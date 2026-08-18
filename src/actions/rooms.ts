@@ -8,6 +8,7 @@ export type { RoomFilters };
 export async function getRooms(filters: RoomFilters = {}) {
   return prisma.property.findMany({
     where: buildRoomWhere(filters),
+    take: 50,
     include: { college: true, images: true },
     orderBy: [{ verifiedAt: { sort: "desc", nulls: "last" } }, { createdAt: "desc" }],
   });

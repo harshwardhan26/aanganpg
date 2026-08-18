@@ -5,7 +5,7 @@ import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
-import { slugify } from "@/lib/slug";
+import { slugify, resolveSlug } from "@/lib/slug";
 import { canonicalPhone } from "@/lib/phone";
 import {
   pgPublishIssues,
@@ -120,6 +120,7 @@ export async function softDelete(id: string) {
   revalidatePath("/admin/listings");
 }
 
+
 export type SaveResult =
   | { ok: true; id: string }
   | { ok: false; issues: string[] };
@@ -155,8 +156,19 @@ export async function saveListing(raw: unknown, publish: boolean): Promise<SaveR
     if (issues.length > 0) return { ok: false, issues };
   }
 
+  const existing = data.id
+    ? await prisma.property.findUnique({
+        where: { id: data.id },
+        select: { verifiedAt: true, slug: true, collegeId: true },
+      })
+    : null;
+
   const session = await getServerSession(authOptions);
-  const slug = await uniqueSlug(data.title, data.location ?? null, data.id ?? null);
+
+  // 1. Get the base slug via pure logic (preserves existing, or builds new)
+  const baseSlug = resolveSlug(existing?.slug, data.title, data.location ?? null);
+  // 2. If it was an existing slug, it's already safe. If new, run uniqueness check.
+  const slug = existing?.slug ? baseSlug : await uniqueSlug(data.title, data.location ?? null, data.id ?? null);
 
   const fields = {
     title: data.title,
@@ -188,13 +200,6 @@ export async function saveListing(raw: unknown, publish: boolean): Promise<SaveR
   // Publishing is a visit record, not a boolean: a named person on a stated
   // date, which is what the listing page shows. Re-publishing an already
   // verified listing must not rewrite the original visit date.
-  const existing = data.id
-    ? await prisma.property.findUnique({
-        where: { id: data.id },
-        select: { verifiedAt: true },
-      })
-    : null;
-
   const verification = publish
     ? {
         verifiedAt: existing?.verifiedAt ?? new Date(),
@@ -217,6 +222,17 @@ export async function saveListing(raw: unknown, publish: boolean): Promise<SaveR
   revalidatePath("/search");
   revalidatePath("/");
   revalidatePath(`/pg/${slug}`);
+  revalidatePath("/sitemap.xml");
+
+  if (fields.collegeId) {
+    const college = await prisma.college.findUnique({ where: { id: fields.collegeId } });
+    if (college) revalidatePath(`/kolhapur/${college.slug}`);
+  }
+
+  if (existing?.collegeId && existing.collegeId !== fields.collegeId) {
+    const oldCollege = await prisma.college.findUnique({ where: { id: existing.collegeId } });
+    if (oldCollege) revalidatePath(`/kolhapur/${oldCollege.slug}`);
+  }
   return { ok: true, id: property.id };
 }
 

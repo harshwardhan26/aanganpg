@@ -54,3 +54,12 @@ export function slugify(title: string, locality?: string | null, collisionIndex?
 
   return slug;
 }
+
+export function resolveSlug(
+  existingSlug: string | undefined | null,
+  title: string,
+  locality: string | null
+) {
+  if (existingSlug) return existingSlug;
+  return slugify(title, locality);
+}

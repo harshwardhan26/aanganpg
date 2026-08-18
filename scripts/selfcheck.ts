@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { canonicalPhone } from "../src/lib/phone";
-import { slugify } from "../src/lib/slug";
+import { slugify, resolveSlug } from "../src/lib/slug";
 import { pgPublishIssues } from "../src/lib/property-options";
 import { buildRoomWhere } from "../src/lib/room-filters";
 import { cloudinaryUrl } from "../src/lib/image";
@@ -72,6 +72,10 @@ async function main() {
   // Slug collision suffixing
   assert(slugify("My Room", "Nagala Park") === "my-room-nagala-park", "slugify basic failed");
   assert(slugify("My Room", "Nagala Park", 1) === "my-room-nagala-park-1", "slugify collision suffix failed");
+  
+  // Slug retention (pure logic test)
+  assert(resolveSlug("existing-slug", "New Title", "New Locality") === "existing-slug", "resolveSlug must return existing slug unchanged");
+  assert(resolveSlug(null, "New Title", "New Locality") === "new-title-new-locality", "resolveSlug must build new slug if no existing");
   
   // Slugify on Marathi title
   assert(slugify("माझी खोली") === "majhii-kholii", "slugify Marathi transliteration failed");
