@@ -28,31 +28,31 @@ model Property {
   rules            String[]        @default([])
   description      String?
 
-  collegeId        String?
-  college          College?        @relation(fields: [collegeId], references: [id])
-  walkMinutes      Int?
-  landmark         String?
+  collegeId   String?
+  college     College? @relation(fields: [collegeId], references: [id])
+  walkMinutes Int?
+  landmark    String?
 
-  foodType         String?
-  messNote         String?
-  vacantBeds       Int?
+  foodType   String?
+  messNote   String?
+  vacantBeds Int?
 
-  wardenName       String?
-  gateClosingTime  String?
+  wardenName      String?
+  gateClosingTime String?
 
-  ownerName        String?
-  ownerPhone       String?
+  ownerName  String?
+  ownerPhone String?
 
-  verifiedAt       DateTime?
-  verifiedBy       String?
+  verifiedAt DateTime?
+  verifiedBy String?
 
-  deletedAt        DateTime?
-  closedAt         DateTime?
-  createdAt        DateTime        @default(now())
-  updatedAt        DateTime        @updatedAt
+  deletedAt DateTime?
+  closedAt  DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
-  leads            Lead[]
-  savedBy          SavedProperty[]
+  leads   Lead[]
+  savedBy SavedProperty[]
 
   @@index([collegeId, genderPreference])
   @@index([price])
@@ -120,14 +120,6 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
-}
-
-model OtpToken {
-  id        String   @id @default(cuid())
-  phone     String   @unique
-  code      String
-  expiresAt DateTime
-  createdAt DateTime @default(now())
 }
 
 model Lead {
