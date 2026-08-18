@@ -6,8 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "postinstall": "prisma generate",
     "lint": "eslint",
     "check": "tsx scripts/selfcheck.ts",
+    "env": "tsx scripts/check-env.ts",
+    "migrate:deploy": "prisma migrate deploy",
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
