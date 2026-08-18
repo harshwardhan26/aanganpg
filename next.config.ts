@@ -9,6 +9,10 @@ if (process.env.NODE_ENV === "production" && !process.env.NEXT_PUBLIC_SITE_URL) 
 }
 
 const nextConfig: NextConfig = {
+  // The Postgres driver must not be bundled. Turbopack's rewrite of `pg` broke
+  // connection setup, and every database query failed with "Connection
+  // terminated unexpectedly" while the identical code worked outside Next.
+  serverExternalPackages: ["pg", "@prisma/adapter-pg", "@prisma/client"],
   images: {
     remotePatterns: [{ protocol: "https", hostname: "res.cloudinary.com" }],
   },

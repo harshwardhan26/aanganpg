@@ -6,7 +6,9 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { cloudinaryUrl } from '@/lib/image';
 
-const FALLBACK_HERO_IMAGE = "https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg";
+// No stock fallback. The hero used to fall back to Cloudinary's demo account,
+// so a page promising "we took these photos ourselves" led with a picture of
+// somebody else's dahlias.
 
 export default async function Home() {
   const [rooms, colleges] = await Promise.all([
@@ -15,7 +17,17 @@ export default async function Home() {
   ]);
 
   const recentRooms = rooms.slice(0, 6);
-  const heroImage = rooms.find(r => r.imageUrl)?.imageUrl || FALLBACK_HERO_IMAGE;
+  // Prefer a verified room's cover: the hero is the promise of the product.
+  const heroImage =
+    rooms.find(r => r.verifiedAt && r.imageUrl)?.imageUrl ??
+    rooms.find(r => r.imageUrl)?.imageUrl ??
+    null;
+  const verifiedCount = rooms.filter(r => r.verifiedAt).length;
+  // Chips show shortName; sorting by `name` put "Bharati" before "CSIBER"
+  // before "DYPCET" in an order that looked random on screen.
+  const collegeChips = [...colleges].sort((a, b) =>
+    (a.shortName || a.name).localeCompare(b.shortName || b.name),
+  );
 
   return (
     <main className="min-h-screen bg-white">
@@ -61,21 +73,34 @@ export default async function Home() {
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
                 </span>
-                <span className="text-text-main font-bold">{rooms.length}</span> rooms verified and counting
+                <span className="text-text-main font-bold">{verifiedCount}</span>{' '}
+                {verifiedCount === 1 ? 'room' : 'rooms'} visited in person
               </div>
             </div>
 
             {/* Hero Image */}
-            <div className="relative aspect-[4/3] lg:aspect-[4/3] rounded-2xl overflow-hidden shadow-2xl border border-border">
-              <Image
-                src={cloudinaryUrl(heroImage, 1200)}
-                alt="Verified student room"
-                width={1200}
-                height={900}
-                priority
-                sizes="(max-width: 1024px) 100vw, 50vw"
-                className="w-full h-full object-cover"
-              />
+            <div className="relative aspect-[4/3] overflow-hidden rounded-2xl border border-border bg-muted shadow-2xl">
+              {heroImage ? (
+                <Image
+                  src={cloudinaryUrl(heroImage, 1200)}
+                  alt="A student room photographed by Aangan"
+                  width={1200}
+                  height={900}
+                  priority
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="flex h-full w-full flex-col items-center justify-center gap-2 px-8 text-center">
+                  <p className="font-heading text-lg font-semibold text-text-main">
+                    Photographs coming this week
+                  </p>
+                  <p className="text-sm text-text-muted">
+                    We are visiting rooms across Kolhapur right now. Every photo on this site
+                    will be one we took ourselves.
+                  </p>
+                </div>
+              )}
             </div>
 
           </div>
@@ -88,7 +113,7 @@ export default async function Home() {
           <div className="space-y-3">
             <h2 className="text-sm font-semibold text-text-muted uppercase tracking-wider">Search by College</h2>
             <div className="flex flex-wrap gap-2">
-              {colleges.map(c => (
+              {collegeChips.map(c => (
                 <Link 
                   key={c.slug} 
                   href={`/search?college=${c.slug}`}
@@ -103,16 +128,16 @@ export default async function Home() {
           <div className="space-y-3 pt-4 border-t border-border">
             <h2 className="text-sm font-semibold text-text-muted uppercase tracking-wider">Popular Shortcuts</h2>
             <div className="flex flex-wrap gap-2">
-              <Link href="/search?genderPreference=Female" className="px-4 py-2 bg-pink-50 border border-pink-200 rounded-full text-sm font-medium text-pink-700 hover:bg-pink-100 transition-colors">
+              <Link href="/search?genderPreference=Female" className="px-4 py-2 bg-light border border-border rounded-full text-sm font-medium text-text-main hover:border-primary-strong hover:text-primary-strong transition-colors">
                 Girls PG
               </Link>
-              <Link href="/search?genderPreference=Male" className="px-4 py-2 bg-blue-50 border border-blue-200 rounded-full text-sm font-medium text-blue-700 hover:bg-blue-100 transition-colors">
+              <Link href="/search?genderPreference=Male" className="px-4 py-2 bg-light border border-border rounded-full text-sm font-medium text-text-main hover:border-primary-strong hover:text-primary-strong transition-colors">
                 Boys PG
               </Link>
-              <Link href="/search?food=yes" className="px-4 py-2 bg-amber-50 border border-amber-200 rounded-full text-sm font-medium text-amber-700 hover:bg-amber-100 transition-colors">
+              <Link href="/search?food=yes" className="px-4 py-2 bg-light border border-border rounded-full text-sm font-medium text-text-main hover:border-primary-strong hover:text-primary-strong transition-colors">
                 With mess
               </Link>
-              <Link href="/search?maxPrice=6000" className="px-4 py-2 bg-emerald-50 border border-emerald-200 rounded-full text-sm font-medium text-emerald-700 hover:bg-emerald-100 transition-colors">
+              <Link href="/search?maxPrice=6000" className="px-4 py-2 bg-light border border-border rounded-full text-sm font-medium text-text-main hover:border-primary-strong hover:text-primary-strong transition-colors">
                 Under ₹6,000
               </Link>
             </div>

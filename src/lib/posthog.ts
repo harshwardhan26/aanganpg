@@ -6,7 +6,9 @@ export function initPostHog() {
   if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_POSTHOG_KEY) {
     posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY, {
       api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://app.posthog.com',
-      capture_pageview: true, // We still want page views, but as noted, they aren't the success metric
+      // PageviewTracker captures these by hand so client-side route changes are
+      // counted once. Leaving this on double-counted every navigation.
+      capture_pageview: false,
       capture_pageleave: false,
       autocapture: false, // We ONLY want the explicit events: pg_contact_clicked, room_shared, filter_applied, lead_submitted
     });
