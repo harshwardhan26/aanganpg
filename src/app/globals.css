@@ -1,0 +1,68 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  /* Colors */
+  --color-primary: var(--primary);
+  --color-primary-strong: var(--primary-strong);
+  --color-primary-hover: var(--primary-hover);
+  --color-text-main: var(--text-main);
+  --color-text-muted: var(--text-muted);
+  --color-border: var(--border);
+  --color-light: var(--light);
+  --color-dark: var(--dark);
+  
+  --color-whatsapp: #25d366;
+  --color-whatsapp-dark: #05391a;
+
+  /* Map shadcn defaults to our palette where possible */
+  --color-background: var(--light);
+  --color-foreground: var(--text-main);
+  --color-muted: #f1f5f9;
+  --color-muted-foreground: var(--text-muted);
+  --color-accent: #f1f5f9;
+  --color-accent-foreground: var(--text-main);
+
+  /* Typography */
+  --font-heading: var(--font-heading);
+  --font-body: var(--font-body);
+  --font-sans: var(--font-body);
+
+  /* Layout & Other */
+  --spacing-content-max: var(--content-max);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+}
+
+:root {
+  /* Tokens */
+  --primary: #fa5a5a;
+  --primary-strong: #cc4040;
+  --primary-hover: #b83838;
+  --text-main: #1e293b;
+  --text-muted: #475569;
+  --border: #e2e8f0;
+  --light: #f8fafc;
+  --dark: #0f172a;
+  
+  --content-max: 1280px;
+  --radius: 0.625rem;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-primary/50;
+  }
+  body {
+    @apply bg-light text-text-main;
+    overflow-x: clip;
+  }
+  html {
+    @apply font-body;
+    overflow-x: clip;
+  }
+}
