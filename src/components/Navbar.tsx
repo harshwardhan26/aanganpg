@@ -18,32 +18,30 @@ export function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-light/95 backdrop-blur supports-[backdrop-filter]:bg-light/60">
-      <div className="mx-auto flex h-16 max-w-[var(--content-max)] items-center justify-between px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center gap-6">
-          <Link href="/" className="text-primary-strong">
-            <Logo height={28} />
-          </Link>
-          <nav className="hidden lg:flex items-center gap-6">
-            {links.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="text-sm font-medium text-text-muted hover:text-text-main transition-colors"
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
-        </div>
+      <div className="mx-auto flex h-16 max-w-[var(--content-max)] items-center justify-between px-4 sm:px-6 lg:px-8 relative">
+        <Link href="/" className="text-primary-strong">
+          <Logo height={28} />
+        </Link>
+        <nav className="hidden lg:flex absolute left-1/2 -translate-x-1/2 items-center gap-6">
+          {links.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="text-sm font-medium text-text-muted hover:text-text-main transition-colors"
+            >
+              {link.label}
+            </Link>
+          ))}
+        </nav>
         <div className="flex items-center gap-4">
           <div className="hidden lg:flex items-center gap-4">
-            <NavAuth />
             <Link 
               href="/list-your-pg" 
-              className={cn(buttonVariants({ variant: "default" }), "bg-primary-strong text-white hover:bg-primary-hover")}
+              className={cn(buttonVariants({ variant: "outline" }), "border-border text-text-main hover:bg-light")}
             >
               List your PG &mdash; FREE
             </Link>
+            <NavAuth />
           </div>
 
           <Sheet>
@@ -53,24 +51,24 @@ export function Navbar() {
             </SheetTrigger>
             <SheetContent side="right">
               <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
-              <nav className="flex flex-col gap-4 mt-8">
+              <nav className="flex flex-col gap-2 mt-6">
                 {links.map((link) => (
                   <Link
                     key={link.href}
                     href={link.href}
-                    className="text-lg font-medium text-text-main"
+                    className="text-lg font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-50 py-3 px-4 rounded-lg transition-colors"
                   >
                     {link.label}
                   </Link>
                 ))}
-                <div className="flex flex-col gap-4 mt-4 pt-4 border-t border-border">
-                  <NavAuth className="w-full justify-start border border-border" />
+                <div className="flex flex-col gap-3 mt-4 pt-6 border-t border-slate-200 px-2">
                   <Link 
                     href="/list-your-pg" 
-                    className={cn(buttonVariants({ variant: "default", className: "w-full justify-start" }), "bg-primary-strong text-white hover:bg-primary-hover")}
+                    className={cn(buttonVariants({ variant: "outline", size: "lg", className: "w-full border-slate-200 text-slate-700 hover:bg-slate-50 font-semibold" }))}
                   >
                     List your PG &mdash; FREE
                   </Link>
+                  <NavAuth className="w-full h-11 text-base font-semibold" />
                 </div>
               </nav>
             </SheetContent>

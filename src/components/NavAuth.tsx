@@ -35,7 +35,7 @@ export function NavAuth({ className }: { className?: string }) {
     <button
       type="button"
       onClick={() => openAuthSheet()}
-      className={cn(buttonVariants({ variant: "ghost" }), className)}
+      className={cn(buttonVariants({ variant: "default" }), "bg-primary-strong text-white hover:bg-primary-hover", className)}
     >
       Login
     </button>

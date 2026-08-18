@@ -176,7 +176,7 @@ export default async function CollegePage(props: PageProps) {
             <p className="text-text-muted mb-6">
               Our team is working on bringing trusted accommodations near {name}.
             </p>
-            <Button className="border-border text-text-main hover:bg-white bg-white border shadow-sm h-10" render={<Link href="/search" />}>
+            <Button className="border-border text-text-main hover:bg-white bg-white border shadow-sm h-10" render={<Link href="/search" />} nativeButton={false}>
               Search all Kolhapur rooms
             </Button>
           </div>

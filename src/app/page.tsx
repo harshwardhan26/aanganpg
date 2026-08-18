@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import Image from 'next/image';
 import { cloudinaryUrl } from '@/lib/image';
+import { ChevronDown } from 'lucide-react';
 
 // No stock fallback. The hero used to fall back to Cloudinary's demo account,
 // so a page promising "we took these photos ourselves" led with a picture of
@@ -48,22 +49,25 @@ export default async function Home() {
               </div>
 
               <form action="/search" method="get" className="bg-white p-2 rounded-xl shadow-md border border-border flex flex-col sm:flex-row gap-2 max-w-xl">
-                <div className="flex-1 px-4 py-2 border-b sm:border-b-0 sm:border-r border-border flex flex-col justify-center">
+                <div className="flex-1 px-4 py-3 border-b sm:border-b-0 sm:border-r border-border flex flex-col justify-center">
                   <label htmlFor="college" className="block text-xs font-semibold text-text-muted uppercase tracking-wider mb-1">Select College</label>
-                  <select 
-                    id="college" 
-                    name="college" 
-                    defaultValue=""
-                    className="w-full min-h-12 bg-transparent text-text-main font-medium focus:outline-none appearance-none cursor-pointer"
-                    required
-                  >
-                    <option value="" disabled>Choose your college...</option>
-                    {colleges.map(c => (
-                      <option key={c.slug} value={c.slug}>{c.name}</option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <select 
+                      id="college" 
+                      name="college" 
+                      defaultValue=""
+                      className="w-full bg-transparent text-text-main font-medium focus:outline-none appearance-none cursor-pointer pr-8"
+                      required
+                    >
+                      <option value="" disabled>Choose your college...</option>
+                      {colleges.map(c => (
+                        <option key={c.slug} value={c.slug}>{c.name}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 w-5 h-5 text-text-muted pointer-events-none" />
+                  </div>
                 </div>
-                <Button type="submit" className="w-full sm:w-auto px-8 h-14 bg-primary-strong text-white hover:bg-primary-hover rounded-lg font-medium text-base shrink-0">
+                <Button type="submit" className="w-full sm:w-auto px-8 h-auto py-4 sm:py-0 self-stretch bg-primary-strong text-white hover:bg-primary-hover rounded-lg font-medium text-base shrink-0">
                   Find rooms
                 </Button>
               </form>

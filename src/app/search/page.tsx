@@ -66,7 +66,7 @@ export default async function SearchPage(props: PageProps) {
                <p className="text-text-muted mb-6">
                  Try widening your budget, dropping the mess filter, or checking a different locality.
                </p>
-               <Button className="border-border text-text-main hover:bg-muted bg-white border shadow-sm h-10" render={<Link href="/search" />}>
+               <Button className="border-border text-text-main hover:bg-muted bg-white border shadow-sm h-10" render={<Link href="/search" />} nativeButton={false}>
                  Clear all filters
                </Button>
              </div>

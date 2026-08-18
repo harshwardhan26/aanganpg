@@ -3,10 +3,9 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { adminAuth } from "./firebase-admin";
 import prisma from "./prisma";
 import { canonicalPhone } from "./phone";
-import { PrismaAdapter } from "@next-auth/prisma-adapter";
+
 
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" },
   pages: {
     signIn: "/",
@@ -45,6 +44,10 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = user.id;
         token.phone = user.phone;
+        // Role is threaded to the session for future role-based checks. 
+        // Currently, all new users are assigned 'student', so admin guards
+        // still rely on the ADMIN_PHONE env var.
+        token.role = user.role;
       }
       return token;
     },
@@ -52,6 +55,7 @@ export const authOptions: NextAuthOptions = {
       if (token && session.user) {
         session.user.id = token.id as string;
         session.user.phone = token.phone as string;
+        session.user.role = token.role as string;
       }
       return session;
     }
