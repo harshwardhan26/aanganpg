@@ -18,7 +18,7 @@ const ratelimit = redis ? new Ratelimit({
   analytics: true,
 }) : null;
 
-export async function processEnquiry(data: {
+async function processEnquiry(data: {
   propertyId: string;
   channel: 'call' | 'whatsapp' | 'share' | 'form' | 'referral';
   name?: string;
@@ -93,6 +93,7 @@ export async function recordEnquiry(data: {
   phone?: string;
 }) {
   const headersList = await headers();
-  const ip = headersList.get('x-forwarded-for') || '127.0.0.1';
+  const forwardedFor = headersList.get('x-forwarded-for');
+  const ip = forwardedFor ? forwardedFor.split(',')[0].trim() : '127.0.0.1';
   return processEnquiry(data, ip);
 }

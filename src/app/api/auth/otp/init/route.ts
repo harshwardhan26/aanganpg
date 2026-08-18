@@ -3,6 +3,9 @@ import { Ratelimit } from "@upstash/ratelimit";
 import { redis } from "@/lib/redis";
 import { canonicalPhone } from "@/lib/phone";
 
+// ponytail: The rate limit here is advisory only. The client calls Firebase's signInWithPhoneNumber
+// directly from AuthSheet.tsx, bypassing this endpoint entirely. This leaves us exposed to SMS
+// pumping and billing loss. The proper fix is enabling Firebase App Check to secure the client.
 // Limit to 3 OTP requests per phone number every 10 minutes
 const ratelimit = redis
   ? new Ratelimit({

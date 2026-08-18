@@ -23,6 +23,26 @@ const nextConfig: NextConfig = {
       { source: "/rooms/:slug", destination: "/pg/:slug", permanent: true },
     ];
   },
+  async headers() {
+    return [
+      {
+        source: "/(.*)",
+        headers: [
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains; preload" },
+          // ponytail: A full Content-Security-Policy is a bigger job than it looks. The site loads Firebase Auth,
+          // an invisible reCAPTCHA iframe, PostHog, Sentry, Cloudinary images, and Google Fonts.
+          // Verify the auth sheet completes a real OTP round trip with a clean console before enforcing this.
+          {
+            key: "Content-Security-Policy-Report-Only",
+            value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.firebaseapp.com https://*.googleapis.com https://us.i.posthog.com; connect-src 'self' https://*.googleapis.com https://*.sentry.io https://us.i.posthog.com https://res.cloudinary.com; img-src 'self' data: https://res.cloudinary.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; frame-src 'self' https://*.firebaseapp.com;",
+          },
+        ],
+      },
+    ];
+  },
 };
 
 export default withSentryConfig(nextConfig, {
