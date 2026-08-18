@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/auth/Providers";
@@ -28,6 +28,10 @@ export const metadata: Metadata = {
     "PGs, hostels and student rooms near every college in Kolhapur. Every one visited in " +
     "person, photographed by us, with the owner's own number on the listing. Students pay " +
     "no brokerage.",
+};
+
+export const viewport: Viewport = {
+  themeColor: "#fa5a5a",
 };
 
 export default function RootLayout({

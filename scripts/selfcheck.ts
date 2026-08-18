@@ -2,7 +2,7 @@ import assert from "node:assert";
 import { canonicalPhone } from "../src/lib/phone";
 import { slugify, resolveSlug } from "../src/lib/slug";
 import { pgPublishIssues } from "../src/lib/property-options";
-import { buildRoomWhere } from "../src/lib/room-filters";
+import { buildRoomWhere, buildRoomOrderBy } from "../src/lib/room-filters";
 import { cloudinaryUrl } from "../src/lib/image";
 
 try { process.loadEnvFile(); } catch {}
@@ -49,7 +49,7 @@ export function contrastRatio(hex1: string, hex2: string) {
 
 async function main() {
   const white = "#ffffff";
-  const primary = "#fa5a5a";
+  const brandCoral = "#fa5a5a";
   const primaryStrong = "#cc4040";
   const whatsapp = "#25d366";
   const whatsappDark = "#05391a";
@@ -57,8 +57,8 @@ async function main() {
   const ratio1 = contrastRatio(white, primaryStrong);
   assert(ratio1 >= 4.5, `white on ${primaryStrong} must be >= 4.5, got ${ratio1.toFixed(2)}`);
 
-  const ratio2 = contrastRatio(white, primary);
-  assert(ratio2 < 4.5, `white on ${primary} must be < 4.5, got ${ratio2.toFixed(2)}`);
+  const ratio2 = contrastRatio(white, brandCoral);
+  assert(ratio2 < 4.5, `white on ${brandCoral} must be < 4.5, got ${ratio2.toFixed(2)}`);
 
   const ratio3 = contrastRatio(whatsappDark, whatsapp);
   assert(ratio3 >= 4.5, `${whatsappDark} on ${whatsapp} must be >= 4.5, got ${ratio3.toFixed(2)}`);
@@ -141,6 +141,13 @@ async function main() {
   assert.deepStrictEqual(query.price, { lte: 6000 }, "maxPrice query failed");
   assert(query.deletedAt === null, "must exclude deleted");
   assert(query.closedAt === null, "must exclude closed");
+
+  // buildRoomOrderBy tests
+  const defaultSort = buildRoomOrderBy({});
+  assert.deepStrictEqual(defaultSort, [{ verifiedAt: { sort: "desc", nulls: "last" } }, { createdAt: "desc" }], "default sort failed");
+
+  const priceSort = buildRoomOrderBy({ sort: "price_asc" });
+  assert.deepStrictEqual(priceSort, [{ price: "asc" }, { verifiedAt: { sort: "desc", nulls: "last" } }, { createdAt: "desc" }], "price sort failed");
 
   // cloudinaryUrl tests
   assert(cloudinaryUrl("https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg", 400) === "https://res.cloudinary.com/demo/image/upload/f_auto,q_auto,w_400/v1312461204/sample.jpg", "cloudinaryUrl rewrites properly");

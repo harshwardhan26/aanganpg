@@ -17,7 +17,11 @@ import {
 
 async function requireAdmin() {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.phone || session.user.phone !== process.env.ADMIN_PHONE) {
+  if (!session?.user?.phone) {
+    throw new Error("Unauthorized");
+  }
+  
+  if (session.user.phone !== process.env.ADMIN_PHONE && session.user.role !== "admin") {
     throw new Error("Unauthorized");
   }
 }
@@ -240,4 +244,20 @@ export async function updateLeadStatus(id: string, status: string) {
   await requireAdmin();
   await prisma.lead.update({ where: { id }, data: { status } });
   revalidatePath("/admin/leads");
+}
+
+export async function promoteUser(phoneInput: string) {
+  await requireAdmin();
+  const phone = canonicalPhone(phoneInput);
+  if (!phone) return { error: "Invalid phone number" };
+
+  const user = await prisma.user.findUnique({ where: { phone } });
+  if (!user) return { error: "User not found" };
+
+  await prisma.user.update({
+    where: { phone },
+    data: { role: "admin" }
+  });
+
+  return { success: true };
 }

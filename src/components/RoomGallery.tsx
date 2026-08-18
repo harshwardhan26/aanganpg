@@ -18,6 +18,7 @@ export function RoomGallery({
   title: string;
 }) {
   const [index, setIndex] = useState(0);
+  const [touchStart, setTouchStart] = useState<{x: number, y: number} | null>(null);
 
   if (images.length === 0) {
     return (
@@ -31,9 +32,28 @@ export function RoomGallery({
   const go = (delta: number) =>
     setIndex((i) => (i + delta + images.length) % images.length);
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart({ x: e.touches[0].clientX, y: e.touches[0].clientY });
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!touchStart) return;
+    const dx = touchStart.x - e.changedTouches[0].clientX;
+    const dy = Math.abs(touchStart.y - e.changedTouches[0].clientY);
+    
+    if (Math.abs(dx) > 50 && Math.abs(dx) > dy) {
+      go(dx > 0 ? 1 : -1);
+    }
+    setTouchStart(null);
+  };
+
   return (
     <div className="space-y-3">
-      <div className="relative aspect-[4/3] w-full overflow-hidden bg-muted sm:aspect-[16/9]">
+      <div 
+        className="relative aspect-[4/3] w-full overflow-hidden bg-muted sm:aspect-[16/9]"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
         <Image
           src={cloudinaryUrl(current.url, 1200)}
           alt={current.tag ? `${title} — ${current.tag}` : title}

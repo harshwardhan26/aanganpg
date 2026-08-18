@@ -8,6 +8,7 @@ export type RoomFilters = {
   occupancy?: string;
   amenities?: string[];
   rules?: string[];
+  sort?: string;
 };
 
 /**
@@ -66,4 +67,18 @@ export function buildRoomWhere(filters: RoomFilters): Prisma.PropertyWhereInput 
   }
 
   return where;
+}
+
+export function buildRoomOrderBy(filters: RoomFilters): Prisma.PropertyOrderByWithRelationInput[] {
+  if (filters.sort === "price_asc") {
+    return [
+      { price: "asc" },
+      { verifiedAt: { sort: "desc", nulls: "last" } },
+      { createdAt: "desc" }
+    ];
+  }
+  return [
+    { verifiedAt: { sort: "desc", nulls: "last" } },
+    { createdAt: "desc" }
+  ];
 }

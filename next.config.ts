@@ -14,7 +14,12 @@ const nextConfig: NextConfig = {
   // terminated unexpectedly" while the identical code worked outside Next.
   serverExternalPackages: ["pg", "@prisma/adapter-pg", "@prisma/client"],
   images: {
-    remotePatterns: [{ protocol: "https", hostname: "res.cloudinary.com" }],
+    remotePatterns: [
+      { protocol: "https", hostname: "res.cloudinary.com" },
+      // Seed/demo listings still point at Unsplash. Without this the detail
+      // page throws "Invalid src prop" and returns a 500.
+      { protocol: "https", hostname: "images.unsplash.com" },
+    ],
   },
   async redirects() {
     return [

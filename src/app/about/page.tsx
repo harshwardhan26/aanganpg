@@ -1,10 +1,9 @@
 import { Metadata } from "next";
 import { getAanganPhone, formatAanganPhoneForDisplay } from "@/lib/contact";
-import Image from "next/image";
 
 export const metadata: Metadata = {
   title: "About Us | Aangan Kolhapur",
-  description: "Aangan is built in Kolhapur, for Kolhapur. Get to know the team behind the most trusted student room platform in the city.",
+  description: "Built in Kolhapur. Every room visited in person. No brokerage from students.",
   alternates: {
     canonical: "/about"
   }
@@ -29,40 +28,21 @@ export default function AboutPage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-            <div className="space-y-4">
-              <div className="relative aspect-square rounded-2xl overflow-hidden bg-slate-200">
-                {/* Fallback image representing the founders/team */}
-                <Image
-                  src="https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg"
-                  alt="Aangan Team Member"
-                  width={400}
-                  height={400}
-                  sizes="(max-width: 640px) 100vw, 50vw"
-                  className="w-full h-full object-cover grayscale"
-                />
-              </div>
-              <div>
-                <h3 className="font-bold text-lg text-text-main">Harshwardhan</h3>
-                <p className="text-text-muted">Founder & Operations</p>
-              </div>
+            {/* TODO: Add real team photos once we have them. Do not use stock images. */}
+            <div className="space-y-2 bg-light p-6 rounded-2xl border border-border">
+              <h3 className="font-bold text-xl text-text-main">Harshwardhan</h3>
+              <p className="text-primary-strong font-medium">Founder & Operations</p>
+              <p className="text-text-muted leading-relaxed pt-2">
+                Personally visits and inspects properties across Kolhapur so you don&apos;t have to.
+              </p>
             </div>
             
-            <div className="space-y-4">
-              <div className="relative aspect-square rounded-2xl overflow-hidden bg-slate-200">
-                {/* Fallback image representing the founders/team */}
-                <Image
-                  src="https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg"
-                  alt="Aangan Team Member"
-                  width={400}
-                  height={400}
-                  sizes="(max-width: 640px) 100vw, 50vw"
-                  className="w-full h-full object-cover grayscale"
-                />
-              </div>
-              <div>
-                <h3 className="font-bold text-lg text-text-main">Aangan Team</h3>
-                <p className="text-text-muted">Local Verification Unit</p>
-              </div>
+            <div className="space-y-2 bg-light p-6 rounded-2xl border border-border">
+              <h3 className="font-bold text-xl text-text-main">Aangan Team</h3>
+              <p className="text-primary-strong font-medium">Local Verification Unit</p>
+              <p className="text-text-muted leading-relaxed pt-2">
+                Our local team members who check amenities, confirm the facts with the owner, and take the real photos you see on the site.
+              </p>
             </div>
           </div>
 
@@ -72,8 +52,8 @@ export default function AboutPage() {
               
               <div className="space-y-2">
                 <h3 className="font-semibold text-text-main uppercase tracking-wider text-sm">Call or WhatsApp</h3>
-                <p className="text-lg text-text-main font-medium">
-                  <a href={`tel:${phone}`} className="hover:text-primary-strong transition-colors">{displayPhone}</a>
+                <p className="text-lg text-text-main font-medium -my-2">
+                  <a href={`tel:${phone}`} className="inline-block py-2 hover:text-primary-strong transition-colors">{displayPhone}</a>
                 </p>
               </div>
 

@@ -7,11 +7,9 @@ import { trackEvent } from '@/lib/posthog';
 
 export function SearchFilters({
   searchParams,
-  roomCount,
   colleges,
 }: {
   searchParams: { [key: string]: string | string[] | undefined };
-  roomCount: number;
   colleges: { slug: string, name: string }[];
 }) {
 
@@ -42,12 +40,25 @@ export function SearchFilters({
         <select 
           name="college" 
           defaultValue={currentCollege || ''}
-          className="w-full h-12 px-3 py-2 border border-border rounded-md bg-white text-sm text-text-main focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="w-full h-12 px-3 py-2 border border-border rounded-lg bg-white text-sm text-text-main focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <option value="">Any College</option>
           {colleges.map(c => (
             <option key={c.slug} value={c.slug}>{c.name}</option>
           ))}
+        </select>
+      </div>
+
+      {/* Sort By */}
+      <div className="space-y-3">
+        <h3 className="font-semibold text-text-main">Sort By</h3>
+        <select 
+          name="sort" 
+          defaultValue={searchParams.sort as string || ''}
+          className="w-full h-12 px-3 py-2 border border-border rounded-lg bg-white text-sm text-text-main focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <option value="">Relevance</option>
+          <option value="price_asc">Price: low to high</option>
         </select>
       </div>
 
@@ -89,8 +100,8 @@ export function SearchFilters({
               <input 
                 type="radio" 
                 name="genderPreference" 
-                value={gender} 
-                defaultChecked={currentGender === gender || (gender === 'Any' && !currentGender)}
+                value={gender === 'Any' ? '' : gender} 
+                defaultChecked={gender === 'Any' ? !currentGender : currentGender === gender}
                 className="w-5 h-5 text-primary-strong border-border focus:ring-primary-strong" 
               />
               {gender === 'Any' ? 'Anyone' : gender}
@@ -124,7 +135,7 @@ export function SearchFilters({
         <select 
           name="occupancy" 
           defaultValue={currentOccupancy || ''}
-          className="w-full h-12 px-3 py-2 border border-border rounded-md bg-white text-sm text-text-main focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="w-full h-12 px-3 py-2 border border-border rounded-lg bg-white text-sm text-text-main focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <option value="">Any</option>
           {OCCUPANCY_TYPES.map(opt => (
@@ -171,10 +182,9 @@ export function SearchFilters({
         </div>
       </div>
 
-      {/* Sticky Confirm Button for Mobile, Normal button for Desktop */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-border lg:static lg:p-0 lg:border-none lg:bg-transparent z-10">
-        <Button type="submit" className="w-full bg-primary-strong text-white hover:bg-primary-hover h-12 text-base">
-          Show {roomCount} {roomCount === 1 ? 'room' : 'rooms'}
+        <Button type="submit" className="w-full bg-primary-strong text-white hover:bg-primary-hover text-base">
+          Apply filters
         </Button>
       </div>
     </form>

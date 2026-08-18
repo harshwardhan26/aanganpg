@@ -32,7 +32,7 @@ export function RoomCard({ room }: RoomCardProps) {
       href={`/pg/${room.slug}`}
       className={cn(
         "group flex flex-col border border-border rounded-xl overflow-hidden bg-white hover:shadow-md transition-shadow",
-        isFull && "opacity-60 grayscale-[0.5]"
+        isFull && "opacity-75"
       )}
     >
       {/* 4:3 aspect box reserved before load */}
@@ -53,26 +53,26 @@ export function RoomCard({ room }: RoomCardProps) {
         )}
         
         {room.verifiedAt && (
-          <div className="absolute top-3 left-3 bg-slate-800 text-white text-xs font-medium px-2.5 py-1 rounded-md shadow-sm">
+          <div className="absolute top-3 left-3 bg-slate-800 text-white text-xs font-medium px-2.5 py-1 rounded-full shadow-sm">
             Aangan visited
           </div>
         )}
         
-        {isFull ? (
-          <div className="absolute top-3 right-3 bg-red-100 text-red-800 border border-red-200 text-xs font-medium px-2 py-1 rounded-md shadow-sm z-10">
+        {isFull && (
+          <div className="absolute top-12 left-3 bg-red-100 text-red-800 border border-red-200 text-xs font-medium px-2.5 py-1 rounded-full shadow-sm z-10">
             Full right now
           </div>
-        ) : (
-          <div className="absolute top-3 right-3 z-10">
-            <SaveButton propertyId={room.id} />
-          </div>
         )}
+
+        <div className="absolute top-3 right-3 z-10">
+          <SaveButton propertyId={room.id} />
+        </div>
       </div>
       
       <div className="p-4 flex flex-col gap-2 flex-1">
-        <div className="flex items-start justify-between gap-3">
+        <div className="flex items-baseline justify-between gap-3">
           <h3 className="font-medium text-text-main line-clamp-2 leading-snug">{room.title}</h3>
-          <span className="font-semibold text-lg whitespace-nowrap text-text-main mt-[-2px]">
+          <span className="font-semibold text-lg whitespace-nowrap text-text-main">
             ₹{room.price.toLocaleString("en-IN")}
             <span className="text-xs font-normal text-text-muted block text-right">/month</span>
           </span>

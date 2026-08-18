@@ -16,6 +16,11 @@ export function MobileFilterSheet({ children }: { children: React.ReactNode }) {
     setOpen(false);
   }, [searchParams]);
 
+  let activeCount = 0;
+  for (const [key, value] of Array.from(searchParams.entries())) {
+    if (key !== 'sort' && value) activeCount++;
+  }
+
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger render={
@@ -25,9 +30,9 @@ export function MobileFilterSheet({ children }: { children: React.ReactNode }) {
         />
       }>
         <Filter className="mr-2 h-5 w-5" />
-        Filters
+        Filters {activeCount > 0 ? `· ${activeCount}` : ''}
       </SheetTrigger>
-      <SheetContent side="bottom" className="h-[85vh] rounded-t-xl px-4 py-6 overflow-hidden flex flex-col bg-white">
+      <SheetContent side="bottom" className="h-[85dvh] rounded-t-2xl px-0 pt-6 pb-0 bg-white border-none shadow-[0_8px_30px_rgb(0,0,0,0.12)] flex flex-col">
         <SheetTitle className="sr-only">Filters</SheetTitle>
         <div className="flex-1 overflow-y-auto pb-20 relative">
           {children}

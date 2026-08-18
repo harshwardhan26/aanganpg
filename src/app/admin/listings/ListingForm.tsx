@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { saveListing } from "@/actions/admin";
@@ -45,7 +45,31 @@ export default function ListingForm({
   });
 
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState("");
   const [serverIssues, setServerIssues] = useState<string[]>([]);
+  const [isRestored, setIsRestored] = useState(false);
+
+  const storageKey = `aangan-admin-form-${initialData?.id || "new"}`;
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setFormData(JSON.parse(saved));
+      }
+    } catch (err) {
+      console.warn("Failed to restore form data", err);
+    } finally {
+      setIsRestored(true);
+    }
+  }, [storageKey]);
+
+  useEffect(() => {
+    if (isRestored) {
+      localStorage.setItem(storageKey, JSON.stringify(formData));
+    }
+  }, [formData, isRestored, storageKey]);
 
   const handleTextChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -55,18 +79,29 @@ export default function ListingForm({
     if (!e.target.files?.length) return;
     setUploadingImage(true);
     setError(null);
-    try {
-      const file = e.target.files[0];
-      const url = await uploadImage(file);
-      setFormData(prev => ({
-        ...prev,
-        images: [...prev.images, { url, tag: null }]
-      }));
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setUploadingImage(false);
+    const files = Array.from(e.target.files);
+    e.target.value = '';
+    
+    const failed: string[] = [];
+    
+    for (let i = 0; i < files.length; i++) {
+      setUploadProgress(`Uploading ${i + 1} of ${files.length}...`);
+      try {
+        const url = await uploadImage(files[i]);
+        setFormData(prev => ({
+          ...prev,
+          images: [...prev.images, { url, tag: null }]
+        }));
+      } catch {
+        failed.push(files[i].name);
+      }
     }
+
+    if (failed.length > 0) {
+      setError(`Failed to upload ${failed.length} image(s): ${failed.join(', ')}`);
+    }
+    setUploadProgress("");
+    setUploadingImage(false);
   };
 
   const handleImageTag = (index: number, tag: string | null) => {
@@ -111,6 +146,7 @@ export default function ListingForm({
         setLoading(false);
         return;
       }
+      localStorage.removeItem(storageKey);
       router.push("/admin/listings");
       router.refresh();
     } catch (err: any) {
@@ -123,7 +159,7 @@ export default function ListingForm({
     <div className="bg-white p-6 rounded-xl border border-border shadow-sm max-w-4xl space-y-10">
       
       {error && (
-        <div className="bg-red-50 text-red-800 p-4 rounded-md font-medium">
+        <div className="bg-red-50 text-red-800 p-4 rounded-lg font-medium">
           {error}
           {serverIssues.length > 0 && (
             <ul className="mt-2 list-disc pl-5 font-normal">
@@ -141,30 +177,30 @@ export default function ListingForm({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium mb-1">Title</label>
-            <input name="title" value={formData.title} onChange={handleTextChange} className="w-full border rounded-md p-2" placeholder="e.g. 2 Bed Girls PG" />
+            <input name="title" value={formData.title} onChange={handleTextChange} className="w-full border rounded-lg p-2" placeholder="e.g. 2 Bed Girls PG" />
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Monthly Rent (₹)</label>
-            <input type="number" name="price" value={formData.price} onChange={handleTextChange} className="w-full border rounded-md p-2" />
+            <input type="number" name="price" value={formData.price} onChange={handleTextChange} className="w-full border rounded-lg p-2" />
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Occupancy</label>
-            <select name="occupancyType" value={formData.occupancyType} onChange={handleTextChange} className="w-full border rounded-md p-2">
+            <select name="occupancyType" value={formData.occupancyType} onChange={handleTextChange} className="w-full border rounded-lg p-2">
               <option value="">Select...</option>
               {OCCUPANCY_TYPES.map(o => <option key={o} value={o}>{o}</option>)}
             </select>
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Deposit (₹)</label>
-            <input type="number" name="deposit" value={formData.deposit} onChange={handleTextChange} className="w-full border rounded-md p-2" />
+            <input type="number" name="deposit" value={formData.deposit} onChange={handleTextChange} className="w-full border rounded-lg p-2" />
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Vacant Beds</label>
-            <input type="number" name="vacantBeds" value={formData.vacantBeds} onChange={handleTextChange} className="w-full border rounded-md p-2" />
+            <input type="number" name="vacantBeds" value={formData.vacantBeds} onChange={handleTextChange} className="w-full border rounded-lg p-2" />
           </div>
           <div className="sm:col-span-2">
             <label className="block text-sm font-medium mb-1">Description</label>
-            <textarea name="description" value={formData.description} onChange={handleTextChange} className="w-full border rounded-md p-2 h-24" />
+            <textarea name="description" value={formData.description} onChange={handleTextChange} className="w-full border rounded-lg p-2 h-24" />
           </div>
         </div>
       </section>
@@ -175,7 +211,7 @@ export default function ListingForm({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium mb-1">Nearest College</label>
-            <select name="collegeId" value={formData.collegeId} onChange={handleTextChange} className="w-full border rounded-md p-2">
+            <select name="collegeId" value={formData.collegeId} onChange={handleTextChange} className="w-full border rounded-lg p-2">
               <option value="">Select...</option>
               {colleges.map(c => (
                 <option key={c.id} value={c.id}>{c.name}</option>
@@ -184,18 +220,18 @@ export default function ListingForm({
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Walk Minutes</label>
-            <input type="number" name="walkMinutes" value={formData.walkMinutes} onChange={handleTextChange} className="w-full border rounded-md p-2" />
+            <input type="number" name="walkMinutes" value={formData.walkMinutes} onChange={handleTextChange} className="w-full border rounded-lg p-2" />
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Locality</label>
-            <select name="location" value={formData.location} onChange={handleTextChange} className="w-full border rounded-md p-2">
+            <select name="location" value={formData.location} onChange={handleTextChange} className="w-full border rounded-lg p-2">
               <option value="">Select...</option>
               {KOLHAPUR_LOCALITIES.map(l => <option key={l} value={l}>{l}</option>)}
             </select>
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Landmark</label>
-            <input name="landmark" value={formData.landmark} onChange={handleTextChange} placeholder="Rajaram College समोर" className="w-full border rounded-md p-2" />
+            <input name="landmark" value={formData.landmark} onChange={handleTextChange} placeholder="Rajaram College समोर" className="w-full border rounded-lg p-2" />
           </div>
         </div>
       </section>
@@ -206,14 +242,14 @@ export default function ListingForm({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium mb-1">Food Provided</label>
-            <select name="foodType" value={formData.foodType} onChange={handleTextChange} className="w-full border rounded-md p-2">
+            <select name="foodType" value={formData.foodType} onChange={handleTextChange} className="w-full border rounded-lg p-2">
               <option value="">No mess</option>
               {FOOD_TYPES.map(o => <option key={o} value={o}>{o}</option>)}
             </select>
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">What the mess serves</label>
-            <input name="messNote" value={formData.messNote} onChange={handleTextChange} placeholder="2 chapati + bhaji + rice, Sunday mutton" className="w-full border rounded-md p-2" />
+            <input name="messNote" value={formData.messNote} onChange={handleTextChange} placeholder="2 chapati + bhaji + rice, Sunday mutton" className="w-full border rounded-lg p-2" />
           </div>
         </div>
       </section>
@@ -224,18 +260,18 @@ export default function ListingForm({
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-medium mb-1">Gender Allowed</label>
-            <select name="genderPreference" value={formData.genderPreference} onChange={handleTextChange} className="w-full border rounded-md p-2">
+            <select name="genderPreference" value={formData.genderPreference} onChange={handleTextChange} className="w-full border rounded-lg p-2">
               <option value="">Select...</option>
               {GENDER_PREFERENCES.map(o => <option key={o} value={o}>{o}</option>)}
             </select>
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Warden Name</label>
-            <input name="wardenName" value={formData.wardenName} onChange={handleTextChange} className="w-full border rounded-md p-2" />
+            <input name="wardenName" value={formData.wardenName} onChange={handleTextChange} className="w-full border rounded-lg p-2" />
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Gate Closing Time</label>
-            <input name="gateClosingTime" value={formData.gateClosingTime} onChange={handleTextChange} className="w-full border rounded-md p-2" placeholder="e.g. 9:30 PM" />
+            <input name="gateClosingTime" value={formData.gateClosingTime} onChange={handleTextChange} className="w-full border rounded-lg p-2" placeholder="e.g. 9:30 PM" />
           </div>
         </div>
       </section>
@@ -246,11 +282,11 @@ export default function ListingForm({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium mb-1">Owner Name</label>
-            <input name="ownerName" value={formData.ownerName} onChange={handleTextChange} className="w-full border rounded-md p-2" />
+            <input name="ownerName" value={formData.ownerName} onChange={handleTextChange} className="w-full border rounded-lg p-2" />
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Owner Phone</label>
-            <input name="ownerPhone" value={formData.ownerPhone} onChange={handleTextChange} className="w-full border rounded-md p-2" placeholder="e.g. 9876543210" />
+            <input name="ownerPhone" value={formData.ownerPhone} onChange={handleTextChange} className="w-full border rounded-lg p-2" placeholder="e.g. 9876543210" />
           </div>
         </div>
       </section>
@@ -272,19 +308,19 @@ export default function ListingForm({
           <div className="flex-1 space-y-4">
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
               {formData.images.map((img: any, idx: number) => (
-                <div key={idx} className="relative group rounded-md overflow-hidden border border-border h-32">
+                <div key={idx} className="relative group rounded-lg overflow-hidden border border-border h-32">
                   <Image src={img.url} alt="upload" width={300} height={300} className="w-full h-full object-cover" sizes="(max-width: 640px) 50vw, 33vw" />
-                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-2 gap-2">
+                  <div className="absolute inset-0 bg-black/50 opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-2 gap-2">
                     <select 
                       value={img.tag || ""} 
                       onChange={(e) => handleImageTag(idx, e.target.value || null)}
-                      className="text-xs p-1 rounded bg-white text-black w-full"
+                      className="text-sm px-2 min-h-[44px] rounded bg-white text-black w-full border-none focus:ring-2 focus:ring-primary-strong"
                     >
                       <option value="">No tag</option>
                       <option value="bathroom">Bathroom</option>
                       <option value="thali">Thali / Mess</option>
                     </select>
-                    <button type="button" onClick={() => removeImage(idx)} className="text-white text-xs bg-red-600 px-2 py-1 rounded">Remove</button>
+                    <button type="button" onClick={() => removeImage(idx)} className="text-white text-sm font-medium bg-red-600 px-4 py-2 min-h-[44px] w-full rounded hover:bg-red-700">Remove</button>
                   </div>
                   {img.tag && (
                     <span className="absolute top-1 left-1 bg-primary-strong text-white text-[10px] px-1.5 py-0.5 rounded-full uppercase font-bold">
@@ -299,9 +335,9 @@ export default function ListingForm({
               <p className="text-red-600 text-sm">Uploads not configured.</p>
             ) : (
               <div>
-                <label className="inline-block bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 px-4 py-2 rounded-md font-medium cursor-pointer transition-colors">
-                  {uploadingImage ? "Uploading..." : "Upload Photo"}
-                  <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={uploadingImage} />
+                <label className="inline-block bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 px-4 py-2 rounded-lg font-medium cursor-pointer transition-colors">
+                  {uploadingImage ? (uploadProgress || "Uploading...") : "Upload Photos"}
+                  <input type="file" multiple accept="image/*" className="hidden" onChange={handleImageUpload} disabled={uploadingImage} />
                 </label>
               </div>
             )}
@@ -337,7 +373,7 @@ export default function ListingForm({
             type="button" 
             onClick={() => handleSubmit(false)} 
             disabled={loading}
-            className="flex-1 sm:flex-none bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 px-6 py-2 rounded-md font-medium transition-colors"
+            className="flex-1 sm:flex-none bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 px-6 py-2 rounded-lg font-medium transition-colors"
           >
             Save Draft
           </button>
@@ -345,7 +381,7 @@ export default function ListingForm({
             type="button" 
             onClick={() => handleSubmit(true)} 
             disabled={loading || currentIssues.length > 0}
-            className="flex-1 sm:flex-none bg-primary-strong hover:bg-primary-hover disabled:bg-slate-300 disabled:text-slate-500 text-white px-6 py-2 rounded-md font-bold transition-colors"
+            className="flex-1 sm:flex-none bg-primary-strong hover:bg-primary-hover disabled:bg-slate-300 disabled:text-slate-500 text-white px-6 py-2 rounded-lg font-bold transition-colors"
           >
             Publish
           </button>

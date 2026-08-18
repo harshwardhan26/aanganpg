@@ -85,7 +85,7 @@ export default async function RoomPage({ params }: Props) {
   };
 
   return (
-    <main className="bg-white pb-28 lg:pb-0">
+    <main className="bg-white">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -248,10 +248,10 @@ export default async function RoomPage({ params }: Props) {
             </section>
           )}
 
-          <p className="text-sm text-text-muted">
+          <p className="text-sm text-text-muted -my-2">
             Every room here was visited in person and photographed by us.{" "}
-            <Link href="/verification" className="text-primary-strong underline underline-offset-4">
-              What &ldquo;verified&rdquo; means
+            <Link href="/verification" className="inline-block py-2 text-primary-strong underline underline-offset-4">
+              What &ldquo;Aangan visited&rdquo; means
             </Link>
             .
           </p>
@@ -276,6 +276,19 @@ export default async function RoomPage({ params }: Props) {
               />
             </div>
 
+            {/* Mobile: inline secondary row */}
+            <div className="mt-8 lg:hidden">
+              <EnquiryActions
+                propertyId={room.id}
+                ownerPhone={room.ownerPhone}
+                title={room.title}
+                displayPrice={priceLabel}
+                ownerName={room.ownerName}
+                location={room.location}
+                variant="secondary-only"
+              />
+            </div>
+
             {/* Mobile: fixed bar. The contact controls have to be reachable at
                 every scroll position — this is the only thing the page is for. */}
             <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-white p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.06)] lg:hidden">
@@ -286,6 +299,7 @@ export default async function RoomPage({ params }: Props) {
                 displayPrice={priceLabel}
                 ownerName={room.ownerName}
                 location={room.location}
+                variant="primary-only"
               />
             </div>
           </aside>

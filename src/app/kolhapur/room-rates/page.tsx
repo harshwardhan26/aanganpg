@@ -59,13 +59,18 @@ export default async function RatesPage() {
     })
     .sort((a, b) => b.count - a.count); // Sort by most listings first
 
-  const shareText = "कोल्हापूर रूम रेट लिस्ट २०२६ — एरिया नुसार पाहण्यासाठी खालील लिंक वर क्लिक करा:\nhttps://aangan.com/rates";
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "";
+  const shareText = `कोल्हापूर रूम रेट लिस्ट २०२६ — एरिया नुसार पाहण्यासाठी खालील लिंक वर क्लिक करा:\n${siteUrl}/kolhapur/room-rates`;
   const shareUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`;
 
   return (
     <main className="min-h-screen bg-white py-12 lg:py-20">
       <div className="max-w-[var(--content-max)] mx-auto px-4 sm:px-6 lg:px-8">
         
+        <div className="bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded-xl mb-12 text-sm">
+          <strong>Why is this page in Marathi?</strong> We share this data directly with landlords to help them set fair prices. We keep it in Marathi so it&apos;s accessible to local property owners.
+        </div>
+
         <div className="max-w-3xl space-y-6 mb-12 text-center sm:text-left">
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-text-main leading-tight font-heading">
             कोल्हापूर रूम रेट लिस्ट २०२६ — एरिया नुसार

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import Image from 'next/image';
 import { cloudinaryUrl } from '@/lib/image';
-import { ChevronDown } from 'lucide-react';
+import { HeroSearchForm } from '@/components/HeroSearchForm';
 
 // No stock fallback. The hero used to fall back to Cloudinary's demo account,
 // so a page promising "we took these photos ourselves" led with a picture of
@@ -48,38 +48,17 @@ export default async function Home() {
                 </p>
               </div>
 
-              <form action="/search" method="get" className="bg-white p-2 rounded-xl shadow-md border border-border flex flex-col sm:flex-row gap-2 max-w-xl">
-                <div className="flex-1 px-4 py-3 border-b sm:border-b-0 sm:border-r border-border flex flex-col justify-center">
-                  <label htmlFor="college" className="block text-xs font-semibold text-text-muted uppercase tracking-wider mb-1">Select College</label>
-                  <div className="relative">
-                    <select 
-                      id="college" 
-                      name="college" 
-                      defaultValue=""
-                      className="w-full bg-transparent text-text-main font-medium focus:outline-none appearance-none cursor-pointer pr-8"
-                      required
-                    >
-                      <option value="" disabled>Choose your college...</option>
-                      {colleges.map(c => (
-                        <option key={c.slug} value={c.slug}>{c.name}</option>
-                      ))}
-                    </select>
-                    <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 w-5 h-5 text-text-muted pointer-events-none" />
-                  </div>
-                </div>
-                <Button type="submit" className="w-full sm:w-auto px-8 h-auto py-4 sm:py-0 self-stretch bg-primary-strong text-white hover:bg-primary-hover rounded-lg font-medium text-base shrink-0">
-                  Find rooms
-                </Button>
-              </form>
+              <HeroSearchForm colleges={colleges} />
               
-              <div className="text-sm font-medium text-text-muted flex items-center gap-2">
-                <span className="flex h-3 w-3 relative">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-                </span>
-                <span className="text-text-main font-bold">{verifiedCount}</span>{' '}
-                {verifiedCount === 1 ? 'room' : 'rooms'} visited in person
-              </div>
+              {verifiedCount > 0 && (
+                <div className="text-sm font-medium text-text-muted flex items-center gap-2">
+                  <span className="flex h-3 w-3 relative">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                  </span>
+                  <span>Aangan visited <strong className="text-text-main font-bold">{verifiedCount}</strong> {verifiedCount === 1 ? 'room' : 'rooms'}</span>
+                </div>
+              )}
             </div>
 
             {/* Hero Image */}
@@ -121,7 +100,7 @@ export default async function Home() {
                 <Link 
                   key={c.slug} 
                   href={`/search?college=${c.slug}`}
-                  className="px-4 py-2 bg-light border border-border rounded-full text-sm font-medium text-text-main hover:border-primary-strong hover:text-primary-strong transition-colors"
+                  className="px-4 min-h-[44px] inline-flex items-center bg-light border border-border rounded-full text-sm font-medium text-text-main hover:border-primary-strong hover:text-primary-strong transition-colors"
                 >
                   {c.shortName || c.name}
                 </Link>
@@ -132,16 +111,16 @@ export default async function Home() {
           <div className="space-y-3 pt-4 border-t border-border">
             <h2 className="text-sm font-semibold text-text-muted uppercase tracking-wider">Popular Shortcuts</h2>
             <div className="flex flex-wrap gap-2">
-              <Link href="/search?genderPreference=Female" className="px-4 py-2 bg-light border border-border rounded-full text-sm font-medium text-text-main hover:border-primary-strong hover:text-primary-strong transition-colors">
+              <Link href="/search?genderPreference=Female" className="px-4 min-h-[44px] inline-flex items-center bg-light border border-border rounded-full text-sm font-medium text-text-main hover:border-primary-strong hover:text-primary-strong transition-colors">
                 Girls PG
               </Link>
-              <Link href="/search?genderPreference=Male" className="px-4 py-2 bg-light border border-border rounded-full text-sm font-medium text-text-main hover:border-primary-strong hover:text-primary-strong transition-colors">
+              <Link href="/search?genderPreference=Male" className="px-4 min-h-[44px] inline-flex items-center bg-light border border-border rounded-full text-sm font-medium text-text-main hover:border-primary-strong hover:text-primary-strong transition-colors">
                 Boys PG
               </Link>
-              <Link href="/search?food=yes" className="px-4 py-2 bg-light border border-border rounded-full text-sm font-medium text-text-main hover:border-primary-strong hover:text-primary-strong transition-colors">
+              <Link href="/search?food=yes" className="px-4 min-h-[44px] inline-flex items-center bg-light border border-border rounded-full text-sm font-medium text-text-main hover:border-primary-strong hover:text-primary-strong transition-colors">
                 With mess
               </Link>
-              <Link href="/search?maxPrice=6000" className="px-4 py-2 bg-light border border-border rounded-full text-sm font-medium text-text-main hover:border-primary-strong hover:text-primary-strong transition-colors">
+              <Link href="/search?maxPrice=6000" className="px-4 min-h-[44px] inline-flex items-center bg-light border border-border rounded-full text-sm font-medium text-text-main hover:border-primary-strong hover:text-primary-strong transition-colors">
                 Under ₹6,000
               </Link>
             </div>
@@ -174,7 +153,7 @@ export default async function Home() {
             
             <div className="flex flex-col items-center sm:items-start text-center sm:text-left space-y-4">
               <div className="w-12 h-12 bg-primary-strong/10 text-primary-strong flex items-center justify-center rounded-full text-xl font-bold">1</div>
-              <h3 className="font-semibold text-text-main text-lg">We go to the room</h3>
+              <h3 className="font-semibold text-text-main text-lg">Aangan visited</h3>
               <p className="text-text-muted text-sm leading-relaxed">No fake listings. We physically visit every PG and room before it goes on Aangan.</p>
             </div>
 
@@ -210,7 +189,7 @@ export default async function Home() {
                 List your property on Aangan to get verified leads directly on your WhatsApp.
               </p>
             </div>
-            <Button className="shrink-0 bg-white text-text-main hover:bg-slate-100 h-14 px-8 text-base font-medium border-none shadow-sm" render={<Link href="/list-your-pg" />} nativeButton={false}>
+            <Button size="lg" className="shrink-0 bg-white text-text-main hover:bg-slate-100 font-medium border-none shadow-sm" render={<Link href="/list-your-pg" />} nativeButton={false}>
               List your PG
             </Button>
           </div>

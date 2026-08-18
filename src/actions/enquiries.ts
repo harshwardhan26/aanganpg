@@ -81,6 +81,16 @@ async function processEnquiry(data: {
         source: data.channel
       }
     });
+
+    if (process.env.LEAD_WEBHOOK_URL) {
+      fetch(process.env.LEAD_WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content: `🚨 **New Lead from ${data.name}**\nPhone: ${phone}\nProperty ID: \`${data.propertyId}\`\nSource: ${data.channel}`
+        })
+      }).catch((e) => console.error("Webhook failed:", e));
+    }
   }
 
   return { success: true };

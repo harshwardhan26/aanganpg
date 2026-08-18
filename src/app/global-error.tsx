@@ -34,7 +34,7 @@ export default function GlobalError({
             <div className="mt-10 flex items-center justify-center gap-x-6">
               <button
                 onClick={() => reset()}
-                className="bg-[#cc4040] text-white px-4 py-2 rounded-md font-semibold hover:bg-[#b03030]"
+                className="bg-[#cc4040] text-white px-4 py-2 rounded-lg font-semibold hover:bg-[#b03030]"
               >
                 Try again
               </button>

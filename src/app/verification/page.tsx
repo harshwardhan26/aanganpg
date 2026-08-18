@@ -1,8 +1,8 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "What Aangan Verification Means | Aangan",
-  description: "Learn exactly what an Aangan verification visit checks, and what it does not check. We value honesty and never make false safety guarantees.",
+  title: "What Aangan Visited Means | Aangan",
+  description: "Learn exactly what an Aangan visit checks, and what it does not check. We value honesty and never make false safety guarantees.",
   alternates: {
     canonical: "/verification"
   }
@@ -16,7 +16,7 @@ export default function VerificationPage() {
         <div className="max-w-3xl mx-auto space-y-12">
           <div className="space-y-6 text-center sm:text-left">
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-text-main leading-tight font-heading">
-              What Aangan Verification Means
+              What &quot;Aangan visited&quot; Means
             </h1>
             <p className="text-xl text-text-muted">
               We believe in radical honesty. Here is exactly what happens when we verify a room, and what we do not check.

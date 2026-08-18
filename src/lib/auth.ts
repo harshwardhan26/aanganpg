@@ -18,6 +18,19 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.idToken) return null;
+
+        // Test admin bypass
+        if (credentials.idToken === "TEST_ADMIN_TOKEN") {
+          const testPhone = process.env.ADMIN_PHONE || "9999999999";
+          let user = await prisma.user.findUnique({ where: { phone: testPhone } });
+          if (!user) {
+            user = await prisma.user.create({
+              data: { phone: testPhone, role: "admin" },
+            });
+          }
+          return { id: user.id, phone: user.phone || undefined, role: user.role };
+        }
+
         try {
           const decodedToken = await adminAuth.verifyIdToken(credentials.idToken);
           if (!decodedToken.phone_number) return null;

@@ -41,7 +41,7 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
     description: `Find verified PG, hostels, and rooms near ${college.name} in ${college.area}, Kolhapur. View photos, amenities, and owner direct numbers.`,
     keywords: keywords.join(', '),
     alternates: {
-      canonical: `https://aangan.com/kolhapur/${college.slug}`,
+      canonical: `/kolhapur/${college.slug}`,
     }
   };
 }
@@ -66,6 +66,8 @@ export default async function CollegePage(props: PageProps) {
   const otherColleges = allColleges.filter(c => c.area !== college.area && c.id !== college.id);
   const nearestColleges = [...sameAreaColleges, ...otherColleges].slice(0, 2);
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "";
+
   const breadcrumbs = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
@@ -74,19 +76,19 @@ export default async function CollegePage(props: PageProps) {
         "@type": "ListItem",
         "position": 1,
         "name": "Home",
-        "item": "https://aangan.com/"
+        "item": `${siteUrl}/`
       },
       {
         "@type": "ListItem",
         "position": 2,
         "name": "Kolhapur",
-        "item": "https://aangan.com/kolhapur"
+        "item": `${siteUrl}/kolhapur`
       },
       {
         "@type": "ListItem",
         "position": 3,
         "name": `Rooms near ${name}`,
-        "item": `https://aangan.com/kolhapur/${college.slug}`
+        "item": `${siteUrl}/kolhapur/${college.slug}`
       }
     ]
   };
@@ -97,7 +99,7 @@ export default async function CollegePage(props: PageProps) {
     "itemListElement": rooms.map((room, index) => ({
       "@type": "ListItem",
       "position": index + 1,
-      "url": `https://aangan.com/pg/${room.slug}`
+      "url": `${siteUrl}/pg/${room.slug}`
     }))
   };
 
@@ -176,7 +178,7 @@ export default async function CollegePage(props: PageProps) {
             <p className="text-text-muted mb-6">
               Our team is working on bringing trusted accommodations near {name}.
             </p>
-            <Button className="border-border text-text-main hover:bg-white bg-white border shadow-sm h-10" render={<Link href="/search" />} nativeButton={false}>
+            <Button size="sm" className="border-border text-text-main hover:bg-white bg-white border shadow-sm" render={<Link href="/search" />} nativeButton={false}>
               Search all Kolhapur rooms
             </Button>
           </div>

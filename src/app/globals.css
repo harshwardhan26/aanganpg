@@ -6,7 +6,7 @@
 
 @theme inline {
   /* Colors */
-  --color-primary: var(--primary);
+  --color-primary: var(--primary-strong);
   --color-primary-strong: var(--primary-strong);
   --color-primary-hover: var(--primary-hover);
   --color-text-main: var(--text-main);
@@ -31,7 +31,12 @@
   --font-body: var(--font-body);
   --font-sans: var(--font-body);
 
-  /* Layout & Other */
+  /* Radius rule:
+   * Inputs, buttons, and small interactive elements: var(--radius-lg) (0.5rem)
+   * Cards, modals, and mid-sized panels: rounded-xl (0.75rem)
+   * Hero sections and large structural panels: rounded-2xl (1rem)
+   * Pills and small badges: rounded-full
+   */
   --spacing-content-max: var(--content-max);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
@@ -40,7 +45,7 @@
 
 :root {
   /* Tokens */
-  --primary: #fa5a5a;
+  --brand-coral: #fa5a5a;
   --primary-strong: #cc4040;
   --primary-hover: #b83838;
   --text-main: #1e293b;

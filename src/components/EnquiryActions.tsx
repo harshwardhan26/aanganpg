@@ -18,9 +18,10 @@ interface EnquiryActionsProps {
   displayPrice?: string | null;
   ownerName?: string | null;
   location?: string | null;
+  variant?: 'full' | 'primary-only' | 'secondary-only';
 }
 
-export function EnquiryActions({ propertyId, ownerPhone, title, displayPrice, ownerName, location }: EnquiryActionsProps) {
+export function EnquiryActions({ propertyId, ownerPhone, title, displayPrice, ownerName, location, variant = 'full' }: EnquiryActionsProps) {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
@@ -60,7 +61,8 @@ export function EnquiryActions({ propertyId, ownerPhone, title, displayPrice, ow
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-3">
+      {variant !== 'secondary-only' && (
+        <div className="grid grid-cols-2 gap-3">
         <a 
           href={telLink(ownerPhone) || '#'}
           className={cn(buttonVariants({ variant: 'outline' }), "w-full text-text-main border-border h-12")}
@@ -78,19 +80,22 @@ export function EnquiryActions({ propertyId, ownerPhone, title, displayPrice, ow
           }
           target="_blank"
           rel="noopener noreferrer"
-          className={cn(buttonVariants(), "w-full bg-[#25d366] hover:bg-[#1da851] text-[#05391a] h-12")}
+          className={cn(buttonVariants(), "w-full bg-whatsapp hover:bg-[#1da851] text-whatsapp-dark h-12")}
           onClick={handleWhatsApp}
         >
           <MessageCircle className="mr-2 h-5 w-5" />
           WhatsApp
         </a>
       </div>
+      )}
 
-      <div className="pt-2 border-t border-border flex items-center justify-between">
-        <button
+      {variant !== 'primary-only' && (
+        <>
+          <div className={cn("flex items-center justify-between", variant === 'full' && "pt-2 border-t border-border")}>
+            <button
           type="button"
           onClick={() => setIsFormOpen(!isFormOpen)}
-          className="text-sm text-text-muted hover:text-text-main underline-offset-4 hover:underline"
+          className="text-sm text-text-muted hover:text-text-main underline-offset-4 hover:underline min-h-[44px] py-2 px-1 -ml-1"
         >
           Owner not picking up? Ask Aangan instead
         </button>
@@ -117,11 +122,11 @@ export function EnquiryActions({ propertyId, ownerPhone, title, displayPrice, ow
       </div>
         
       {isFormOpen && (
-          <form onSubmit={handleSubmit} className="mt-4 space-y-3 p-4 bg-light rounded-md border border-border">
-            <h3 className="font-semibold text-text-main mb-3">Aangan ला विचारा</h3>
+          <form onSubmit={handleSubmit} className="mt-4 space-y-3 p-4 bg-light rounded-xl border border-border">
+            <h3 className="font-semibold text-text-main mb-3">Ask Aangan</h3>
             
             {status === 'success' ? (
-              <div className="text-sm text-green-700 bg-green-50 p-3 rounded-md">
+              <div className="text-sm text-green-700 bg-green-50 p-3 rounded-lg">
                 Thanks! We will check with the owner and get back to you shortly.
               </div>
             ) : (
@@ -159,6 +164,8 @@ export function EnquiryActions({ propertyId, ownerPhone, title, displayPrice, ow
             )}
           </form>
         )}
+      </>
+      )}
     </div>
   );
 }

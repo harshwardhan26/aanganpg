@@ -1,7 +1,7 @@
 "use server";
 
 import prisma from "@/lib/prisma";
-import { buildRoomWhere, type RoomFilters } from "@/lib/room-filters";
+import { buildRoomWhere, buildRoomOrderBy, type RoomFilters } from "@/lib/room-filters";
 
 export type { RoomFilters };
 
@@ -10,7 +10,7 @@ export async function getRooms(filters: RoomFilters = {}) {
     where: buildRoomWhere(filters),
     take: 50,
     include: { college: true, images: true },
-    orderBy: [{ verifiedAt: { sort: "desc", nulls: "last" } }, { createdAt: "desc" }],
+    orderBy: buildRoomOrderBy(filters),
   });
 }
 

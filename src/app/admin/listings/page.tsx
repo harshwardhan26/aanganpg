@@ -22,13 +22,14 @@ export default async function AdminListingsPage() {
         <h2 className="text-2xl font-bold font-heading text-text-main">Listings</h2>
         <Link 
           href="/admin/listings/new" 
-          className="bg-primary-strong hover:bg-primary-hover text-white px-4 py-2 rounded-md font-medium text-sm transition-colors"
+          className="bg-primary-strong hover:bg-primary-hover text-white px-4 py-2 rounded-lg font-medium text-sm transition-colors"
         >
           + New Listing
         </Link>
       </div>
 
-      <div className="bg-white shadow-sm rounded-xl border border-border overflow-x-auto">
+      {/* Desktop Table */}
+      <div className="hidden md:block bg-white shadow-sm rounded-xl border border-border overflow-x-auto">
         <table className="w-full text-left text-sm">
           <thead className="bg-slate-50 text-text-muted border-b border-border">
             <tr>
@@ -108,6 +109,71 @@ export default async function AdminListingsPage() {
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Mobile Cards */}
+      <div className="md:hidden space-y-4">
+        {listings.map(listing => {
+          const isClosed = !!listing.closedAt;
+          const isDeleted = !!listing.deletedAt;
+          const isFull = listing.vacantBeds === 0;
+          const leadsThisWeek = listing._count.leads;
+          const showWarning = !isDeleted && !isClosed && leadsThisWeek < 1;
+
+          return (
+            <div key={listing.id} className={`bg-white shadow-sm rounded-xl border border-border p-4 ${isDeleted ? "opacity-50" : ""}`}>
+              <div className="flex justify-between items-start mb-2">
+                <div>
+                  <div className="font-bold text-text-main text-lg">
+                    {listing.title}
+                  </div>
+                  <div className="text-sm text-text-muted mt-1">{listing.college?.shortName || listing.college?.name} • ₹{listing.price}</div>
+                </div>
+                <div className="text-right">
+                  {isDeleted ? (
+                    <span className="text-red-600 font-medium text-sm">Deleted</span>
+                  ) : isClosed ? (
+                    <span className="text-slate-500 font-medium text-sm">Closed</span>
+                  ) : isFull ? (
+                    <span className="text-orange-600 font-medium text-sm">Full</span>
+                  ) : (
+                    <span className="text-green-600 font-medium text-sm">Active</span>
+                  )}
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-2 mb-4">
+                <span className="text-sm text-text-muted">Leads (7d): <span className="font-medium text-text-main">{leadsThisWeek}</span></span>
+                {showWarning && (
+                  <span className="text-xs text-orange-600 font-medium bg-orange-50 px-1.5 py-0.5 rounded" title="Supply and demand not matched">
+                    Low
+                  </span>
+                )}
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <Link href={`/admin/listings/${listing.id}/edit`} className="bg-slate-100 text-slate-800 hover:bg-slate-200 px-4 py-2 min-h-[44px] rounded font-medium text-sm flex items-center justify-center flex-1 transition-colors">
+                  Edit
+                </Link>
+                {!isDeleted && !isFull && !isClosed && (
+                  <form action={markFull.bind(null, listing.id)} className="flex-1 flex">
+                    <button className="w-full bg-orange-100 text-orange-800 hover:bg-orange-200 px-4 py-2 min-h-[44px] rounded font-medium text-sm transition-colors">Mark Full</button>
+                  </form>
+                )}
+                {!isDeleted && !isClosed && (
+                  <form action={markClosed.bind(null, listing.id)} className="flex-1 flex">
+                    <button className="w-full bg-slate-100 text-slate-800 hover:bg-slate-200 px-4 py-2 min-h-[44px] rounded font-medium text-sm transition-colors">Close</button>
+                  </form>
+                )}
+              </div>
+            </div>
+          );
+        })}
+        {listings.length === 0 && (
+          <div className="text-center py-8 text-text-muted bg-white shadow-sm rounded-xl border border-border">
+            No listings found.
+          </div>
+        )}
       </div>
     </div>
   );
