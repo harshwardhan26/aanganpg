@@ -2,11 +2,13 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
+
 import { signIn } from "next-auth/react";
 import { auth } from "@/lib/firebase-client";
 import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from "firebase/auth";
 import { canonicalPhone } from "@/lib/phone";
+import Image from "next/image";
+import Link from "next/link";
 
 type AuthContextType = {
   openAuthSheet: (callback?: () => void) => void;
@@ -115,36 +117,52 @@ function AuthSheet({ open, onOpenChange, onSuccess }: { open: boolean, onOpenCha
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="h-[auto] max-h-[90vh] rounded-t-xl px-6 py-8 bg-white flex flex-col gap-6" showCloseButton={false}>
-        <SheetTitle className="text-2xl font-bold font-heading text-text-main">
-          {step === "phone" ? "Log in to save rooms" : "Enter verification code"}
+      <SheetContent 
+        side="bottom" 
+        className="h-[auto] max-h-[90vh] rounded-t-2xl sm:rounded-2xl px-8 pt-8 pb-6 sm:px-8 sm:pt-10 sm:pb-8 bg-white border-none shadow-[0_8px_30px_rgb(0,0,0,0.12)] flex flex-col sm:max-w-[420px] sm:mx-auto sm:!fixed sm:!top-[50%] sm:!bottom-auto sm:!-translate-y-1/2" 
+      >
+        {/* Logo */}
+        <div className="flex justify-center mb-3">
+          <Image src="/logo-dark.png" alt="Aangan" width={160} height={44} className="h-9 w-auto" />
+        </div>
+
+        {/* Title */}
+        <SheetTitle className="text-xl font-bold font-heading text-slate-900 text-center mb-8">
+          {step === "phone" ? "Sign in or Create account" : "Enter verification code"}
         </SheetTitle>
         
         {step === "phone" ? (
-          <div className="space-y-4">
-            <p className="text-text-muted">Students only. Owners, please contact us directly.</p>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-text-main">Mobile Number</label>
-              <div className="flex bg-light border border-border rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-primary-strong/20 min-h-12">
-                <span className="flex items-center px-4 bg-slate-100 text-text-muted font-medium border-r border-border">+91</span>
+          <div className="flex flex-col gap-5 pb-2">
+            {/* Phone input */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[13px] font-semibold text-slate-700">Mobile Number <span className="text-primary-strong">*</span></label>
+              <div className="flex border border-slate-300 rounded-lg overflow-hidden focus-within:border-primary-strong focus-within:ring-2 focus-within:ring-primary-strong/10 transition-all h-[46px]">
+                <span className="flex items-center px-3.5 text-slate-700 font-semibold border-r border-slate-300 text-sm bg-slate-50">+91</span>
                 <input 
                   type="tel" 
                   value={phone} 
                   onChange={e => setPhone(e.target.value.replace(/\D/g, ''))}
-                  placeholder="98765 43210"
-                  className="flex-1 bg-transparent px-4 py-3 outline-none"
+                  placeholder="e.g. 9876543210"
+                  className="flex-1 bg-white px-3.5 outline-none text-slate-900 text-sm placeholder-slate-400"
                   maxLength={10}
                 />
               </div>
             </div>
-            {error && <p className="text-primary-strong text-sm font-medium">{error}</p>}
-            <Button 
-              className="w-full bg-primary-strong hover:bg-primary-hover text-white font-bold h-12"
+
+            {/* Error */}
+            {error && <p className="text-primary-strong text-xs font-semibold text-center -mt-1">{error}</p>}
+
+            {/* Submit */}
+            <button
+              type="button"
+              className="w-full h-[46px] rounded-lg text-[15px] font-semibold text-white transition-colors bg-primary-strong hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-80"
               onClick={handleSendCode}
               disabled={loading || phone.length < 10}
             >
               {loading ? "Sending..." : "Send OTP"}
-            </Button>
+            </button>
+
+            {/* Recaptcha */}
             <div id="recaptcha-container" ref={(el) => {
               if (el && !window.recaptchaVerifier) {
                 window.recaptchaVerifier = new RecaptchaVerifier(auth, el, {
@@ -152,34 +170,54 @@ function AuthSheet({ open, onOpenChange, onSuccess }: { open: boolean, onOpenCha
                 });
               }
             }}></div>
-            <button className="min-h-12 px-4 flex items-center justify-center text-sm text-text-muted hover:text-text-main font-medium mx-auto mt-2" onClick={() => onOpenChange(false)}>
-              Cancel
-            </button>
+
+            {/* Terms */}
+            <p className="text-[11px] text-center text-slate-400 leading-relaxed mt-2 mb-1">
+              By continuing, you agree to Aangan&apos;s{' '}
+              <Link href="/terms" className="text-primary-strong hover:underline" onClick={() => onOpenChange(false)}>Terms of Service</Link>
+              {' '}&amp;{' '}
+              <Link href="/privacy" className="text-primary-strong hover:underline" onClick={() => onOpenChange(false)}>Privacy Policy</Link>
+            </p>
           </div>
         ) : (
-          <div className="space-y-4">
-            <p className="text-text-muted">We sent a 6-digit code to {canonicalPhone(phone)}</p>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-text-main">OTP Code</label>
+          <div className="flex flex-col gap-5">
+            {/* Info */}
+            <p className="text-slate-500 text-sm text-center">
+              We sent a 6-digit code to <span className="font-bold text-slate-800">{canonicalPhone(phone)}</span>
+            </p>
+
+            {/* OTP input */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[13px] font-semibold text-slate-700">OTP Code <span className="text-primary-strong">*</span></label>
               <input 
                 type="text" 
                 value={code} 
                 onChange={e => setCode(e.target.value.replace(/\D/g, ''))}
-                placeholder="000000"
-                className="w-full h-12 bg-light border border-border rounded-lg px-4 outline-none focus:ring-2 focus:ring-primary-strong/20 text-center text-lg tracking-[0.5em] font-medium"
+                placeholder="••••••"
+                className="w-full h-[46px] border border-slate-300 rounded-lg px-4 outline-none focus:border-primary-strong focus:ring-2 focus:ring-primary-strong/10 text-center text-xl tracking-[0.4em] font-bold text-slate-900 placeholder-slate-300 transition-all"
                 maxLength={6}
               />
             </div>
-            {error && <p className="text-primary-strong text-sm font-medium">{error}</p>}
-            <Button 
-              className="w-full bg-primary-strong hover:bg-primary-hover text-white font-bold h-12"
+
+            {/* Error */}
+
+            {/* Submit */}
+            <button
+              type="button"
+              className="w-full h-[46px] rounded-lg text-[15px] font-semibold text-white transition-colors bg-primary-strong hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-80"
               onClick={handleVerify}
               disabled={loading || code.length < 6}
             >
               {loading ? "Verifying..." : "Verify & Login"}
-            </Button>
-            <button className="min-h-12 px-4 flex items-center justify-center text-sm text-text-muted hover:text-text-main font-medium mx-auto mt-2" onClick={() => setStep("phone")}>
-              Change phone number
+            </button>
+
+            {/* Back link */}
+            <button 
+              type="button"
+              className="h-10 w-full flex items-center justify-center text-xs text-slate-400 hover:text-slate-700 font-semibold transition-colors" 
+              onClick={() => setStep("phone")}
+            >
+              ← Change phone number
             </button>
           </div>
         )}
