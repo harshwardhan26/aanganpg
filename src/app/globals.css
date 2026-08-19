@@ -71,3 +71,5 @@
     overflow-x: clip;
   }
 }
+/* Hide Firebase reCAPTCHA badge since we added the required terms text */
+.grecaptcha-badge { visibility: hidden !important; }

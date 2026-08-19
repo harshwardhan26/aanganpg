@@ -186,7 +186,9 @@ function AuthSheet({ open, onOpenChange, onSuccess }: { open: boolean, onOpenCha
               By continuing, you agree to Aangan&apos;s{' '}
               <Link href="/terms" className="text-primary-strong hover:underline" onClick={() => onOpenChange(false)}>Terms of Service</Link>
               {' '}&amp;{' '}
-              <Link href="/privacy" className="text-primary-strong hover:underline" onClick={() => onOpenChange(false)}>Privacy Policy</Link>
+              <Link href="/privacy" className="text-primary-strong hover:underline" onClick={() => onOpenChange(false)}>Privacy Policy</Link>.
+              <br />
+              This site is protected by reCAPTCHA and the Google <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="hover:underline">Privacy Policy</a> and <a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer" className="hover:underline">Terms of Service</a> apply.
             </p>
           </div>
         ) : (
