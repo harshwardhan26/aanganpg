@@ -32,7 +32,7 @@ export function SearchFilters({
     : [];
 
   return (
-    <form action="/search" method="get" onSubmit={() => trackEvent('filter_applied')} className="flex flex-col gap-8 pb-20 lg:pb-0 h-full overflow-y-auto">
+    <form action="/search" method="get" onSubmit={() => trackEvent('filter_applied')} className="flex flex-col gap-6 px-4 pb-24 lg:px-0 lg:pb-0 lg:h-full lg:overflow-y-auto">
       
       {/* College Filter */}
       <div className="space-y-3">
@@ -94,9 +94,10 @@ export function SearchFilters({
       {/* Gender Preference */}
       <div className="space-y-3">
         <h3 className="font-semibold text-text-main">Gender</h3>
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col">
           {GENDER_PREFERENCES.map((gender) => (
-            <label key={gender} className="flex items-center gap-2 text-text-main text-sm cursor-pointer min-h-[48px]">
+            <label key={gender} className="flex items-center justify-between text-text-main text-sm cursor-pointer py-3 border-b border-border/60 last:border-0">
+              <span>{gender === 'Any' ? 'Anyone' : gender}</span>
               <input 
                 type="radio" 
                 name="genderPreference" 
@@ -104,7 +105,6 @@ export function SearchFilters({
                 defaultChecked={gender === 'Any' ? !currentGender : currentGender === gender}
                 className="w-5 h-5 text-primary-strong border-border focus:ring-primary-strong" 
               />
-              {gender === 'Any' ? 'Anyone' : gender}
             </label>
           ))}
         </div>
@@ -113,18 +113,18 @@ export function SearchFilters({
       {/* Mess / Food */}
       <div className="space-y-3">
         <h3 className="font-semibold text-text-main">Mess Included</h3>
-        <div className="flex flex-col gap-2">
-          <label className="flex items-center gap-2 text-text-main text-sm cursor-pointer min-h-[48px]">
+        <div className="flex flex-col">
+          <label className="flex items-center justify-between text-text-main text-sm cursor-pointer py-3 border-b border-border/60 last:border-0">
+            <span>Doesn&apos;t matter</span>
             <input type="radio" name="food" value="" defaultChecked={!currentFood} className="w-5 h-5 text-primary-strong border-border focus:ring-primary-strong" />
-            Doesn&apos;t matter
           </label>
-          <label className="flex items-center gap-2 text-text-main text-sm cursor-pointer min-h-[48px]">
+          <label className="flex items-center justify-between text-text-main text-sm cursor-pointer py-3 border-b border-border/60 last:border-0">
+            <span>Yes</span>
             <input type="radio" name="food" value="yes" defaultChecked={currentFood === 'yes'} className="w-5 h-5 text-primary-strong border-border focus:ring-primary-strong" />
-            Yes
           </label>
-          <label className="flex items-center gap-2 text-text-main text-sm cursor-pointer min-h-[48px]">
+          <label className="flex items-center justify-between text-text-main text-sm cursor-pointer py-3 border-b border-border/60 last:border-0">
+            <span>No</span>
             <input type="radio" name="food" value="no" defaultChecked={currentFood === 'no'} className="w-5 h-5 text-primary-strong border-border focus:ring-primary-strong" />
-            No
           </label>
         </div>
       </div>
@@ -147,9 +147,10 @@ export function SearchFilters({
       {/* Amenities */}
       <div className="space-y-3">
         <h3 className="font-semibold text-text-main">Amenities</h3>
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col">
           {PG_AMENITIES.map((amenity) => (
-            <label key={amenity} className="flex items-center gap-2 text-text-main text-sm cursor-pointer min-h-[48px]">
+            <label key={amenity} className="flex items-center justify-between text-text-main text-sm cursor-pointer py-3 border-b border-border/60 last:border-0">
+              <span>{amenity}</span>
               <input 
                 type="checkbox" 
                 name="amenities" 
@@ -157,7 +158,6 @@ export function SearchFilters({
                 defaultChecked={currentAmenities.includes(amenity)}
                 className="w-5 h-5 text-primary-strong rounded border-border focus:ring-primary-strong" 
               />
-              {amenity}
             </label>
           ))}
         </div>
@@ -166,9 +166,10 @@ export function SearchFilters({
       {/* Rules */}
       <div className="space-y-3">
         <h3 className="font-semibold text-text-main">Rules</h3>
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col">
           {PG_RULES.map((rule) => (
-            <label key={rule} className="flex items-center gap-2 text-text-main text-sm cursor-pointer min-h-[48px]">
+            <label key={rule} className="flex items-center justify-between text-text-main text-sm cursor-pointer py-3 border-b border-border/60 last:border-0">
+              <span>{rule}</span>
               <input 
                 type="checkbox" 
                 name="rules" 
@@ -176,7 +177,6 @@ export function SearchFilters({
                 defaultChecked={currentRules.includes(rule)}
                 className="w-5 h-5 text-primary-strong rounded border-border focus:ring-primary-strong" 
               />
-              {rule}
             </label>
           ))}
         </div>
