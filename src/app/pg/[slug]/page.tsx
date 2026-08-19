@@ -1,7 +1,8 @@
+import { cache } from "react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { getRoomBySlug, getRoomsNearCollege } from "@/actions/rooms";
+import { getRoomBySlug, getRoomSlugs, getRoomsNearCollege } from "@/actions/rooms";
 import { cloudinaryUrl } from "@/lib/image";
 import { SaveButton } from "@/components/SaveButton";
 import { RoomGallery } from "@/components/RoomGallery";
@@ -13,11 +14,38 @@ import { RoomCard } from "@/components/RoomCard";
 // request and is removed in a future major.
 type Props = { params: Promise<{ slug: string }> };
 
+/**
+ * The listing page is served from cache and rebuilt in the background.
+ *
+ * Every uncached render costs three sequential round trips to a Postgres in
+ * another continent (~266ms each), which measured out at 4.5 req/s and a 3.2s
+ * p50 under 20 concurrent students. Admin edits do not wait for this window:
+ * `updateListing` already calls `revalidatePath("/pg/" + slug)`.
+ */
+export const revalidate = 300;
+
+/**
+ * Without this the segment stays server-rendered on demand and `revalidate`
+ * buys nothing — the same reason `/kolhapur/[collegeSlug]` has one. Listings
+ * added after a build are still generated on first request and then cached.
+ */
+export async function generateStaticParams() {
+  const slugs = await getRoomSlugs();
+  return slugs.map((slug) => ({ slug }));
+}
+
+/**
+ * `generateMetadata` and the page both need the same room. Without this they
+ * each issued their own query for it — one whole round trip per request spent
+ * fetching a row we already had.
+ */
+const getRoom = cache(getRoomBySlug);
+
 const rupees = (n: number) => `₹${n.toLocaleString("en-IN")}`;
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const room = await getRoomBySlug(slug);
+  const room = await getRoom(slug);
   if (!room) return { title: "Room not found" };
 
   const near = room.college ? ` near ${room.college.name}` : "";
@@ -28,7 +56,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     description:
       room.description ||
       `${room.occupancyType ?? "Student"} room${near} in Kolhapur at ${rupees(room.price)} a month. ` +
-        `Visited in person by Aangan. Call the owner directly — students pay no brokerage.`,
+        `Visited in person by Aangan. Call Aangan to see it — students pay no brokerage.`,
     alternates: { canonical: `/pg/${room.slug}` },
     openGraph: ogImage
       ? { images: [{ url: ogImage, width: 1200, height: 675, alt: room.title }] }
@@ -50,7 +78,7 @@ function Answer({ label, children }: { label: string; children: React.ReactNode 
 
 export default async function RoomPage({ params }: Props) {
   const { slug } = await params;
-  const room = await getRoomBySlug(slug);
+  const room = await getRoom(slug);
   if (!room) notFound();
 
   const isClosed = room.closedAt != null;

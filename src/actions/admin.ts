@@ -4,9 +4,10 @@ import { z } from "zod";
 import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { slugify, resolveSlug } from "@/lib/slug";
 import { canonicalPhone } from "@/lib/phone";
+import { ROOMS_TAG } from "@/lib/room-cache";
 import {
   pgPublishIssues,
   GENDER_PREFERENCES,
@@ -222,6 +223,9 @@ export async function saveListing(raw: unknown, publish: boolean): Promise<SaveR
       })
     : await prisma.property.create({ data: { ...fields, ...verification, images } });
 
+  // updateTag, not revalidateTag: an admin who just saved an edit must see it
+  // on the next request, not the request after.
+  updateTag(ROOMS_TAG);
   revalidatePath("/admin/listings");
   revalidatePath("/search");
   revalidatePath("/");

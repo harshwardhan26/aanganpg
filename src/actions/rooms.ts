@@ -28,6 +28,15 @@ export async function getRoomBySlug(slug: string) {
   });
 }
 
+/** Slugs of every listing that still has a page, for prerendering. */
+export async function getRoomSlugs() {
+  const rooms = await prisma.property.findMany({
+    where: { deletedAt: null },
+    select: { slug: true },
+  });
+  return rooms.map((r) => r.slug);
+}
+
 export async function getColleges() {
   return prisma.college.findMany({ orderBy: { name: "asc" } });
 }

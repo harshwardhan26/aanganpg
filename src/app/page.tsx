@@ -1,7 +1,6 @@
 export const metadata = { alternates: { canonical: "/" } };
 import { getRooms, getColleges, getLocations } from '@/actions/rooms';
 import { RoomCard } from '@/components/RoomCard';
-import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import Image from 'next/image';
 import { cloudinaryUrl } from '@/lib/image';

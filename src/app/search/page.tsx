@@ -1,4 +1,4 @@
-import { getRooms, getColleges } from '@/actions/rooms';
+import { getCachedRooms, getCachedColleges } from '@/lib/room-cache';
 import { RoomCard } from '@/components/RoomCard';
 import { SearchFilters } from '@/components/SearchFilters';
 import { MobileFilterSheet } from '@/components/MobileFilterSheet';
@@ -20,8 +20,8 @@ export default async function SearchPage(props: PageProps) {
   const searchParams = await props.searchParams;
 
   const [colleges, rooms] = await Promise.all([
-    getColleges(),
-    getRooms({
+    getCachedColleges(),
+    getCachedRooms({
       college: searchParams.college as string,
       genderPreference: searchParams.genderPreference as string,
       maxPrice: searchParams.maxPrice ? parseInt(searchParams.maxPrice as string) : undefined,
