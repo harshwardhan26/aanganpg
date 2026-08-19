@@ -5,6 +5,7 @@ import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/s
 import { Logo } from "./Logo";
 import { cn } from "@/lib/utils";
 import { NavAuth } from "./NavAuth";
+import { ListPgButton } from "./ListPgButton";
 
 export function Navbar() {
   // Every one of these is a real route. They used to be /all, /girls, /boys and
@@ -22,7 +23,7 @@ export function Navbar() {
         <div className="flex flex-1 items-center">
           <Link href="/" className="text-primary-strong py-2 flex items-center gap-2.5 w-fit">
             <Logo height={32} />
-            <span className="text-xs font-semibold text-text-muted mt-0.5 tracking-wide">Kolhapur</span>
+            <span className="hidden sm:inline-block text-xs font-semibold text-text-muted mt-0.5 tracking-wide">Kolhapur</span>
           </Link>
         </div>
         
@@ -38,15 +39,14 @@ export function Navbar() {
           ))}
         </nav>
         
-        <div className="flex flex-1 items-center justify-end gap-4">
+        <div className="flex flex-1 items-center justify-end gap-0 sm:gap-4">
           <div className="hidden lg:flex items-center gap-4">
-            <Link 
-              href="/list-your-pg" 
-              className={cn(buttonVariants({ variant: "outline" }), "border-border text-text-main hover:bg-light whitespace-nowrap")}
-            >
-              List your PG &mdash; FREE
-            </Link>
+            <ListPgButton className="border-border text-text-main hover:bg-light whitespace-nowrap" />
             <NavAuth />
+          </div>
+
+          <div className="flex items-center lg:hidden">
+            <NavAuth mode="login-only" className="h-9 px-2 text-sm font-medium" />
           </div>
 
           <Sheet>
@@ -67,13 +67,11 @@ export function Navbar() {
                   </Link>
                 ))}
                 <div className="flex flex-col gap-3 mt-6 pt-6 border-t border-border px-2">
-                  <Link 
-                    href="/list-your-pg" 
-                    className={cn(buttonVariants({ variant: "outline", size: "lg" }), "w-full border-border text-text-main hover:bg-slate-50 font-semibold rounded-xl")}
-                  >
-                    List your PG &mdash; FREE
-                  </Link>
-                  <NavAuth className="w-full h-11 text-base font-semibold rounded-xl" />
+                  <ListPgButton 
+                    size="lg"
+                    className="w-full border-border text-text-main hover:bg-slate-50 font-semibold rounded-xl" 
+                  />
+                  <NavAuth mode="authenticated-only" className="w-full h-11 text-base font-semibold rounded-xl" />
                 </div>
               </nav>
             </SheetContent>

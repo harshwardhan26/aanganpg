@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { cloudinaryUrl } from '@/lib/image';
 import { HeroSearchForm } from '@/components/HeroSearchForm';
+import { ListPgButton } from '@/components/ListPgButton';
 
 // No stock fallback. The hero used to fall back to Cloudinary's demo account,
 // so a page promising "we took these photos ourselves" led with a picture of
@@ -212,9 +213,9 @@ export default async function Home() {
                 List your property on Aangan to get verified leads directly on your WhatsApp.
               </p>
             </div>
-            <Button size="lg" className="shrink-0 bg-white text-text-main hover:bg-slate-100 font-medium border-none shadow-sm" render={<Link href="/list-your-pg" />} nativeButton={false}>
+            <ListPgButton size="lg" className="shrink-0 bg-white text-text-main hover:bg-slate-100 font-medium border-none shadow-sm">
               List your PG
-            </Button>
+            </ListPgButton>
           </div>
         </div>
       </section>

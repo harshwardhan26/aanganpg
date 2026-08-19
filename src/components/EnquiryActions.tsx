@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { useSession } from 'next-auth/react';
+import { useAuthSheet } from '@/components/auth/AuthSheet';
 import { recordEnquiry } from '@/actions/enquiries';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -32,26 +34,42 @@ interface EnquiryActionsProps {
  * deal in the doorway is a deal Aangan never knew happened.
  */
 export function EnquiryActions({ propertyId, title, displayPrice, location, listingUrl, variant = 'full' }: EnquiryActionsProps) {
+  const { status } = useSession();
+  const { openAuthSheet } = useAuthSheet();
   const aanganPhone = getAanganPhone();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
-  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [statusState, setStatusState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
 
-  const handleCall = () => {
+  const handleCall = (e: React.MouseEvent) => {
+    if (status !== 'authenticated') {
+      e.preventDefault();
+      openAuthSheet();
+      return;
+    }
     trackEvent('pg_contact_clicked', { channel: 'call', propertyId });
     recordEnquiry({ propertyId, channel: 'call' });
   };
 
-  const handleWhatsApp = () => {
+  const handleWhatsApp = (e: React.MouseEvent) => {
+    if (status !== 'authenticated') {
+      e.preventDefault();
+      openAuthSheet();
+      return;
+    }
     trackEvent('pg_contact_clicked', { channel: 'whatsapp', propertyId });
     recordEnquiry({ propertyId, channel: 'whatsapp' });
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setStatus('loading');
+    if (status !== 'authenticated') {
+      openAuthSheet();
+      return;
+    }
+    setStatusState('loading');
     setErrorMessage('');
     
     const result = await recordEnquiry({
@@ -63,10 +81,10 @@ export function EnquiryActions({ propertyId, title, displayPrice, location, list
 
     if (result?.error) {
       setErrorMessage(result.error);
-      setStatus('error');
+      setStatusState('error');
     } else {
       trackEvent('lead_submitted', { propertyId });
-      setStatus('success');
+      setStatusState('success');
     }
   };
 
@@ -110,7 +128,14 @@ export function EnquiryActions({ propertyId, title, displayPrice, location, list
           <div className={cn("flex items-center justify-between", variant === 'full' && "pt-2 border-t border-border")}>
             <button
           type="button"
-          onClick={() => setIsFormOpen(!isFormOpen)}
+          onClick={(e) => {
+            if (status !== 'authenticated') {
+              e.preventDefault();
+              openAuthSheet();
+              return;
+            }
+            setIsFormOpen(!isFormOpen);
+          }}
           className="text-sm text-text-muted hover:text-text-main underline-offset-4 hover:underline min-h-[44px] py-2 px-1 -ml-1"
         >
           Prefer a callback? Leave your number
@@ -141,7 +166,7 @@ export function EnquiryActions({ propertyId, title, displayPrice, location, list
           <form onSubmit={handleSubmit} className="mt-4 space-y-3 p-4 bg-light rounded-xl border border-border">
             <h3 className="font-semibold text-text-main mb-3">Ask Aangan</h3>
             
-            {status === 'success' ? (
+            {statusState === 'success' ? (
               <div className="text-sm text-green-700 bg-green-50 p-3 rounded-lg">
                 Thanks! We will check with the owner and call you back shortly.
               </div>
@@ -166,15 +191,15 @@ export function EnquiryActions({ propertyId, title, displayPrice, location, list
                     className="bg-white"
                   />
                 </div>
-                {status === 'error' && (
+                {statusState === 'error' && (
                   <p className="text-sm text-red-600">{errorMessage}</p>
                 )}
                 <Button 
                   type="submit" 
-                  disabled={status === 'loading'}
+                  disabled={statusState === 'loading'}
                   className="w-full bg-primary-strong text-white hover:bg-primary-hover"
                 >
-                  {status === 'loading' ? 'Sending...' : 'Send Enquiry'}
+                  {statusState === 'loading' ? 'Sending...' : 'Send Enquiry'}
                 </Button>
               </>
             )}

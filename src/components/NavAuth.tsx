@@ -15,11 +15,12 @@ import { cn } from "@/lib/utils";
  * navigation. The navbar itself stays a server component; only this bit is
  * client-side.
  */
-export function NavAuth({ className }: { className?: string }) {
+export function NavAuth({ className, mode = "all" }: { className?: string, mode?: "all" | "login-only" | "authenticated-only" }) {
   const { status } = useSession();
   const { openAuthSheet } = useAuthSheet();
 
   if (status === "authenticated") {
+    if (mode === "login-only") return null;
     return (
       <>
         <Link
@@ -38,6 +39,20 @@ export function NavAuth({ className }: { className?: string }) {
           Sign out
         </button>
       </>
+    );
+  }
+
+  if (mode === "authenticated-only") return null;
+
+  if (mode === "login-only") {
+    return (
+      <button
+        type="button"
+        onClick={() => openAuthSheet()}
+        className={cn(buttonVariants({ variant: "ghost" }), "text-primary-strong hover:bg-primary-strong/10 font-semibold", className)}
+      >
+        Login
+      </button>
     );
   }
 
