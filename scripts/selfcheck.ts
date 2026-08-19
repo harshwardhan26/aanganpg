@@ -142,6 +142,9 @@ async function main() {
   assert(query.deletedAt === null, "must exclude deleted");
   assert(query.closedAt === null, "must exclude closed");
 
+  const locQuery = buildRoomWhere({ location: 'Rajarampuri' });
+  assert(locQuery.location === 'Rajarampuri', "location query failed");
+
   // buildRoomOrderBy tests
   const defaultSort = buildRoomOrderBy({});
   assert.deepStrictEqual(defaultSort, [{ verifiedAt: { sort: "desc", nulls: "last" } }, { createdAt: "desc" }], "default sort failed");

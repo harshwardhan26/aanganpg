@@ -5,7 +5,7 @@ import { Phone, MessageCircle, CheckCircle2, AlertCircle } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "List Your PG or Room | Aangan Kolhapur",
-  description: "List your Kolhapur PG or hostel on Aangan for free. We photograph your rooms, give students your direct number, and take zero brokerage.",
+  description: "List your Kolhapur PG or hostel on Aangan for free. We photograph your rooms and bring students to your door.",
   alternates: {
     canonical: "/list-your-pg"
   }
@@ -29,7 +29,7 @@ export default function ListYourPgPage() {
               List your PG on Aangan
             </h1>
             <p className="text-xl text-text-muted max-w-2xl leading-relaxed">
-              Get verified leads directly on your WhatsApp and phone. No middlemen, no brokerage.
+              We photograph your rooms, put them in front of students, and bring the serious ones to you.
             </p>
           </div>
 
@@ -55,11 +55,11 @@ export default function ListYourPgPage() {
                   </li>
                   <li className="flex items-start gap-3">
                     <span className="h-6 w-6 rounded-full bg-light flex items-center justify-center shrink-0 mt-0.5 border border-border text-text-main text-xs font-semibold">3</span>
-                    <span>Students call <strong className="text-text-main">your own number</strong>.</span>
+                    <span>Students contact Aangan. We <strong className="text-text-main">bring them to you</strong>.</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <span className="h-6 w-6 rounded-full bg-light flex items-center justify-center shrink-0 mt-0.5 border border-border text-text-main text-xs font-semibold">4</span>
-                    <span>We take <strong className="text-text-main">zero cut or brokerage</strong>.</span>
+                    <span>You only meet students who have <strong className="text-text-main">already seen the room</strong> and asked to visit.</span>
                   </li>
                 </ul>
               </div>

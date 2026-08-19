@@ -7,21 +7,32 @@ import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Phone, MessageCircle } from 'lucide-react';
 import { telLink, whatsappLink } from '@/lib/whatsapp';
+import { getAanganPhone } from '@/lib/contact';
 
 import { trackEvent } from '@/lib/posthog';
 
 interface EnquiryActionsProps {
   propertyId: string;
-  ownerPhone: string;
   title: string;
-  /** "₹5,000/month" — carried into the WhatsApp text so the owner sees which room. */
+  /** "₹5,000/month" — carried into the WhatsApp text so we see which room. */
   displayPrice?: string | null;
-  ownerName?: string | null;
   location?: string | null;
+  /** Absolute listing URL, built on the server. Needed in the WhatsApp text at
+      render time, and reading `window.location` during render is a hydration
+      mismatch waiting to happen. */
+  listingUrl?: string | null;
   variant?: 'full' | 'primary-only' | 'secondary-only';
 }
 
-export function EnquiryActions({ propertyId, ownerPhone, title, displayPrice, ownerName, location, variant = 'full' }: EnquiryActionsProps) {
+/**
+ * Every contact route on a listing goes to Aangan, never to the owner.
+ *
+ * The owner's number is stored on the listing and is required to publish, but a
+ * student never sees it: a student who calls the owner direct and closes the
+ * deal in the doorway is a deal Aangan never knew happened.
+ */
+export function EnquiryActions({ propertyId, title, displayPrice, location, listingUrl, variant = 'full' }: EnquiryActionsProps) {
+  const aanganPhone = getAanganPhone();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
@@ -64,18 +75,23 @@ export function EnquiryActions({ propertyId, ownerPhone, title, displayPrice, ow
       {variant !== 'secondary-only' && (
         <div className="grid grid-cols-2 gap-3">
         <a 
-          href={telLink(ownerPhone) || '#'}
+          href={telLink(aanganPhone) || '#'}
           className={cn(buttonVariants({ variant: 'outline' }), "w-full text-text-main border-border h-12")}
           onClick={handleCall}
         >
           <Phone className="mr-2 h-5 w-5" />
-          Call Owner
+          Call Aangan
         </a>
         <a
           href={
             whatsappLink(
-              ownerPhone,
-              `नमस्कार${ownerName ? ` ${ownerName}` : ''}, Aangan वर तुमची रूम बघितली — "${title}"${displayPrice ? `, ${displayPrice}` : ''}. अजून जागा आहे का?`,
+              aanganPhone,
+              [
+                `I want to see this room — "${title}"${displayPrice ? `, ${displayPrice}` : ''}`,
+                listingUrl,
+              ]
+                .filter(Boolean)
+                .join('\n'),
             ) || '#'
           }
           target="_blank"
@@ -97,7 +113,7 @@ export function EnquiryActions({ propertyId, ownerPhone, title, displayPrice, ow
           onClick={() => setIsFormOpen(!isFormOpen)}
           className="text-sm text-text-muted hover:text-text-main underline-offset-4 hover:underline min-h-[44px] py-2 px-1 -ml-1"
         >
-          Owner not picking up? Ask Aangan instead
+          Prefer a callback? Leave your number
         </button>
 
         <button
@@ -127,7 +143,7 @@ export function EnquiryActions({ propertyId, ownerPhone, title, displayPrice, ow
             
             {status === 'success' ? (
               <div className="text-sm text-green-700 bg-green-50 p-3 rounded-lg">
-                Thanks! We will check with the owner and get back to you shortly.
+                Thanks! We will check with the owner and call you back shortly.
               </div>
             ) : (
               <>

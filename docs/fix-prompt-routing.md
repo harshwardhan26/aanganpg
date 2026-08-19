@@ -125,6 +125,12 @@ login as the secondary path.** Most students take the guided route because it is
 the easier button; the number is still reachable, so the brand promise is not a
 lie. Best fit for the model.
 
+> **Superseded 19 Aug 2026: the decision is now stricter than C.** A student
+> never sees the owner's number at all — every contact route on a listing goes
+> to Aangan. Options A and B are dead. What is built matches C's guided flow
+> without the gated-reveal secondary path. The copy consequences below still
+> apply and have been carried out.
+
 **Build C**, unless I say otherwise. Note what C costs: the homepage currently
 promises "We give you the owner's direct mobile number. **No middlemen blocking
 the conversation.**" Under C the number is still given, but a middleman is

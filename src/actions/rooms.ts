@@ -39,3 +39,14 @@ export async function getCollegeBySlug(slug: string) {
 export async function getRoomsNearCollege(slug: string) {
   return getRooms({ college: slug });
 }
+
+export async function getLocations() {
+  const rooms = await prisma.property.findMany({
+    where: { deletedAt: null, closedAt: null, location: { not: null } },
+    select: { location: true },
+    distinct: ["location"],
+  });
+  return rooms
+    .map((r) => r.location as string)
+    .sort((a, b) => a.localeCompare(b));
+}

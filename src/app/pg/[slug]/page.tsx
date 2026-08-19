@@ -3,7 +3,6 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { getRoomBySlug, getRoomsNearCollege } from "@/actions/rooms";
 import { cloudinaryUrl } from "@/lib/image";
-import { displayPhone } from "@/lib/phone";
 import { SaveButton } from "@/components/SaveButton";
 import { RoomGallery } from "@/components/RoomGallery";
 import { EnquiryActions } from "@/components/EnquiryActions";
@@ -60,6 +59,8 @@ export default async function RoomPage({ params }: Props) {
     : [];
 
   const priceLabel = `${rupees(room.price)}/month`;
+  // Absolute, because it is pasted into a WhatsApp message to us.
+  const listingUrl = new URL(`/pg/${room.slug}`, process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000').toString();
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -180,17 +181,11 @@ export default async function RoomPage({ params }: Props) {
               </Answer>
               <Answer label="Beds free">
                 {room.vacantBeds == null
-                  ? "Ask the owner"
+                  ? "Ask Aangan"
                   : room.vacantBeds === 0
                     ? "Full right now"
                     : room.vacantBeds}
               </Answer>
-              {room.ownerPhone && (
-                <Answer label="Who to call">
-                  {room.ownerName ? `${room.ownerName} — ` : ""}
-                  {displayPhone(room.ownerPhone)}
-                </Answer>
-              )}
             </dl>
           </section>
 
@@ -258,21 +253,19 @@ export default async function RoomPage({ params }: Props) {
         </div>
 
         {/* ---------------- contact ---------------- */}
-        {!isClosed && room.ownerPhone && (
+        {!isClosed && (
           <aside className="mt-10 lg:mt-0">
             <div className="hidden rounded-xl border border-border border-t-4 border-t-primary-strong bg-white p-5 shadow-md lg:sticky lg:top-24 lg:block">
               <p className="mb-4 text-sm leading-relaxed text-text-muted">
-                Call {room.ownerName || "the owner"} directly on{" "}
-                <strong className="text-text-main">{displayPhone(room.ownerPhone)}</strong>. Aangan
-                takes no brokerage from students.
+                Tell Aangan you want to see this room and we arrange the visit with{" "}
+                {room.ownerName || "the owner"}. Students pay us nothing.
               </p>
               <EnquiryActions
                 propertyId={room.id}
-                ownerPhone={room.ownerPhone}
                 title={room.title}
                 displayPrice={priceLabel}
-                ownerName={room.ownerName}
                 location={room.location}
+                listingUrl={listingUrl}
               />
             </div>
 
@@ -280,11 +273,10 @@ export default async function RoomPage({ params }: Props) {
             <div className="mt-8 lg:hidden">
               <EnquiryActions
                 propertyId={room.id}
-                ownerPhone={room.ownerPhone}
                 title={room.title}
                 displayPrice={priceLabel}
-                ownerName={room.ownerName}
                 location={room.location}
+                listingUrl={listingUrl}
                 variant="secondary-only"
               />
             </div>
@@ -294,11 +286,10 @@ export default async function RoomPage({ params }: Props) {
             <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-white p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.06)] lg:hidden">
               <EnquiryActions
                 propertyId={room.id}
-                ownerPhone={room.ownerPhone}
                 title={room.title}
                 displayPrice={priceLabel}
-                ownerName={room.ownerName}
                 location={room.location}
+                listingUrl={listingUrl}
                 variant="primary-only"
               />
             </div>

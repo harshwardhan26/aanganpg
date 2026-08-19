@@ -54,7 +54,7 @@ Everything else in the meeting is elaboration on that sentence.
    facilities, rules, gate timing, warden.
 2. You photograph everything yourself — including the bathroom.
 3. Owner signs the listing agreement. One page.
-4. You put the listing up. Free. The owner's own number is on it.
+4. You put the listing up. Free. Students contact Aangan, and Aangan brings them to your door.
 5. A student finds it, contacts Aangan, and you arrange the visit.
 6. **You go with the student to the PG.** Owner, student, and you in the room.
 7. Student and owner agree the rent between themselves. You do not set it.

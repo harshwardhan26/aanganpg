@@ -10,6 +10,7 @@ type RoomCardProps = {
     slug: string;
     title: string;
     price: number;
+    location: string | null;
     imageUrl: string | null;
     occupancyType: string | null;
     genderPreference: string | null;
@@ -78,10 +79,13 @@ export function RoomCard({ room }: RoomCardProps) {
           </span>
         </div>
         
-        {room.college && (
-          <p className="text-sm text-text-muted">
-            {room.college.shortName || room.college.name}
-            {room.walkMinutes ? ` · ${room.walkMinutes} min walk` : ''}
+        {(room.location || room.college) && (
+          <p className="text-sm text-text-muted leading-relaxed">
+            {[
+              room.location,
+              room.college ? (room.college.shortName || room.college.name) : null,
+              room.walkMinutes ? `${room.walkMinutes} min walk` : null
+            ].filter(Boolean).join(' · ')}
           </p>
         )}
         

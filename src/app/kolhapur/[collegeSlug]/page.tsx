@@ -38,7 +38,7 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
 
   return {
     title: `PG, hostel and rooms near ${name} | Aangan Kolhapur`,
-    description: `Find verified PG, hostels, and rooms near ${college.name} in ${college.area}, Kolhapur. View photos, amenities, and owner direct numbers.`,
+    description: `Find verified PG, hostels, and rooms near ${college.name} in ${college.area}, Kolhapur. View photos, amenities and real rents.`,
     keywords: keywords.join(', '),
     alternates: {
       canonical: `/kolhapur/${college.slug}`,

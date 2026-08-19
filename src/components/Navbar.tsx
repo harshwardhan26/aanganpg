@@ -20,8 +20,9 @@ export function Navbar() {
     <header className="sticky top-0 z-50 w-full border-b border-border bg-light/95 backdrop-blur supports-[backdrop-filter]:bg-light/60">
       <div className="mx-auto flex h-16 max-w-[var(--content-max)] items-center px-4 sm:px-6 lg:px-8">
         <div className="flex flex-1 items-center">
-          <Link href="/" className="text-primary-strong py-2 block w-fit">
-            <Logo height={28} />
+          <Link href="/" className="text-primary-strong py-2 flex items-center gap-2.5 w-fit">
+            <Logo height={32} />
+            <span className="text-xs font-semibold text-text-muted mt-0.5 tracking-wide">Kolhapur</span>
           </Link>
         </div>
         
@@ -53,26 +54,26 @@ export function Navbar() {
               <Menu className="h-6 w-6" />
               <span className="sr-only">Toggle navigation menu</span>
             </SheetTrigger>
-            <SheetContent side="right">
+            <SheetContent side="right" className="w-[85vw] sm:w-[350px] bg-white p-6 outline-none">
               <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
-              <nav className="flex flex-col gap-2 mt-6">
+              <nav className="flex flex-col gap-1 mt-8">
                 {links.map((link) => (
                   <Link
                     key={link.href}
                     href={link.href}
-                    className="text-lg font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-50 py-3 px-4 rounded-lg transition-colors"
+                    className="text-base font-medium text-text-main hover:text-primary-strong hover:bg-slate-50 py-3 px-4 rounded-xl transition-colors outline-none focus-visible:ring-2 focus-visible:ring-primary-strong"
                   >
                     {link.label}
                   </Link>
                 ))}
-                <div className="flex flex-col gap-3 mt-4 pt-6 border-t border-slate-200 px-2">
+                <div className="flex flex-col gap-3 mt-6 pt-6 border-t border-border px-2">
                   <Link 
                     href="/list-your-pg" 
-                    className={cn(buttonVariants({ variant: "outline", size: "lg", className: "w-full border-slate-200 text-slate-700 hover:bg-slate-50 font-semibold" }))}
+                    className={cn(buttonVariants({ variant: "outline", size: "lg" }), "w-full border-border text-text-main hover:bg-slate-50 font-semibold rounded-xl")}
                   >
                     List your PG &mdash; FREE
                   </Link>
-                  <NavAuth className="w-full h-11 text-base font-semibold" />
+                  <NavAuth className="w-full h-11 text-base font-semibold rounded-xl" />
                 </div>
               </nav>
             </SheetContent>

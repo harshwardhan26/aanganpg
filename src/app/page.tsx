@@ -1,5 +1,5 @@
 export const metadata = { alternates: { canonical: "/" } };
-import { getRooms, getColleges } from '@/actions/rooms';
+import { getRooms, getColleges, getLocations } from '@/actions/rooms';
 import { RoomCard } from '@/components/RoomCard';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -12,9 +12,10 @@ import { HeroSearchForm } from '@/components/HeroSearchForm';
 // somebody else's dahlias.
 
 export default async function Home() {
-  const [rooms, colleges] = await Promise.all([
+  const [rooms, colleges, locations] = await Promise.all([
     getRooms(),
     getColleges(),
+    getLocations(),
   ]);
 
   const recentRooms = rooms.slice(0, 6);
@@ -41,10 +42,10 @@ export default async function Home() {
             <div className="space-y-10">
               <div className="space-y-4">
                 <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-text-main leading-tight font-heading">
-                  Student rooms,<br/>actually verified.
+                  Student rooms in Kolhapur,<br/>actually verified.
                 </h1>
                 <p className="text-lg text-text-muted max-w-lg">
-                  We visit every PG, take photos of the bathroom, and give you the owner&apos;s direct number. Zero brokerage.
+                  We visit every PG, take photos of the bathroom, and come with you to see the room. Students pay no brokerage.
                 </p>
               </div>
 
@@ -56,7 +57,7 @@ export default async function Home() {
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                     <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
                   </span>
-                  <span>Aangan visited <strong className="text-text-main font-bold">{verifiedCount}</strong> {verifiedCount === 1 ? 'room' : 'rooms'}</span>
+                  <span><strong className="text-text-main font-bold text-base">{verifiedCount}</strong> {verifiedCount === 1 ? 'room' : 'rooms'} visited across Kolhapur</span>
                 </div>
               )}
             </div>
@@ -74,15 +75,15 @@ export default async function Home() {
                   className="h-full w-full object-cover"
                 />
               ) : (
-                <div className="flex h-full w-full flex-col items-center justify-center gap-2 px-8 text-center">
-                  <p className="font-heading text-lg font-semibold text-text-main">
-                    Photographs coming this week
-                  </p>
-                  <p className="text-sm text-text-muted">
-                    We are visiting rooms across Kolhapur right now. Every photo on this site
-                    will be one we took ourselves.
-                  </p>
-                </div>
+                <Image
+                  src="/images/hero-room.png"
+                  alt="A student room in Kolhapur"
+                  width={1200}
+                  height={900}
+                  priority
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                  className="h-full w-full object-cover"
+                />
               )}
             </div>
 
@@ -94,7 +95,7 @@ export default async function Home() {
       <section className="mb-16 lg:mb-24">
         <div className="max-w-[var(--content-max)] mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
           <div className="space-y-3">
-            <h2 className="text-sm font-semibold text-text-muted uppercase tracking-wider">Search by College</h2>
+            <h2 className="text-sm font-semibold text-text-muted uppercase tracking-wider">Find rooms near your campus</h2>
             <div className="flex flex-wrap gap-2">
               {collegeChips.map(c => (
                 <Link 
@@ -108,8 +109,24 @@ export default async function Home() {
             </div>
           </div>
 
+          {locations.length > 0 && (
+            <div className="space-y-3 pt-4 border-t border-border">
+              <div className="flex flex-wrap gap-2">
+                {locations.map(loc => (
+                  <Link 
+                    key={loc} 
+                    href={`/search?location=${encodeURIComponent(loc)}`}
+                    className="px-4 min-h-[44px] inline-flex items-center bg-light border border-border rounded-full text-sm font-medium text-text-main hover:border-primary-strong hover:text-primary-strong transition-colors"
+                  >
+                    {loc}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="space-y-3 pt-4 border-t border-border">
-            <h2 className="text-sm font-semibold text-text-muted uppercase tracking-wider">Popular Shortcuts</h2>
+            <h2 className="text-sm font-semibold text-text-muted uppercase tracking-wider">What are you looking for?</h2>
             <div className="flex flex-wrap gap-2">
               <Link href="/search?genderPreference=Female" className="px-4 min-h-[44px] inline-flex items-center bg-light border border-border rounded-full text-sm font-medium text-text-main hover:border-primary-strong hover:text-primary-strong transition-colors">
                 Girls PG
@@ -165,8 +182,8 @@ export default async function Home() {
 
             <div className="flex flex-col items-center sm:items-start text-center sm:text-left space-y-4">
               <div className="w-12 h-12 bg-primary-strong/10 text-primary-strong flex items-center justify-center rounded-full text-xl font-bold">3</div>
-              <h3 className="font-semibold text-text-main text-lg">You call the owner</h3>
-              <p className="text-text-muted text-sm leading-relaxed">We give you the owner&apos;s direct mobile number. No middlemen blocking the conversation.</p>
+              <h3 className="font-semibold text-text-main text-lg">You call Aangan</h3>
+              <p className="text-text-muted text-sm leading-relaxed">One number for every room on this site. We check it is still free and fix a time to show you.</p>
             </div>
 
             <div className="flex flex-col items-center sm:items-start text-center sm:text-left space-y-4">
@@ -175,6 +192,12 @@ export default async function Home() {
               <p className="text-text-muted text-sm leading-relaxed">Zero brokerage. Zero hidden fees. You only pay rent directly to your PG owner.</p>
             </div>
 
+          </div>
+          
+          <div className="mt-12 text-center">
+            <Link href="/verification" className="text-primary-strong font-medium hover:underline inline-flex items-center gap-1">
+              See exactly how we verify rooms &rarr;
+            </Link>
           </div>
         </div>
       </section>

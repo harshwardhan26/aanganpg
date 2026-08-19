@@ -2,6 +2,7 @@ import type { Prisma } from "@prisma/client";
 
 export type RoomFilters = {
   college?: string; // college slug
+  location?: string;
   genderPreference?: string;
   maxPrice?: number;
   food?: "yes" | "no";
@@ -26,6 +27,10 @@ export function buildRoomWhere(filters: RoomFilters): Prisma.PropertyWhereInput 
 
   if (filters.college) {
     where.college = { slug: filters.college };
+  }
+
+  if (filters.location) {
+    where.location = filters.location;
   }
 
   if (filters.genderPreference) {

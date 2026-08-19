@@ -24,7 +24,7 @@ export function NavAuth({ className }: { className?: string }) {
       <>
         <Link
           href="/saved"
-          className={cn(buttonVariants({ variant: "ghost" }), "gap-2", className)}
+          className={cn(buttonVariants({ variant: "ghost" }), "gap-2 justify-start px-4", className)}
         >
           <Heart className="h-4 w-4" />
           Saved
@@ -32,7 +32,7 @@ export function NavAuth({ className }: { className?: string }) {
         <button
           type="button"
           onClick={() => signOut({ callbackUrl: "/" })}
-          className={cn(buttonVariants({ variant: "ghost" }), "gap-2 text-text-muted", className)}
+          className={cn(buttonVariants({ variant: "ghost" }), "gap-2 justify-start px-4 text-text-muted", className)}
         >
           <LogOut className="h-4 w-4" />
           Sign out

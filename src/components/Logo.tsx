@@ -9,7 +9,7 @@ export function Logo({
 }) {
   return (
     <div
-      className={`flex items-center gap-2 ${className || ""}`}
+      className={`flex items-center gap-1 ${className || ""}`}
       style={{ height: `${height}px` }}
     >
       <svg
@@ -26,7 +26,7 @@ export function Logo({
         <circle cx="12" cy="16" r="2" fill="currentColor" stroke="none" />
       </svg>
       <span
-        className="font-heading font-bold tracking-tight text-inherit"
+        className="font-heading font-extrabold tracking-tight text-inherit"
         style={{ fontSize: `${height * 0.8}px`, lineHeight: 1 }}
       >
         aangan
