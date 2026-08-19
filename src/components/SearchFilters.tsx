@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from '@/components/ui/button';
+import { ChevronDown } from 'lucide-react';
 import { GENDER_PREFERENCES, OCCUPANCY_TYPES, PG_AMENITIES, PG_RULES } from '@/lib/property-options';
 
 import { trackEvent } from '@/lib/posthog';
@@ -32,7 +33,7 @@ export function SearchFilters({
     : [];
 
   return (
-    <form action="/search" method="get" onSubmit={() => trackEvent('filter_applied')} className="flex flex-col gap-6 px-4 pb-24 lg:px-0 lg:pb-0 lg:h-full lg:overflow-y-auto">
+    <form action="/search" method="get" onSubmit={() => trackEvent('filter_applied')} className="flex flex-col gap-6 px-4 py-4 pb-24 lg:px-0 lg:py-0 lg:pb-0 lg:h-full lg:overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
       
       {/* College Filter */}
       <div className="space-y-3">
@@ -103,7 +104,7 @@ export function SearchFilters({
                 name="genderPreference" 
                 value={gender === 'Any' ? '' : gender} 
                 defaultChecked={gender === 'Any' ? !currentGender : currentGender === gender}
-                className="w-5 h-5 text-primary-strong border-border focus:ring-primary-strong" 
+                className="w-5 h-5 text-primary-strong border-border focus:ring-primary-strong accent-primary-strong" 
               />
             </label>
           ))}
@@ -116,15 +117,15 @@ export function SearchFilters({
         <div className="flex flex-col">
           <label className="flex items-center justify-between text-text-main text-sm cursor-pointer py-3 border-b border-border/60 last:border-0">
             <span>Doesn&apos;t matter</span>
-            <input type="radio" name="food" value="" defaultChecked={!currentFood} className="w-5 h-5 text-primary-strong border-border focus:ring-primary-strong" />
+            <input type="radio" name="food" value="" defaultChecked={!currentFood} className="w-5 h-5 text-primary-strong border-border focus:ring-primary-strong accent-primary-strong" />
           </label>
           <label className="flex items-center justify-between text-text-main text-sm cursor-pointer py-3 border-b border-border/60 last:border-0">
             <span>Yes</span>
-            <input type="radio" name="food" value="yes" defaultChecked={currentFood === 'yes'} className="w-5 h-5 text-primary-strong border-border focus:ring-primary-strong" />
+            <input type="radio" name="food" value="yes" defaultChecked={currentFood === 'yes'} className="w-5 h-5 text-primary-strong border-border focus:ring-primary-strong accent-primary-strong" />
           </label>
           <label className="flex items-center justify-between text-text-main text-sm cursor-pointer py-3 border-b border-border/60 last:border-0">
             <span>No</span>
-            <input type="radio" name="food" value="no" defaultChecked={currentFood === 'no'} className="w-5 h-5 text-primary-strong border-border focus:ring-primary-strong" />
+            <input type="radio" name="food" value="no" defaultChecked={currentFood === 'no'} className="w-5 h-5 text-primary-strong border-border focus:ring-primary-strong accent-primary-strong" />
           </label>
         </div>
       </div>
@@ -145,8 +146,11 @@ export function SearchFilters({
       </div>
 
       {/* Amenities */}
-      <div className="space-y-3">
-        <h3 className="font-semibold text-text-main">Amenities</h3>
+      <details className="group space-y-3">
+        <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between font-semibold text-text-main marker:content-none [&::-webkit-details-marker]:hidden">
+          Amenities
+          <ChevronDown className="h-4 w-4 shrink-0 text-text-muted transition-transform group-open:rotate-180" />
+        </summary>
         <div className="flex flex-col">
           {PG_AMENITIES.map((amenity) => (
             <label key={amenity} className="flex items-center justify-between text-text-main text-sm cursor-pointer py-3 border-b border-border/60 last:border-0">
@@ -156,16 +160,19 @@ export function SearchFilters({
                 name="amenities" 
                 value={amenity} 
                 defaultChecked={currentAmenities.includes(amenity)}
-                className="w-5 h-5 text-primary-strong rounded border-border focus:ring-primary-strong" 
+                className="w-5 h-5 text-primary-strong rounded border-border focus:ring-primary-strong accent-primary-strong" 
               />
             </label>
           ))}
         </div>
-      </div>
+      </details>
 
       {/* Rules */}
-      <div className="space-y-3">
-        <h3 className="font-semibold text-text-main">Rules</h3>
+      <details className="group space-y-3">
+        <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between font-semibold text-text-main marker:content-none [&::-webkit-details-marker]:hidden">
+          Rules
+          <ChevronDown className="h-4 w-4 shrink-0 text-text-muted transition-transform group-open:rotate-180" />
+        </summary>
         <div className="flex flex-col">
           {PG_RULES.map((rule) => (
             <label key={rule} className="flex items-center justify-between text-text-main text-sm cursor-pointer py-3 border-b border-border/60 last:border-0">
@@ -175,14 +182,17 @@ export function SearchFilters({
                 name="rules" 
                 value={rule} 
                 defaultChecked={currentRules.includes(rule)}
-                className="w-5 h-5 text-primary-strong rounded border-border focus:ring-primary-strong" 
+                className="w-5 h-5 text-primary-strong rounded border-border focus:ring-primary-strong accent-primary-strong" 
               />
             </label>
           ))}
         </div>
-      </div>
+      </details>
 
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-border lg:static lg:p-0 lg:border-none lg:bg-transparent z-10">
+      {/* Sticky, not fixed. `fixed` positioned this against the viewport rather
+          than the sheet, so it spanned the full width outside the sheet's
+          rounded corners and sat over the results page behind it. */}
+      <div className="sticky bottom-0 -mx-4 border-t border-border bg-white px-4 py-3 lg:static lg:mx-0 lg:border-none lg:bg-transparent lg:px-0 lg:py-0">
         <Button type="submit" className="w-full bg-primary-strong text-white hover:bg-primary-hover text-base">
           Apply filters
         </Button>

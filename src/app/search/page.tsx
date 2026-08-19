@@ -6,11 +6,25 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Metadata } from 'next';
 
-export const metadata: Metadata = {
-  title: 'Search Rooms | Aangan',
-  description: 'Find student rooms and PGs',
-  alternates: { canonical: '/search' },
-};
+export async function generateMetadata(props: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }): Promise<Metadata> {
+  const searchParams = await props.searchParams;
+  const collegeSlug = searchParams.college as string;
+  let title = 'Search rooms';
+  
+  if (collegeSlug) {
+    const colleges = await getCachedColleges();
+    const matchedCollege = colleges.find(c => c.slug === collegeSlug);
+    if (matchedCollege) {
+      title = `Rooms near ${matchedCollege.shortName || matchedCollege.name}`;
+    }
+  }
+
+  return {
+    title,
+    description: 'Find student rooms and PGs',
+    alternates: { canonical: '/search' },
+  };
+}
 
 type PageProps = {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;

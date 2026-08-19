@@ -34,8 +34,8 @@ export default function AdminUsersPage() {
 
   return (
     <div className="space-y-6 max-w-lg">
-      <div className="flex items-center gap-4">
-        <Link href="/admin/listings" className="text-sm font-medium text-text-muted hover:text-text-main">
+      <div className="flex flex-col gap-2 mb-2">
+        <Link href="/admin" className="text-sm font-medium text-text-muted hover:text-text-main w-fit">
           &larr; Back to Admin
         </Link>
         <h1 className="text-2xl font-bold font-heading text-text-main">Manage Admins</h1>
