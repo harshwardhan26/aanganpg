@@ -18,26 +18,30 @@ export function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-light/95 backdrop-blur supports-[backdrop-filter]:bg-light/60">
-      <div className="mx-auto flex h-16 max-w-[var(--content-max)] items-center justify-between px-4 sm:px-6 lg:px-8 relative">
-        <Link href="/" className="text-primary-strong py-2 block">
-          <Logo height={28} />
-        </Link>
-        <nav className="hidden lg:flex absolute left-1/2 -translate-x-1/2 items-center gap-6">
+      <div className="mx-auto flex h-16 max-w-[var(--content-max)] items-center px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-1 items-center">
+          <Link href="/" className="text-primary-strong py-2 block w-fit">
+            <Logo height={28} />
+          </Link>
+        </div>
+        
+        <nav className="hidden lg:flex flex-none items-center justify-center gap-5 xl:gap-6 mx-4">
           {links.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className="text-sm font-medium text-text-muted hover:text-text-main transition-colors"
+              className="text-sm font-medium text-text-muted hover:text-text-main transition-colors whitespace-nowrap"
             >
               {link.label}
             </Link>
           ))}
         </nav>
-        <div className="flex items-center gap-4">
+        
+        <div className="flex flex-1 items-center justify-end gap-4">
           <div className="hidden lg:flex items-center gap-4">
             <Link 
               href="/list-your-pg" 
-              className={cn(buttonVariants({ variant: "outline" }), "border-border text-text-main hover:bg-light")}
+              className={cn(buttonVariants({ variant: "outline" }), "border-border text-text-main hover:bg-light whitespace-nowrap")}
             >
               List your PG &mdash; FREE
             </Link>
