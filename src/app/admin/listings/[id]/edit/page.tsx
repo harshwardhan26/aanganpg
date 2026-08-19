@@ -2,11 +2,12 @@ import prisma from "@/lib/prisma";
 import ListingForm from "../../ListingForm";
 import { notFound } from "next/navigation";
 
-export default async function EditListingPage({ params }: { params: { id: string } }) {
+export default async function EditListingPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const [colleges, property] = await Promise.all([
     prisma.college.findMany({ orderBy: { name: "asc" } }),
     prisma.property.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: { images: true }
     })
   ]);
