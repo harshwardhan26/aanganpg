@@ -75,15 +75,15 @@ export default async function Home() {
                   className="h-full w-full object-cover"
                 />
               ) : (
-                <Image
-                  src="/images/hero-room.png"
-                  alt="A student room in Kolhapur"
-                  width={1200}
-                  height={900}
-                  priority
-                  sizes="(max-width: 1024px) 100vw, 50vw"
-                  className="h-full w-full object-cover"
-                />
+                <div className="flex h-full w-full flex-col items-center justify-center gap-2 px-8 text-center bg-muted">
+                  <p className="font-heading text-lg font-semibold text-text-main">
+                    Photographs coming this week
+                  </p>
+                  <p className="text-sm text-text-muted">
+                    We are visiting rooms right now. Every photo on this site
+                    will be one we took ourselves.
+                  </p>
+                </div>
               )}
             </div>
 
