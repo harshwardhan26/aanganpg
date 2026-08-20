@@ -8,7 +8,7 @@ import { ListPgButton } from '@/components/ListPgButton';
 import { publicImage } from '@/lib/publicImage';
 import {
   ShieldCheck, Camera, PhoneCall, Wallet,
-  UserRound, Users, UtensilsCrossed, IndianRupee, ArrowRight,
+  UserRound, Users, UtensilsCrossed, IndianRupee, ArrowRight, GraduationCap, MapPin
 } from 'lucide-react';
 
 // No stock fallback, and no listing photo used as decoration. Until a file lands
@@ -91,12 +91,12 @@ export default async function Home() {
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
                   <span className="relative inline-flex h-2 w-2 rounded-full bg-green-400" />
                 </span>
-                {verifiedCount} {verifiedCount === 1 ? 'room' : 'rooms'} visited
+                Aangan visited & verified {verifiedCount} {verifiedCount === 1 ? 'room' : 'rooms'}
               </span>
             )}
 
             <h1 className="font-heading text-4xl font-bold leading-[1.1] text-white sm:text-5xl lg:text-6xl">
-              Rooms we have<br />actually seen.
+              Rooms that are<br />actually verified.
             </h1>
             <p className="text-base text-white/90 sm:text-lg">
               Student PGs in Kolhapur. Zero brokerage.
@@ -142,33 +142,48 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* CAMPUSES — one swipeable row instead of a wrapping wall */}
-      <section className="py-2 lg:py-6">
-        <div className="mx-auto max-w-[var(--content-max)] space-y-3 px-4 sm:px-6 lg:px-8">
-          <h2 className="font-heading text-lg font-bold text-text-main">Near your campus</h2>
-          <div className="-mx-4 flex snap-x snap-mandatory gap-2 overflow-x-auto px-4 pb-2 sm:mx-0 sm:flex-wrap sm:px-0 [&::-webkit-scrollbar]:hidden">
+      {/* CAMPUSES — refined scrollable sections for mobile */}
+      <section className="py-6 lg:py-10">
+        <div className="mx-auto max-w-[var(--content-max)] px-4 sm:px-6 lg:px-8">
+          <div className="mb-4">
+            <h2 className="font-heading text-xl font-bold text-text-main lg:text-2xl tracking-tight">Near your campus</h2>
+            <p className="text-sm text-text-muted mt-1">Find student rooms walking distance from classes.</p>
+          </div>
+          
+          <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto pb-4 sm:mx-0 sm:flex-wrap sm:gap-3 [&::-webkit-scrollbar]:hidden">
+            <div className="w-1 shrink-0 sm:hidden" />
             {collegeChips.map(c => (
               <Link
                 key={c.slug}
                 href={`/search?college=${c.slug}`}
-                className="inline-flex min-h-[44px] shrink-0 snap-start items-center rounded-full border border-border bg-light px-4 text-sm font-medium text-text-main transition-colors hover:border-primary-strong hover:text-primary-strong"
+                className="group relative inline-flex min-h-[52px] shrink-0 snap-center items-center gap-3 rounded-2xl border border-slate-200 bg-white pr-5 pl-1.5 py-1.5 text-sm font-semibold text-slate-700 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-primary-strong/30 hover:shadow-md active:translate-y-0 sm:snap-start"
               >
-                {c.shortName || c.name}
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-50 text-slate-400 group-hover:bg-primary-strong/10 group-hover:text-primary-strong transition-colors">
+                  <GraduationCap className="h-5 w-5" />
+                </div>
+                <span>{c.shortName || c.name}</span>
               </Link>
             ))}
+            <div className="w-1 shrink-0 sm:hidden" />
           </div>
 
           {locations.length > 0 && (
-            <div className="-mx-4 flex snap-x snap-mandatory gap-2 overflow-x-auto px-4 pb-2 sm:mx-0 sm:flex-wrap sm:px-0 [&::-webkit-scrollbar]:hidden">
-              {locations.map(loc => (
-                <Link
-                  key={loc}
-                  href={`/search?location=${encodeURIComponent(loc)}`}
-                  className="inline-flex min-h-[44px] shrink-0 snap-start items-center rounded-full border border-border bg-light px-4 text-sm font-medium text-text-muted transition-colors hover:border-primary-strong hover:text-primary-strong"
-                >
-                  {loc}
-                </Link>
-              ))}
+            <div className="mt-4 border-t border-slate-100 pt-5">
+              <h3 className="font-heading text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Or browse by locality</h3>
+              <div className="-mx-4 flex snap-x snap-mandatory gap-2.5 overflow-x-auto pb-4 sm:mx-0 sm:flex-wrap sm:gap-2.5 [&::-webkit-scrollbar]:hidden">
+                <div className="w-1.5 shrink-0 sm:hidden" />
+                {locations.map(loc => (
+                  <Link
+                    key={loc}
+                    href={`/search?location=${encodeURIComponent(loc)}`}
+                    className="group inline-flex min-h-[40px] shrink-0 snap-center items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-1.5 text-sm font-medium text-slate-600 transition-all duration-300 hover:border-slate-300 hover:bg-white hover:text-slate-900 hover:shadow-sm sm:snap-start"
+                  >
+                    <MapPin className="h-3.5 w-3.5 text-slate-400 group-hover:text-primary-strong transition-colors" />
+                    <span>{loc}</span>
+                  </Link>
+                ))}
+                <div className="w-1.5 shrink-0 sm:hidden" />
+              </div>
             </div>
           )}
         </div>
