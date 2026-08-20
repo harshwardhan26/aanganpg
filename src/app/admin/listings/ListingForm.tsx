@@ -8,6 +8,8 @@ import Image from "next/image";
 import { saveListing } from "@/actions/admin";
 import { uploadImage, UPLOAD_CONFIGURED } from "@/lib/upload";
 import { pgPublishIssues, GENDER_PREFERENCES, FOOD_TYPES, OCCUPANCY_TYPES, PG_SHOT_LIST, KOLHAPUR_LOCALITIES } from "@/lib/property-options";
+import { looksLikeKolhapur } from "@/lib/maps";
+import { MapPin, Crosshair } from "lucide-react";
 
 export default function ListingForm({ 
   initialData, 
@@ -42,7 +44,53 @@ export default function ListingForm({
     ownerPhone: initialData?.ownerPhone || "",
     description: initialData?.description || "",
     images: initialData?.images || [],
+    lat: initialData?.lat?.toString() || "",
+    lng: initialData?.lng?.toString() || "",
   });
+
+  const [geoStatus, setGeoStatus] = useState<string>("");
+
+  const handleGetCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      setGeoStatus("Geolocation is not supported by your browser.");
+      return;
+    }
+    setGeoStatus("Finding location...");
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setFormData(prev => ({
+          ...prev,
+          lat: position.coords.latitude.toString(),
+          lng: position.coords.longitude.toString()
+        }));
+        setGeoStatus("");
+      },
+      (error) => {
+        if (error.code === error.PERMISSION_DENIED) {
+          setGeoStatus("Permission denied. Ensure location is allowed.");
+        } else if (error.code === error.TIMEOUT) {
+          setGeoStatus("Location request timed out.");
+        } else {
+          setGeoStatus("Failed to get location.");
+        }
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
+
+  const handlePasteMapUrl = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    // Extract @lat,lng from URL. Also catches raw "16.702, 74.234"
+    const match = val.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/) || val.match(/^(-?\d+\.\d+)[,\s]+(-?\d+\.\d+)$/);
+    if (match) {
+      setFormData(prev => ({
+        ...prev,
+        lat: match[1],
+        lng: match[2]
+      }));
+      e.target.value = ''; // clear input after successful paste
+    }
+  };
 
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadProgress, setUploadProgress] = useState("");
@@ -236,6 +284,42 @@ export default function ListingForm({
           <div>
             <label className="block text-sm font-medium mb-1">Landmark</label>
             <input name="landmark" value={formData.landmark} onChange={handleTextChange} placeholder="Rajaram College समोर" className="w-full border rounded-lg p-2 min-h-[44px]" />
+          </div>
+          
+          <div className="sm:col-span-2 p-4 bg-slate-50 border border-slate-200 rounded-lg space-y-3 mt-2">
+            <div className="flex justify-between items-center">
+              <label className="block text-sm font-bold">Map Pin</label>
+              {(formData.lat && formData.lng) && (
+                <button type="button" onClick={() => setFormData(p => ({...p, lat: "", lng: ""}))} className="text-sm text-red-600 font-medium hover:underline">Clear pin</button>
+              )}
+            </div>
+            
+            {(formData.lat && formData.lng) ? (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm bg-green-50 text-green-800 border border-green-200 p-2 rounded">
+                  <MapPin className="h-4 w-4" />
+                  Pin captured: {formData.lat}, {formData.lng}
+                </div>
+                {!looksLikeKolhapur(Number(formData.lat), Number(formData.lng)) && (
+                  <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 p-2 rounded font-medium">
+                    Warning: These coordinates appear to be outside Kolhapur.
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <button type="button" onClick={handleGetCurrentLocation} className="flex items-center justify-center gap-2 w-full sm:w-auto bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium px-4 py-2 min-h-[44px] rounded-lg transition-colors">
+                  <Crosshair className="h-4 w-4" /> Use my current location
+                </button>
+                {geoStatus && <p className="text-sm text-red-600 font-medium">{geoStatus}</p>}
+                
+                <div>
+                  <label className="block text-xs text-slate-500 mb-1">Or paste a Google Maps URL (or direct coordinates)</label>
+                  <input type="text" onChange={handlePasteMapUrl} placeholder="https://www.google.com/maps/...@16.7,74.2,15z" className="w-full border border-slate-300 rounded-lg p-2 min-h-[44px] text-sm" />
+                  <p className="text-[10px] text-slate-400 mt-1">Hint: Short links (maps.app.goo.gl) won&apos;t work until opened. Long-press the pin in the Maps app to copy coordinates directly.</p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </section>

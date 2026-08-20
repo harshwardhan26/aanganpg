@@ -6,6 +6,7 @@ import { pgPublishIssues } from "../src/lib/property-options";
 import { buildRoomWhere, buildRoomOrderBy } from "../src/lib/room-filters";
 import { cloudinaryUrl } from "../src/lib/image";
 import { publicImage } from "../src/lib/publicImage";
+import { directionsUrl, looksLikeKolhapur } from "../src/lib/maps";
 
 try { process.loadEnvFile(); } catch {}
 
@@ -173,6 +174,16 @@ async function main() {
   assert(!prefill.includes("Jevan:"), "Prefill should not include Jevan label if null");
   assert(prefill.includes("Testing PG"), "Prefill should include title");
   assert(prefill.includes("https://aangan.com/pg/testing-pg"), "Prefill should include URL");
+
+  // Map utilities tests
+  const url = directionsUrl(16.7, 74.2);
+  assert(url !== null && url.includes("16.7") && url.includes("74.2"), "directionsUrl failed for valid Kolhapur pair");
+  assert(directionsUrl(null, 74.2) === null, "directionsUrl failed for null lat");
+  assert(directionsUrl(16.7, undefined) === null, "directionsUrl failed for undefined lng");
+  assert(directionsUrl(0, 0) !== null, "directionsUrl failed to handle 0 as a real number");
+
+  assert(looksLikeKolhapur(16.7, 74.2) === true, "looksLikeKolhapur failed for valid pair");
+  assert(looksLikeKolhapur(74.2, 16.7) === false, "looksLikeKolhapur failed to catch swapped pair");
 
   console.log("Self check passed");
 }

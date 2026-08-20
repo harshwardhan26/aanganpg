@@ -21,6 +21,8 @@ model Property {
   location         String?
   occupancyType    String?
   genderPreference String?
+  lat              Float?
+  lng              Float?
   deposit          Int?
   imageUrl         String?
   images           PropertyImage[]

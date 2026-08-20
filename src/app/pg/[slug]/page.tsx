@@ -8,6 +8,8 @@ import { SaveButton } from "@/components/SaveButton";
 import { RoomGallery } from "@/components/RoomGallery";
 import { EnquiryActions } from "@/components/EnquiryActions";
 import { RoomCard } from "@/components/RoomCard";
+import { directionsUrl } from "@/lib/maps";
+import { MapPin } from "lucide-react";
 
 // Next 16: `params` is a Promise and must be awaited before its properties are
 // read. Reading it synchronously logged a sync-dynamic-apis warning on every
@@ -89,6 +91,7 @@ export default async function RoomPage({ params }: Props) {
   const priceLabel = `${rupees(room.price)}/month`;
   // Absolute, because it is pasted into a WhatsApp message to us.
   const listingUrl = new URL(`/pg/${room.slug}`, process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000').toString();
+  const mapUrl = directionsUrl(room.lat, room.lng);
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -102,6 +105,9 @@ export default async function RoomPage({ params }: Props) {
       addressRegion: "Maharashtra",
       addressCountry: "IN",
     },
+    ...(room.lat != null && room.lng != null ? {
+      geo: { "@type": "GeoCoordinates", latitude: room.lat, longitude: room.lng }
+    } : {}),
     numberOfBedrooms: undefined,
     offers: {
       "@type": "Offer",
@@ -310,6 +316,17 @@ export default async function RoomPage({ params }: Props) {
                 ownerPhone={room.ownerPhone}
                 prefillData={prefillData}
               />
+              {mapUrl && (
+                <a
+                  href={mapUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-3 flex w-full min-h-[44px] items-center justify-center gap-2 rounded-lg border border-border bg-white px-4 text-sm font-medium text-text-main shadow-sm transition-colors hover:bg-slate-50"
+                >
+                  <MapPin className="h-4 w-4" />
+                  Get directions
+                </a>
+              )}
             </div>
 
             {/* Mobile: inline secondary row */}
@@ -324,6 +341,17 @@ export default async function RoomPage({ params }: Props) {
                 prefillData={prefillData}
                 variant="secondary-only"
               />
+              {mapUrl && (
+                <a
+                  href={mapUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-3 flex w-full min-h-[44px] items-center justify-center gap-2 rounded-lg border border-border bg-white px-4 text-sm font-medium text-text-main shadow-sm transition-colors hover:bg-slate-50"
+                >
+                  <MapPin className="h-4 w-4" />
+                  Get directions
+                </a>
+              )}
             </div>
 
             {/* Mobile: fixed bar. The contact controls have to be reachable at
@@ -339,6 +367,17 @@ export default async function RoomPage({ params }: Props) {
                 prefillData={prefillData}
                 variant="primary-only"
               />
+              {mapUrl && (
+                <a
+                  href={mapUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-3 flex w-full min-h-[44px] items-center justify-center gap-2 rounded-lg border border-border bg-white px-4 text-sm font-medium text-text-main shadow-sm transition-colors hover:bg-slate-50"
+                >
+                  <MapPin className="h-4 w-4" />
+                  Get directions
+                </a>
+              )}
             </div>
           </aside>
         )}

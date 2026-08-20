@@ -49,6 +49,14 @@ const optionalInt = z
     return Number.isFinite(n) ? Math.trunc(n) : null;
   });
 
+const optionalFloat = z
+  .union([z.string(), z.number(), z.null(), z.undefined()])
+  .transform((v) => {
+    if (v === null || v === undefined || v === "") return null;
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+  });
+
 const imageSchema = z.object({
   url: z.string().url(),
   // "bathroom" and "thali" are the two the publish guard reads.
@@ -61,6 +69,8 @@ const listingSchema = z.object({
   price: optionalInt,
   location: z.enum(KOLHAPUR_LOCALITIES).nullable().optional(),
   landmark: optionalText,
+  lat: optionalFloat,
+  lng: optionalFloat,
   collegeId: optionalText,
   walkMinutes: optionalInt,
   genderPreference: z.enum(GENDER_PREFERENCES).nullable().optional(),
@@ -182,6 +192,8 @@ export async function saveListing(raw: unknown, publish: boolean): Promise<SaveR
     displayPrice: data.price != null ? `₹${data.price.toLocaleString("en-IN")}/month` : null,
     location: data.location ?? null,
     landmark: data.landmark ?? null,
+    lat: data.lat,
+    lng: data.lng,
     collegeId: data.collegeId ?? null,
     walkMinutes: data.walkMinutes,
     genderPreference: data.genderPreference ?? null,
