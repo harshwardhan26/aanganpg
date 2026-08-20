@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils";
 export function NavAuth({ className, mode = "all" }: { className?: string, mode?: "all" | "login-only" | "authenticated-only" }) {
   const { data: session, status } = useSession();
   const { openAuthSheet } = useAuthSheet();
-  const isAdmin = (session?.user as any)?.role === "admin";
+  const isAdmin = (session?.user as { role?: string })?.role === "admin";
 
   if (status === "authenticated") {
     if (mode === "login-only") return null;
