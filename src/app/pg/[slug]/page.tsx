@@ -10,6 +10,7 @@ import { EnquiryActions } from "@/components/EnquiryActions";
 import { RoomCard } from "@/components/RoomCard";
 import { directionsUrl } from "@/lib/maps";
 import { MapPin } from "lucide-react";
+import { getBaseUrl } from "@/lib/url";
 
 // Next 16: `params` is a Promise and must be awaited before its properties are
 // read. Reading it synchronously logged a sync-dynamic-apis warning on every
@@ -90,7 +91,7 @@ export default async function RoomPage({ params }: Props) {
 
   const priceLabel = `${rupees(room.price)}/month`;
   // Absolute, because it is pasted into a WhatsApp message to us.
-  const listingUrl = new URL(`/pg/${room.slug}`, process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000').toString();
+  const listingUrl = new URL(`/pg/${room.slug}`, getBaseUrl()).toString();
   const mapUrl = directionsUrl(room.lat, room.lng);
 
   const jsonLd = {

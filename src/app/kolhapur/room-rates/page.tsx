@@ -1,6 +1,7 @@
 import prisma from "@/lib/prisma";
 import { Metadata } from "next";
 import { Button } from "@/components/ui/button";
+import { getBaseUrl } from "@/lib/url";
 
 export const revalidate = 86400; // Cache for 24 hours
 
@@ -59,8 +60,9 @@ export default async function RatesPage() {
     })
     .sort((a, b) => b.count - a.count); // Sort by most listings first
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "";
-  const shareText = `कोल्हापूर रूम रेट लिस्ट २०२६ — एरिया नुसार पाहण्यासाठी खालील लिंक वर क्लिक करा:\n${siteUrl}/kolhapur/room-rates`;
+  const siteUrl = getBaseUrl();
+  const canonicalUrl = `${siteUrl}/kolhapur/room-rates`;
+  const shareText = `कोल्हापूर रूम रेट लिस्ट २०२६ — एरिया नुसार पाहण्यासाठी खालील लिंक वर क्लिक करा:\n${canonicalUrl}`;
   const shareUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`;
 
   return (

@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
+import { getBaseUrl } from "@/lib/url";
 
 type PageProps = {
   params: Promise<{ collegeSlug: string }>;
@@ -66,7 +67,7 @@ export default async function CollegePage(props: PageProps) {
   const otherColleges = allColleges.filter(c => c.area !== college.area && c.id !== college.id);
   const nearestColleges = [...sameAreaColleges, ...otherColleges].slice(0, 2);
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "";
+  const siteUrl = getBaseUrl();
 
   const breadcrumbs = {
     "@context": "https://schema.org",

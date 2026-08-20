@@ -18,8 +18,10 @@ const poppinsHeading = Poppins({
   variable: "--font-heading",
 });
 
+import { getBaseUrl } from "@/lib/url";
+
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
+  metadataBase: new URL(getBaseUrl()),
   title: {
     default: "Aangan — PG and student rooms in Kolhapur",
     template: "%s | Aangan",
