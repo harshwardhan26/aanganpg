@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { signOut, useSession } from "next-auth/react";
-import { Heart, LogOut } from "lucide-react";
+import { Heart, LogOut, LayoutDashboard } from "lucide-react";
 import { useAuthSheet } from "@/components/auth/AuthSheet";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -16,13 +16,23 @@ import { cn } from "@/lib/utils";
  * client-side.
  */
 export function NavAuth({ className, mode = "all" }: { className?: string, mode?: "all" | "login-only" | "authenticated-only" }) {
-  const { status } = useSession();
+  const { data: session, status } = useSession();
   const { openAuthSheet } = useAuthSheet();
+  const isAdmin = (session?.user as any)?.role === "admin";
 
   if (status === "authenticated") {
     if (mode === "login-only") return null;
     return (
       <>
+        {isAdmin && (
+          <Link
+            href="/admin/listings"
+            className={cn(buttonVariants({ variant: "ghost" }), "gap-2 justify-start px-4 text-primary-strong", className)}
+          >
+            <LayoutDashboard className="h-4 w-4" />
+            Dashboard
+          </Link>
+        )}
         <Link
           href="/saved"
           className={cn(buttonVariants({ variant: "ghost" }), "gap-2 justify-start px-4", className)}

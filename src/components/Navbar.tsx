@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import { Menu } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
@@ -8,6 +11,7 @@ import { NavAuth } from "./NavAuth";
 import { ListPgButton } from "./ListPgButton";
 
 export function Navbar() {
+  const [isOpen, setIsOpen] = useState(false);
   // Every one of these is a real route. They used to be /all, /girls, /boys and
   // /mess, none of which exist — the whole nav was 404s.
   const links = [
@@ -49,7 +53,7 @@ export function Navbar() {
             <NavAuth mode="login-only" className="h-9 px-2 text-sm font-medium" />
           </div>
 
-          <Sheet>
+          <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "lg:hidden")}>
               <Menu className="h-6 w-6" />
               <span className="sr-only">Toggle navigation menu</span>
@@ -61,12 +65,13 @@ export function Navbar() {
                   <Link
                     key={link.href}
                     href={link.href}
+                    onClick={() => setIsOpen(false)}
                     className="text-base font-medium text-text-main hover:text-primary-strong hover:bg-slate-50 py-3 px-4 rounded-xl transition-colors outline-none focus-visible:ring-2 focus-visible:ring-primary-strong"
                   >
                     {link.label}
                   </Link>
                 ))}
-                <div className="flex flex-col gap-3 mt-6 pt-6 border-t border-border px-2">
+                <div className="flex flex-col gap-3 mt-6 pt-6 border-t border-border px-2" onClick={() => setIsOpen(false)}>
                   <ListPgButton 
                     size="lg"
                     className="w-full border-border text-text-main hover:bg-slate-50 font-semibold rounded-xl" 
