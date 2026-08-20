@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import Image from "next/image";
 import { getAanganPhone, formatAanganPhoneForDisplay } from "@/lib/contact";
 
 export const metadata: Metadata = {
@@ -28,20 +29,29 @@ export default function AboutPage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-            {/* TODO: Add real team photos once we have them. Do not use stock images. */}
-            <div className="space-y-2 bg-light p-6 rounded-2xl border border-border">
-              <h3 className="font-bold text-xl text-text-main">Harshwardhan</h3>
-              <p className="text-primary-strong font-medium">Founder & Operations</p>
-              <p className="text-text-muted leading-relaxed pt-2">
-                Personally visits and inspects properties across Kolhapur so you don&apos;t have to.
+            <div className="bg-light p-6 rounded-2xl border border-border flex flex-col items-center sm:items-start text-center sm:text-left">
+              <div className="relative w-32 h-32 mb-4 overflow-hidden rounded-full border-4 border-white shadow-sm">
+                <Image src="/images/harshwardhan.jpg" alt="Harshwardhan Patil" fill style={{ objectFit: "cover" }} className="object-cover" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="font-bold text-xl text-text-main">Harshwardhan Patil</h3>
+                <p className="text-primary-strong font-medium">Founder</p>
+              </div>
+              <p className="text-text-muted leading-relaxed pt-3">
+                Building the thing Kolhapur should have had ten years ago. Room by room.
               </p>
             </div>
             
-            <div className="space-y-2 bg-light p-6 rounded-2xl border border-border">
-              <h3 className="font-bold text-xl text-text-main">Aangan Team</h3>
-              <p className="text-primary-strong font-medium">Local Photo Team</p>
-              <p className="text-text-muted leading-relaxed pt-2">
-                Our local team members who check amenities, record the facts, and take the real photos you see on the site. (Note: we check details, but we do not verify safety).
+            <div className="bg-light p-6 rounded-2xl border border-border flex flex-col items-center sm:items-start text-center sm:text-left">
+              <div className="relative w-32 h-32 mb-4 overflow-hidden rounded-full border-4 border-white shadow-sm">
+                <Image src="/images/purushottam.jpg" alt="Purushottam Patil" fill style={{ objectFit: "cover" }} className="object-cover" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="font-bold text-xl text-text-main">Purushottam Patil</h3>
+                <p className="text-primary-strong font-medium">Operations</p>
+              </div>
+              <p className="text-text-muted leading-relaxed pt-3">
+                Our local operations lead. Checks the amenities, records the facts, takes the real photos. (Note: we check details, but we do not verify safety).
               </p>
             </div>
           </div>
@@ -61,8 +71,9 @@ export default function AboutPage() {
                 <h3 className="font-semibold text-text-main uppercase tracking-wider text-sm">Office Address</h3>
                 <p className="text-lg text-text-main leading-relaxed">
                   Aangan Rooms<br />
-                  Rajarampuri, 1st Lane<br />
-                  Kolhapur, Maharashtra 416008
+                  Rankala Mhada Sankul,<br />
+                  near ruggedial gym, old vashinaka<br />
+                  Kolhapur 416012
                 </p>
               </div>
 

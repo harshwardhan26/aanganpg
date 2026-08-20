@@ -5,6 +5,7 @@ import { Providers } from "@/components/auth/Providers";
 import { PostHogProvider } from "@/components/PostHogProvider";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
+import { PWAPrompt } from "@/components/PWAPrompt";
 
 const poppins = Poppins({
   weight: ["400", "500", "600", "700"],
@@ -30,6 +31,11 @@ export const metadata: Metadata = {
     "PGs, hostels and student rooms near every college in Kolhapur. Every one visited in " +
     "person and photographed by us. Contact owners directly. Students pay " +
     "no brokerage.",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Aangan",
+  },
 };
 
 export const viewport: Viewport = {
@@ -49,6 +55,7 @@ export default function RootLayout({
             <Navbar />
             {children}
             <Footer />
+            <PWAPrompt />
           </Providers>
         </PostHogProvider>
       </body>

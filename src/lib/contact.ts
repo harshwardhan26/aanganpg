@@ -3,7 +3,7 @@ export function getAanganPhone() {
   if (process.env.NODE_ENV === 'production' && !phone) {
     throw new Error("HARD REQUIREMENT: NEXT_PUBLIC_AANGAN_PHONE is required in production. No placeholder phone numbers ship.");
   }
-  return phone || "+919876543210";
+  return phone || "+918830810131";
 }
 
 export function formatAanganPhoneForDisplay(phone: string) {
