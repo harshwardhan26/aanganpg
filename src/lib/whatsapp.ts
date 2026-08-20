@@ -32,3 +32,57 @@ export function telLink(raw: string | null | undefined): string | null {
 export function shareListingMessage(opts: { title: string; displayPrice: string; location: string; url: string }): string {
   return `${opts.title}\n${opts.displayPrice} · ${opts.location}\n\n${opts.url}`;
 }
+
+export type PrefillData = {
+  title: string;
+  displayPrice?: string | null;
+  location?: string | null;
+  landmark?: string | null;
+  occupancyType?: string | null;
+  genderPreference?: string | null;
+  deposit?: number | null;
+  foodType?: string | null;
+  walkMinutes?: number | null;
+  listingUrl: string;
+};
+
+/** Build the rich prefill message from a student to Aangan (Phase F1). */
+export function buildPropertyPrefill(p: PrefillData): string {
+  const lines: string[] = [
+    'Namaskar, Aangan varun ha PG baghitla —',
+    '',
+    p.title,
+  ];
+
+  if (p.displayPrice) lines.push(`Bhade: ${p.displayPrice}`);
+
+  if (p.location || p.landmark) {
+    const loc = [p.location, p.landmark].filter(Boolean).join(', ');
+    lines.push(`Thikan: ${loc}`);
+  }
+
+  if (p.occupancyType || p.genderPreference) {
+    const typeStr = [p.occupancyType, p.genderPreference].filter(Boolean).join(' · ');
+    lines.push(`Type: ${typeStr}`);
+  }
+
+  if (p.deposit != null) lines.push(`Deposit: ${p.deposit}`);
+  if (p.foodType) lines.push(`Jevan: ${p.foodType}`);
+  if (p.walkMinutes != null) lines.push(`Chalat antar: ${p.walkMinutes} min`);
+
+  lines.push('');
+  if (p.listingUrl) lines.push(p.listingUrl);
+  lines.push('');
+  lines.push('Mala yaa baddal maahiti hawi aahe.');
+
+  let text = lines.join('\n');
+  
+  // Android wa.me intents can silently fail on very long strings (usually ~2000 chars,
+  // but playing it safe under 1000). Truncate the middle if needed.
+  if (text.length > 800) {
+    const end = '\n\nMala yaa baddal maahiti hawi aahe.';
+    text = text.slice(0, 800 - end.length - 3) + '...' + end;
+  }
+  
+  return text;
+}

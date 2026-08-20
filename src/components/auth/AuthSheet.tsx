@@ -198,6 +198,11 @@ function AuthSheet({ open, onOpenChange, onSuccess }: { open: boolean, onOpenCha
               We sent a 6-digit code to <span className="font-bold text-slate-800">{canonicalPhone(phone)}</span>
             </p>
 
+            <p className="text-slate-600 text-xs text-center px-4 bg-slate-50 py-2 rounded-md border border-slate-200">
+              By logging in, you agree that we may share your contact details with the owner of any room you choose to contact. <br />
+              लॉग इन करून, तुम्ही सहमत आहात की तुम्ही संपर्क साधू इच्छित असलेल्या कोणत्याही रूमच्या मालकासोबत आम्ही तुमचे संपर्क तपशील शेअर करू शकतो.
+            </p>
+
             {/* OTP input */}
             <div className="flex flex-col gap-1.5">
               <label className="text-[13px] font-semibold text-slate-700">OTP Code <span className="text-primary-strong">*</span></label>

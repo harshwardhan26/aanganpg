@@ -105,15 +105,19 @@ export default function ListingForm({
   };
 
   const handleImageTag = (index: number, tag: string | null) => {
-    const newImages = [...formData.images];
-    newImages[index].tag = tag;
-    setFormData({ ...formData, images: newImages });
+    setFormData(prev => {
+      const newImages = [...prev.images];
+      newImages[index] = { ...newImages[index], tag };
+      return { ...prev, images: newImages };
+    });
   };
 
   const removeImage = (index: number) => {
-    const newImages = [...formData.images];
-    newImages.splice(index, 1);
-    setFormData({ ...formData, images: newImages });
+    setFormData(prev => {
+      const newImages = [...prev.images];
+      newImages.splice(index, 1);
+      return { ...prev, images: newImages };
+    });
   };
 
   const hasBathroomPhoto = formData.images.some((img: any) => img.tag === "bathroom");
@@ -177,26 +181,26 @@ export default function ListingForm({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium mb-1">Title</label>
-            <input name="title" value={formData.title} onChange={handleTextChange} className="w-full border rounded-lg p-2" placeholder="e.g. 2 Bed Girls PG" />
+            <input name="title" value={formData.title} onChange={handleTextChange} className="w-full border rounded-lg p-2 min-h-[44px]" placeholder="e.g. 2 Bed Girls PG" />
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Monthly Rent (₹)</label>
-            <input type="number" name="price" value={formData.price} onChange={handleTextChange} className="w-full border rounded-lg p-2" />
+            <input type="number" name="price" value={formData.price} onChange={handleTextChange} className="w-full border rounded-lg p-2 min-h-[44px]" />
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Occupancy</label>
-            <select name="occupancyType" value={formData.occupancyType} onChange={handleTextChange} className="w-full border rounded-lg p-2">
+            <select name="occupancyType" value={formData.occupancyType} onChange={handleTextChange} className="w-full border rounded-lg p-2 min-h-[44px]">
               <option value="">Select...</option>
               {OCCUPANCY_TYPES.map(o => <option key={o} value={o}>{o}</option>)}
             </select>
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Deposit (₹)</label>
-            <input type="number" name="deposit" value={formData.deposit} onChange={handleTextChange} className="w-full border rounded-lg p-2" />
+            <input type="number" name="deposit" value={formData.deposit} onChange={handleTextChange} className="w-full border rounded-lg p-2 min-h-[44px]" />
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Vacant Beds</label>
-            <input type="number" name="vacantBeds" value={formData.vacantBeds} onChange={handleTextChange} className="w-full border rounded-lg p-2" />
+            <input type="number" name="vacantBeds" value={formData.vacantBeds} onChange={handleTextChange} className="w-full border rounded-lg p-2 min-h-[44px]" />
           </div>
           <div className="sm:col-span-2">
             <label className="block text-sm font-medium mb-1">Description</label>
@@ -211,7 +215,7 @@ export default function ListingForm({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium mb-1">Nearest College</label>
-            <select name="collegeId" value={formData.collegeId} onChange={handleTextChange} className="w-full border rounded-lg p-2">
+            <select name="collegeId" value={formData.collegeId} onChange={handleTextChange} className="w-full border rounded-lg p-2 min-h-[44px]">
               <option value="">Select...</option>
               {colleges.map(c => (
                 <option key={c.id} value={c.id}>{c.name}</option>
@@ -220,18 +224,18 @@ export default function ListingForm({
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Walk Minutes</label>
-            <input type="number" name="walkMinutes" value={formData.walkMinutes} onChange={handleTextChange} className="w-full border rounded-lg p-2" />
+            <input type="number" name="walkMinutes" value={formData.walkMinutes} onChange={handleTextChange} className="w-full border rounded-lg p-2 min-h-[44px]" />
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Locality</label>
-            <select name="location" value={formData.location} onChange={handleTextChange} className="w-full border rounded-lg p-2">
+            <select name="location" value={formData.location} onChange={handleTextChange} className="w-full border rounded-lg p-2 min-h-[44px]">
               <option value="">Select...</option>
               {KOLHAPUR_LOCALITIES.map(l => <option key={l} value={l}>{l}</option>)}
             </select>
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Landmark</label>
-            <input name="landmark" value={formData.landmark} onChange={handleTextChange} placeholder="Rajaram College समोर" className="w-full border rounded-lg p-2" />
+            <input name="landmark" value={formData.landmark} onChange={handleTextChange} placeholder="Rajaram College समोर" className="w-full border rounded-lg p-2 min-h-[44px]" />
           </div>
         </div>
       </section>
@@ -242,14 +246,14 @@ export default function ListingForm({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium mb-1">Food Provided</label>
-            <select name="foodType" value={formData.foodType} onChange={handleTextChange} className="w-full border rounded-lg p-2">
+            <select name="foodType" value={formData.foodType} onChange={handleTextChange} className="w-full border rounded-lg p-2 min-h-[44px]">
               <option value="">No mess</option>
               {FOOD_TYPES.map(o => <option key={o} value={o}>{o}</option>)}
             </select>
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">What the mess serves</label>
-            <input name="messNote" value={formData.messNote} onChange={handleTextChange} placeholder="2 chapati + bhaji + rice, Sunday mutton" className="w-full border rounded-lg p-2" />
+            <input name="messNote" value={formData.messNote} onChange={handleTextChange} placeholder="2 chapati + bhaji + rice, Sunday mutton" className="w-full border rounded-lg p-2 min-h-[44px]" />
           </div>
         </div>
       </section>
@@ -260,18 +264,18 @@ export default function ListingForm({
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-medium mb-1">Gender Allowed</label>
-            <select name="genderPreference" value={formData.genderPreference} onChange={handleTextChange} className="w-full border rounded-lg p-2">
+            <select name="genderPreference" value={formData.genderPreference} onChange={handleTextChange} className="w-full border rounded-lg p-2 min-h-[44px]">
               <option value="">Select...</option>
               {GENDER_PREFERENCES.map(o => <option key={o} value={o}>{o}</option>)}
             </select>
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Warden Name</label>
-            <input name="wardenName" value={formData.wardenName} onChange={handleTextChange} className="w-full border rounded-lg p-2" />
+            <input name="wardenName" value={formData.wardenName} onChange={handleTextChange} className="w-full border rounded-lg p-2 min-h-[44px]" />
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Gate Closing Time</label>
-            <input name="gateClosingTime" value={formData.gateClosingTime} onChange={handleTextChange} className="w-full border rounded-lg p-2" placeholder="e.g. 9:30 PM" />
+            <input name="gateClosingTime" value={formData.gateClosingTime} onChange={handleTextChange} className="w-full border rounded-lg p-2 min-h-[44px]" placeholder="e.g. 9:30 PM" />
           </div>
         </div>
       </section>
@@ -282,11 +286,11 @@ export default function ListingForm({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium mb-1">Owner Name</label>
-            <input name="ownerName" value={formData.ownerName} onChange={handleTextChange} className="w-full border rounded-lg p-2" />
+            <input name="ownerName" value={formData.ownerName} onChange={handleTextChange} className="w-full border rounded-lg p-2 min-h-[44px]" />
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Owner Phone</label>
-            <input name="ownerPhone" value={formData.ownerPhone} onChange={handleTextChange} className="w-full border rounded-lg p-2" placeholder="e.g. 9876543210" />
+            <input name="ownerPhone" value={formData.ownerPhone} onChange={handleTextChange} className="w-full border rounded-lg p-2 min-h-[44px]" placeholder="e.g. 9876543210" />
           </div>
         </div>
       </section>
@@ -308,25 +312,29 @@ export default function ListingForm({
           <div className="flex-1 space-y-4">
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
               {formData.images.map((img: any, idx: number) => (
-                <div key={idx} className="relative group rounded-lg overflow-hidden border border-border h-32">
-                  <Image src={img.url} alt="upload" width={300} height={300} className="w-full h-full object-cover" sizes="(max-width: 640px) 50vw, 33vw" />
-                  <div className="absolute inset-0 bg-black/50 opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-2 gap-2">
+                <div key={idx} className="flex flex-col gap-2 p-2 border border-slate-200 rounded-lg bg-white shadow-sm">
+                  <div className="relative rounded-md overflow-hidden h-32 border border-slate-100">
+                    <Image src={img.url} alt="upload" width={300} height={300} className="w-full h-full object-cover" sizes="(max-width: 640px) 50vw, 33vw" />
+                    {img.tag && (
+                      <span className="absolute top-2 left-2 bg-primary-strong text-white text-[10px] px-2 py-0.5 rounded-full uppercase font-bold shadow-md">
+                        {img.tag}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-2">
                     <select 
                       value={img.tag || ""} 
                       onChange={(e) => handleImageTag(idx, e.target.value || null)}
-                      className="text-sm px-2 min-h-[44px] rounded bg-white text-black w-full border-none focus:ring-2 focus:ring-primary-strong"
+                      className="text-sm px-2 min-h-[44px] rounded bg-slate-50 border border-slate-200 text-slate-800 w-full focus:ring-2 focus:ring-primary-strong outline-none"
                     >
                       <option value="">No tag</option>
                       <option value="bathroom">Bathroom</option>
                       <option value="thali">Thali / Mess</option>
                     </select>
-                    <button type="button" onClick={() => removeImage(idx)} className="text-white text-sm font-medium bg-red-600 px-4 py-2 min-h-[44px] w-full rounded hover:bg-red-700">Remove</button>
+                    <button type="button" onClick={() => removeImage(idx)} className="text-red-600 border border-red-200 bg-red-50 text-sm font-medium px-4 py-2 min-h-[44px] w-full rounded hover:bg-red-100 transition-colors">
+                      Remove
+                    </button>
                   </div>
-                  {img.tag && (
-                    <span className="absolute top-1 left-1 bg-primary-strong text-white text-[10px] px-1.5 py-0.5 rounded-full uppercase font-bold">
-                      {img.tag}
-                    </span>
-                  )}
                 </div>
               ))}
             </div>

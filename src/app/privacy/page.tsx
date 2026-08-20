@@ -1,5 +1,4 @@
 import { Metadata } from "next";
-import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Privacy Policy | Aangan Kolhapur",
@@ -20,22 +19,17 @@ export default function PrivacyPage() {
         <div className="space-y-6 text-slate-600 leading-relaxed">
           <p className="font-medium text-slate-500">Last updated: August 2026</p>
           
-          <p>Your privacy is important to us. It is Aangan Rooms&apos; policy to respect your privacy regarding any information we may collect from you across our website.</p>
+          <h2 className="text-xl font-bold text-slate-800 pt-4">What we collect and why</h2>
+          <p>We collect your name and phone number when you sign in. We also record which listings you contact. This allows us to provide our service and ensure that property owners know who is contacting them.</p>
           
-          <h2 className="text-xl font-bold text-slate-800 pt-4">1. Information We Collect</h2>
-          <p>We only ask for personal information (such as your mobile number) when we truly need it to provide a service to you, like logging in or saving your favorite rooms.</p>
+          <h2 className="text-xl font-bold text-slate-800 pt-4">Sharing with owners</h2>
+          <p>When you contact a listing (via Call or WhatsApp), we share your name and verified phone number with the owner of that specific listing so they can communicate with you directly. This is the core function of Aangan.</p>
           
-          <h2 className="text-xl font-bold text-slate-800 pt-4">2. How We Use Your Information</h2>
-          <p>We use your information to facilitate your experience on the platform, manage your saved rooms, and contact you regarding inquiries. We do not sell your data to third parties.</p>
+          <h2 className="text-xl font-bold text-slate-800 pt-4">How long we keep your data</h2>
+          <p>We retain your contact information and contact history as long as your account is active, so you can continue using the platform. We do not sell your data to any third-party marketers.</p>
           
-          <h2 className="text-xl font-bold text-slate-800 pt-4">3. Security</h2>
-          <p>We use industry-standard security measures, including Firebase Authentication, to protect your personal information. However, no method of transmission over the internet is 100% secure.</p>
-          
-          <h2 className="text-xl font-bold text-slate-800 pt-4">4. Third-Party Services</h2>
-          <p>Our website may link to external sites that are not operated by us. Please be aware that we have no control over the content and practices of these sites, and cannot accept responsibility for their respective privacy policies.</p>
-          
-          <h2 className="text-xl font-bold text-slate-800 pt-4">5. Contact</h2>
-          <p>If you have any questions about how we handle user data and personal information, feel free to <Link href="/about" className="text-primary-strong hover:underline">contact us</Link>.</p>
+          <h2 className="text-xl font-bold text-slate-800 pt-4">Your rights (Consent & Deletion)</h2>
+          <p>You can withdraw your consent at any time. If you wish to withdraw consent or request the complete deletion of your data and account, please email our Grievance Officer at <a href="mailto:grievance@aangan.com" className="text-primary-strong hover:underline">grievance@aangan.com</a>. We will process your deletion request within 15 days.</p>
         </div>
       </div>
     </main>

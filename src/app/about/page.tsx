@@ -39,9 +39,9 @@ export default function AboutPage() {
             
             <div className="space-y-2 bg-light p-6 rounded-2xl border border-border">
               <h3 className="font-bold text-xl text-text-main">Aangan Team</h3>
-              <p className="text-primary-strong font-medium">Local Verification Unit</p>
+              <p className="text-primary-strong font-medium">Local Photo Team</p>
               <p className="text-text-muted leading-relaxed pt-2">
-                Our local team members who check amenities, confirm the facts with the owner, and take the real photos you see on the site.
+                Our local team members who check amenities, record the facts, and take the real photos you see on the site. (Note: we check details, but we do not verify safety).
               </p>
             </div>
           </div>

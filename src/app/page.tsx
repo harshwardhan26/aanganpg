@@ -3,13 +3,36 @@ import { getRooms, getColleges, getLocations } from '@/actions/rooms';
 import { RoomCard } from '@/components/RoomCard';
 import Link from 'next/link';
 import Image from 'next/image';
-import { cloudinaryUrl } from '@/lib/image';
 import { HeroSearchForm } from '@/components/HeroSearchForm';
 import { ListPgButton } from '@/components/ListPgButton';
+import { publicImage } from '@/lib/publicImage';
+import {
+  ShieldCheck, Camera, PhoneCall, Wallet,
+  UserRound, Users, UtensilsCrossed, IndianRupee, ArrowRight,
+} from 'lucide-react';
 
-// No stock fallback. The hero used to fall back to Cloudinary's demo account,
-// so a page promising "we took these photos ourselves" led with a picture of
-// somebody else's dahlias.
+// No stock fallback, and no listing photo used as decoration. Until a file lands
+// in public/images the slot renders as a gradient panel instead of somebody
+// else's dahlias. Room photos appear in one place only: the room cards.
+//
+// The hero is currently a generated illustration, not a photograph, so its alt
+// text says so and claims no provenance. Swap it for a real shot as soon as one
+// exists — the site tells owners and students that the photographs are real, and
+// this is the one image on it that isn't.
+
+const PICKS = [
+  { href: '/search?genderPreference=Female', label: 'Girls PG', file: 'images/pick-girls.jpg', Icon: UserRound, tint: 'from-[#cc4040] to-[#8f2b2b]' },
+  { href: '/search?genderPreference=Male', label: 'Boys PG', file: 'images/pick-boys.jpg', Icon: Users, tint: 'from-slate-700 to-slate-900' },
+  { href: '/search?food=yes', label: 'With mess', file: 'images/pick-mess.jpg', Icon: UtensilsCrossed, tint: 'from-amber-700 to-amber-900' },
+  { href: '/search?maxPrice=6000', label: 'Under ₹6,000', file: 'images/pick-budget.jpg', Icon: IndianRupee, tint: 'from-emerald-700 to-emerald-900' },
+];
+
+const STEPS = [
+  { Icon: ShieldCheck, title: 'We visit it', body: 'Every room, in person, before it goes up.' },
+  { Icon: Camera, title: 'We shoot it', body: 'Bathroom included. No wide-angle tricks.' },
+  { Icon: PhoneCall, title: 'Contact the owner', body: 'Get their number directly. No middleman.' },
+  { Icon: Wallet, title: 'You pay ₹0', body: 'No brokerage. Rent goes to the owner.' },
+];
 
 export default async function Home() {
   const [rooms, colleges, locations] = await Promise.all([
@@ -19,11 +42,7 @@ export default async function Home() {
   ]);
 
   const recentRooms = rooms.slice(0, 6);
-  // Prefer a verified room's cover: the hero is the promise of the product.
-  const heroImage =
-    rooms.find(r => r.verifiedAt && r.imageUrl)?.imageUrl ??
-    rooms.find(r => r.imageUrl)?.imageUrl ??
-    null;
+  const heroImage = publicImage('images/hero.jpg');
   const verifiedCount = rooms.filter(r => r.verifiedAt).length;
   // Chips show shortName; sorting by `name` put "Bharati" before "CSIBER"
   // before "DYPCET" in an order that looked random on screen.
@@ -32,187 +51,178 @@ export default async function Home() {
   );
 
   return (
-    <main className="min-h-screen bg-white">
-      {/* HERO SECTION */}
-      <section className="mb-16 lg:mb-24 bg-light pt-12 pb-16 lg:py-24 border-b border-border">
-        <div className="max-w-[var(--content-max)] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-            
-            {/* Hero Text & Form */}
-            <div className="space-y-10">
-              <div className="space-y-4">
-                <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-text-main leading-tight font-heading">
-                  Student rooms in Kolhapur,<br/>actually verified.
-                </h1>
-                <p className="text-lg text-text-muted max-w-lg">
-                  We visit every PG, take photos of the bathroom, and come with you to see the room. Students pay no brokerage.
-                </p>
-              </div>
+    <main className="bg-white">
+      {/* HERO — full-bleed photograph, copy sits on top of it */}
+      <section
+        className={`relative isolate flex flex-col justify-end overflow-hidden bg-dark lg:min-h-[560px] lg:justify-center ${
+          // Without a photograph the top of the hero is dead space, so the
+          // gradient version is deliberately shorter.
+          heroImage ? "min-h-[78svh]" : "min-h-[62svh]"
+        }`}
+      >
+        {heroImage ? (
+          <Image
+            src={heroImage}
+            alt="Illustration of a student room in Kolhapur, the Mahalaxmi temple visible through the window"
+            fill
+            priority
+            sizes="100vw"
+            // Portrait viewports crop a 1.83:1 image down to roughly a third of
+            // its width. Centred, that lands on a blank wall and loses the
+            // Mahalaxmi temple in the window — the only thing in the frame that
+            // says Kolhapur. Bias the crop right on mobile; desktop shows it all.
+            className="object-cover object-[78%_center] lg:object-center"
+          />
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-br from-[#e05252] via-[#8f2b2b] to-[#0f172a]" />
+        )}
+        <div
+          // The hero photograph is bright, so the scrim is heavy where the copy
+          // sits: white body text needs 4.5:1, which needs roughly 0.85 alpha
+          // over a near-white photo. The top stays light so the room shows.
+          className="absolute inset-0 bg-gradient-to-t from-[#020617]/95 via-[#020617]/80 to-[#020617]/20"
+        />
 
-              <HeroSearchForm colleges={colleges} />
-              
-              {verifiedCount > 0 && (
-                <div className="text-sm font-medium text-text-muted flex items-center gap-2">
-                  <span className="flex h-3 w-3 relative">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-                  </span>
-                  <span><strong className="text-text-main font-bold text-base">{verifiedCount}</strong> {verifiedCount === 1 ? 'room' : 'rooms'} visited across Kolhapur</span>
-                </div>
-              )}
-            </div>
+        <div className="relative mx-auto w-full max-w-[var(--content-max)] px-4 pb-10 pt-24 sm:px-6 lg:px-8 lg:py-20">
+          <div className="max-w-xl space-y-6">
+            {verifiedCount > 0 && (
+              <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur">
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-green-400" />
+                </span>
+                {verifiedCount} {verifiedCount === 1 ? 'room' : 'rooms'} visited
+              </span>
+            )}
 
-            {/* Hero Image */}
-            <div className="relative aspect-[4/3] overflow-hidden rounded-2xl border border-border bg-muted shadow-2xl">
-              {heroImage ? (
-                <Image
-                  src={cloudinaryUrl(heroImage, 1200)}
-                  alt="A student room photographed by Aangan"
-                  width={1200}
-                  height={900}
-                  priority
-                  sizes="(max-width: 1024px) 100vw, 50vw"
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <div className="flex h-full w-full flex-col items-center justify-center gap-2 px-8 text-center bg-muted">
-                  <p className="font-heading text-lg font-semibold text-text-main">
-                    Photographs coming this week
-                  </p>
-                  <p className="text-sm text-text-muted">
-                    We are visiting rooms right now. Every photo on this site
-                    will be one we took ourselves.
-                  </p>
-                </div>
-              )}
-            </div>
+            <h1 className="font-heading text-4xl font-bold leading-[1.1] text-white sm:text-5xl lg:text-6xl">
+              Rooms we have<br />actually seen.
+            </h1>
+            <p className="text-base text-white/90 sm:text-lg">
+              Student PGs in Kolhapur. Zero brokerage.
+            </p>
 
+            <HeroSearchForm colleges={colleges} />
           </div>
         </div>
       </section>
 
-      {/* QUICK LINKS / CHIPS */}
-      <section className="mb-16 lg:mb-24">
-        <div className="max-w-[var(--content-max)] mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-          <div className="space-y-3">
-            <h2 className="text-sm font-semibold text-text-muted uppercase tracking-wider">Find rooms near your campus</h2>
-            <div className="flex flex-wrap gap-2">
-              {collegeChips.map(c => (
-                <Link 
-                  key={c.slug} 
-                  href={`/search?college=${c.slug}`}
-                  className="px-4 min-h-[44px] inline-flex items-center bg-light border border-border rounded-full text-sm font-medium text-text-main hover:border-primary-strong hover:text-primary-strong transition-colors"
-                >
-                  {c.shortName || c.name}
-                </Link>
-              ))}
-            </div>
+      {/* QUICK PICKS — visual tiles, not a pile of chips */}
+      <section className="mx-auto max-w-[var(--content-max)] px-4 py-10 sm:px-6 lg:px-8 lg:py-16">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-6">
+          {PICKS.map(({ href, label, file, Icon, tint }) => {
+            const photo = publicImage(file);
+            return (
+              <Link
+                key={href}
+                href={href}
+                className="group relative isolate flex aspect-[4/5] flex-col justify-end overflow-hidden rounded-2xl sm:aspect-[4/3] lg:aspect-square"
+              >
+                {photo ? (
+                  <Image
+                    src={photo}
+                    alt=""
+                    fill
+                    sizes="(max-width: 1024px) 50vw, 25vw"
+                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                ) : (
+                  <div className={`absolute inset-0 bg-gradient-to-br ${tint}`} />
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/75 to-black/10" />
+                <div className="relative space-y-2 p-4">
+                  <Icon className="h-6 w-6 text-white" strokeWidth={1.75} />
+                  <span className="block font-heading text-base font-semibold leading-tight text-white">
+                    {label}
+                  </span>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* CAMPUSES — one swipeable row instead of a wrapping wall */}
+      <section className="py-2 lg:py-6">
+        <div className="mx-auto max-w-[var(--content-max)] space-y-3 px-4 sm:px-6 lg:px-8">
+          <h2 className="font-heading text-lg font-bold text-text-main">Near your campus</h2>
+          <div className="-mx-4 flex snap-x snap-mandatory gap-2 overflow-x-auto px-4 pb-2 sm:mx-0 sm:flex-wrap sm:px-0 [&::-webkit-scrollbar]:hidden">
+            {collegeChips.map(c => (
+              <Link
+                key={c.slug}
+                href={`/search?college=${c.slug}`}
+                className="inline-flex min-h-[44px] shrink-0 snap-start items-center rounded-full border border-border bg-light px-4 text-sm font-medium text-text-main transition-colors hover:border-primary-strong hover:text-primary-strong"
+              >
+                {c.shortName || c.name}
+              </Link>
+            ))}
           </div>
 
           {locations.length > 0 && (
-            <div className="space-y-3 pt-4 border-t border-border">
-              <div className="flex flex-wrap gap-2">
-                {locations.map(loc => (
-                  <Link 
-                    key={loc} 
-                    href={`/search?location=${encodeURIComponent(loc)}`}
-                    className="px-4 min-h-[44px] inline-flex items-center bg-light border border-border rounded-full text-sm font-medium text-text-main hover:border-primary-strong hover:text-primary-strong transition-colors"
-                  >
-                    {loc}
-                  </Link>
-                ))}
-              </div>
+            <div className="-mx-4 flex snap-x snap-mandatory gap-2 overflow-x-auto px-4 pb-2 sm:mx-0 sm:flex-wrap sm:px-0 [&::-webkit-scrollbar]:hidden">
+              {locations.map(loc => (
+                <Link
+                  key={loc}
+                  href={`/search?location=${encodeURIComponent(loc)}`}
+                  className="inline-flex min-h-[44px] shrink-0 snap-start items-center rounded-full border border-border bg-light px-4 text-sm font-medium text-text-muted transition-colors hover:border-primary-strong hover:text-primary-strong"
+                >
+                  {loc}
+                </Link>
+              ))}
             </div>
           )}
-
-          <div className="space-y-3 pt-4 border-t border-border">
-            <h2 className="text-sm font-semibold text-text-muted uppercase tracking-wider">What are you looking for?</h2>
-            <div className="flex flex-wrap gap-2">
-              <Link href="/search?genderPreference=Female" className="px-4 min-h-[44px] inline-flex items-center bg-light border border-border rounded-full text-sm font-medium text-text-main hover:border-primary-strong hover:text-primary-strong transition-colors">
-                Girls PG
-              </Link>
-              <Link href="/search?genderPreference=Male" className="px-4 min-h-[44px] inline-flex items-center bg-light border border-border rounded-full text-sm font-medium text-text-main hover:border-primary-strong hover:text-primary-strong transition-colors">
-                Boys PG
-              </Link>
-              <Link href="/search?food=yes" className="px-4 min-h-[44px] inline-flex items-center bg-light border border-border rounded-full text-sm font-medium text-text-main hover:border-primary-strong hover:text-primary-strong transition-colors">
-                With mess
-              </Link>
-              <Link href="/search?maxPrice=6000" className="px-4 min-h-[44px] inline-flex items-center bg-light border border-border rounded-full text-sm font-medium text-text-main hover:border-primary-strong hover:text-primary-strong transition-colors">
-                Under ₹6,000
-              </Link>
-            </div>
-          </div>
         </div>
       </section>
 
-      {/* RECENTLY ADDED */}
+      {/* RECENTLY ADDED — swipe row on mobile, grid from sm up */}
       {recentRooms.length > 0 && (
-        <section className="mb-16 lg:mb-24">
-          <div className="max-w-[var(--content-max)] mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between mb-8">
-              <h2 className="text-2xl font-bold text-text-main font-heading">Recently added</h2>
-              <Link href="/search" className="text-primary-strong font-medium hover:underline">View all →</Link>
+        <section className="py-10 lg:py-16">
+          <div className="mx-auto max-w-[var(--content-max)] px-4 sm:px-6 lg:px-8">
+            <div className="mb-5 flex items-baseline justify-between gap-4">
+              <h2 className="font-heading text-xl font-bold text-text-main lg:text-2xl">Recently added</h2>
+              <Link href="/search" className="inline-flex items-center gap-1 text-sm font-medium text-primary-strong hover:underline">
+                View all <ArrowRight className="h-4 w-4" />
+              </Link>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 lg:grid-cols-3 lg:gap-6 [&::-webkit-scrollbar]:hidden">
               {recentRooms.map(room => (
-                <RoomCard key={room.id} room={room} />
+                <div key={room.id} className="w-[78vw] shrink-0 snap-start sm:w-auto">
+                  <RoomCard room={room} />
+                </div>
               ))}
             </div>
           </div>
         </section>
       )}
 
-      {/* HOW THIS WORKS */}
-      <section className="mb-16 lg:mb-24 bg-light py-16 lg:py-24 border-y border-border">
-        <div className="max-w-[var(--content-max)] mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-2xl sm:text-3xl font-bold mb-12 text-text-main font-heading text-center">How this works</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-12">
-            
-            <div className="flex flex-col items-center sm:items-start text-center sm:text-left space-y-4">
-              <div className="w-12 h-12 bg-primary-strong/10 text-primary-strong flex items-center justify-center rounded-full text-xl font-bold">1</div>
-              <h3 className="font-semibold text-text-main text-lg">Aangan visited</h3>
-              <p className="text-text-muted text-sm leading-relaxed">No fake listings. We physically visit every PG and room before it goes on Aangan.</p>
-            </div>
-
-            <div className="flex flex-col items-center sm:items-start text-center sm:text-left space-y-4">
-              <div className="w-12 h-12 bg-primary-strong/10 text-primary-strong flex items-center justify-center rounded-full text-xl font-bold">2</div>
-              <h3 className="font-semibold text-text-main text-lg">We take the photos</h3>
-              <p className="text-text-muted text-sm leading-relaxed">Including the bathroom. No wide-angle tricks, just honest photos of where you&apos;ll live.</p>
-            </div>
-
-            <div className="flex flex-col items-center sm:items-start text-center sm:text-left space-y-4">
-              <div className="w-12 h-12 bg-primary-strong/10 text-primary-strong flex items-center justify-center rounded-full text-xl font-bold">3</div>
-              <h3 className="font-semibold text-text-main text-lg">You call Aangan</h3>
-              <p className="text-text-muted text-sm leading-relaxed">One number for every room on this site. We check it is still free and fix a time to show you.</p>
-            </div>
-
-            <div className="flex flex-col items-center sm:items-start text-center sm:text-left space-y-4">
-              <div className="w-12 h-12 bg-primary-strong/10 text-primary-strong flex items-center justify-center rounded-full text-xl font-bold">4</div>
-              <h3 className="font-semibold text-text-main text-lg">You pay us nothing</h3>
-              <p className="text-text-muted text-sm leading-relaxed">Zero brokerage. Zero hidden fees. You only pay rent directly to your PG owner.</p>
-            </div>
-
+      {/* HOW THIS WORKS — four short lines, not four paragraphs */}
+      <section className="border-y border-border bg-light py-10 lg:py-16">
+        <div className="mx-auto max-w-[var(--content-max)] px-4 sm:px-6 lg:px-8">
+          <h2 className="mb-6 font-heading text-xl font-bold text-text-main lg:mb-10 lg:text-2xl">How this works</h2>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-6 lg:grid-cols-4 lg:gap-8">
+            {STEPS.map(({ Icon, title, body }) => (
+              <div key={title} className="space-y-2">
+                <Icon className="h-7 w-7 text-primary-strong" strokeWidth={1.75} />
+                <h3 className="font-semibold leading-snug text-text-main">{title}</h3>
+                <p className="text-sm leading-relaxed text-text-muted">{body}</p>
+              </div>
+            ))}
           </div>
-          
-          <div className="mt-12 text-center">
-            <Link href="/verification" className="text-primary-strong font-medium hover:underline inline-flex items-center gap-1">
-              See exactly how we verify rooms &rarr;
-            </Link>
-          </div>
+          <Link href="/verification" className="mt-8 inline-flex items-center gap-1 font-medium text-primary-strong hover:underline">
+            How we verify <ArrowRight className="h-4 w-4" />
+          </Link>
         </div>
       </section>
 
       {/* OWNER CTA */}
-      <section className="mb-16 lg:mb-24">
-        <div className="max-w-[var(--content-max)] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-text-main text-white rounded-2xl p-8 sm:p-12 flex flex-col md:flex-row items-center justify-between gap-8 shadow-xl">
-            <div className="space-y-4 max-w-xl text-center md:text-left">
-              <h2 className="text-2xl sm:text-3xl font-bold font-heading">Are you a PG owner?</h2>
-              <p className="text-slate-300 text-lg">
-                List your property on Aangan to get verified leads directly on your WhatsApp.
-              </p>
+      <section className="py-10 lg:py-16">
+        <div className="mx-auto max-w-[var(--content-max)] px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col items-start gap-6 rounded-2xl bg-text-main p-6 text-white shadow-xl sm:p-10 md:flex-row md:items-center md:justify-between">
+            <div className="space-y-2">
+              <h2 className="font-heading text-xl font-bold sm:text-2xl">Own a PG?</h2>
+              <p className="text-slate-300">Verified leads straight to your WhatsApp.</p>
             </div>
-            <ListPgButton size="lg" className="shrink-0 bg-white text-text-main hover:bg-slate-100 font-medium border-none shadow-sm">
+            <ListPgButton size="lg" className="w-full shrink-0 border-none bg-white font-medium text-text-main shadow-sm hover:bg-slate-100 md:w-auto">
               List your PG
             </ListPgButton>
           </div>

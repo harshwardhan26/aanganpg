@@ -33,18 +33,43 @@ export async function uploadImage(file: File): Promise<string> {
     throw new Error(UPLOAD_UNAVAILABLE);
   }
 
+  let uploadBlob: Blob = file;
+  let filename = file.name;
+  
+  if (file.type.startsWith('image/')) {
+    try {
+      uploadBlob = await downscaleImage(file);
+      filename = filename.replace(/\.[^/.]+$/, "") + ".jpg";
+    } catch (e) {
+      console.warn('[upload] Downscaling failed, falling back to original file:', e);
+    }
+  }
+
   const form = new FormData();
-  form.append('file', file);
+  form.append('file', uploadBlob, filename);
   form.append('upload_preset', UPLOAD_PRESET!);
 
-  let res: Response;
-  try {
-    res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
-      method: 'POST',
-      body: form,
-    });
-  } catch {
-    // Network-level failure — distinct from Cloudinary rejecting the file.
+  let res: Response | null = null;
+  let attempt = 0;
+  
+  while (attempt < 2) {
+    try {
+      res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
+        method: 'POST',
+        body: form,
+      });
+      break; // Network success, proceed to check res.ok
+    } catch (e) {
+      attempt++;
+      if (attempt >= 2) {
+        throw new Error('Could not reach the image server. Check your connection and try again.');
+      }
+      // Brief pause before retry
+      await new Promise(r => setTimeout(r, 1000));
+    }
+  }
+  
+  if (!res) {
     throw new Error('Could not reach the image server. Check your connection and try again.');
   }
 
@@ -67,4 +92,41 @@ export async function uploadImage(file: File): Promise<string> {
   const data = await res.json();
   if (!data?.secure_url) throw new Error('Image upload failed. Please try again.');
   return data.secure_url as string;
+}
+
+async function downscaleImage(file: File): Promise<Blob> {
+  const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
+  
+  let width = bitmap.width;
+  let height = bitmap.height;
+  const maxEdge = 1600;
+
+  if (width > maxEdge || height > maxEdge) {
+    if (width > height) {
+      height = Math.round((height * maxEdge) / width);
+      width = maxEdge;
+    } else {
+      width = Math.round((width * maxEdge) / height);
+      height = maxEdge;
+    }
+  }
+
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('Could not get canvas context');
+  
+  ctx.drawImage(bitmap, 0, 0, width, height);
+  
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => {
+        if (blob) resolve(blob);
+        else reject(new Error('Canvas to Blob failed'));
+      },
+      'image/jpeg',
+      0.82
+    );
+  });
 }

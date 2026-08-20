@@ -8,8 +8,10 @@ export const metadata: Metadata = {
     canonical: "/terms"
   }
 };
+import { getGrievanceOfficer } from "@/lib/contact";
 
 export default function TermsPage() {
+  const grievance = getGrievanceOfficer();
   return (
     <main className="min-h-screen bg-white py-12 lg:py-24">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
@@ -31,10 +33,21 @@ export default function TermsPage() {
           <h2 className="text-xl font-bold text-slate-800 pt-4">3. User Responsibilities</h2>
           <p>Users are responsible for verifying the details of any accommodation before making a financial commitment. Aangan Rooms acts as a discovery platform and is not a party to any rental agreements.</p>
           
-          <h2 className="text-xl font-bold text-slate-800 pt-4">4. Content and Accuracy</h2>
+          <h2 className="text-xl font-bold text-slate-800 pt-4">4. Not an Agent</h2>
+          <p>Aangan lists properties for discovery. We are not a broker, agent, or party to any rent agreement. We do not handle rent, deposit, or booking money, and we charge students nothing. The accuracy of rent, availability, and facilities is the sole responsibility of the listing owner.</p>
+          
+          <h2 className="text-xl font-bold text-slate-800 pt-4">5. Content and Accuracy</h2>
           <p>While we physically verify properties and take our own photographs, we do not guarantee that the property will perfectly match at the time of your visit. Availability and prices change frequently.</p>
           
-          <h2 className="text-xl font-bold text-slate-800 pt-4">5. Contact</h2>
+          <h2 className="text-xl font-bold text-slate-800 pt-4">6. Grievance Officer</h2>
+          <p>In accordance with the Information Technology (Intermediary Guidelines and Digital Media Ethics Code) Rules, 2021, the name and contact details of the Grievance Officer are provided below. Complaints will be acknowledged within 24 hours and resolved within 15 days.</p>
+          <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 mt-2">
+            <p className="font-semibold text-slate-800">{grievance.name}</p>
+            <p>Email: <a href={`mailto:${grievance.email}`} className="text-primary-strong hover:underline">{grievance.email}</a></p>
+            <p>Address: {grievance.address}</p>
+          </div>
+          
+          <h2 className="text-xl font-bold text-slate-800 pt-4">7. Contact</h2>
           <p>If you have any questions about these Terms, please <Link href="/about" className="text-primary-strong hover:underline">contact us</Link>.</p>
         </div>
       </div>

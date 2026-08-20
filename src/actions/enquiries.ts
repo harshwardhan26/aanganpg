@@ -1,6 +1,8 @@
 "use server";
 
 import { headers } from 'next/headers';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
 import { prisma } from '@/lib/prisma';
@@ -31,9 +33,15 @@ async function processEnquiry(data: {
     }
   }
 
-  // If there's no name and no phone, this is just a click counter.
+  const session = await getServerSession(authOptions);
+  
+  // Use session data if available (session value always wins)
+  const name = session?.user?.name || data.name || "Student";
+  const rawPhone = session?.user?.phone || data.phone;
+
+  // If there's no phone, this is an unauthenticated caller.
   // We fire a PostHog event and write nothing else.
-  if (!data.name || !data.phone) {
+  if (!rawPhone) {
     const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
     if (posthogKey) {
       await fetch('https://us.i.posthog.com/capture/', {
@@ -53,8 +61,7 @@ async function processEnquiry(data: {
     return { success: true };
   }
 
-  // This is a form submission (or a referral with contact details).
-  const phone = canonicalPhone(data.phone);
+  const phone = canonicalPhone(rawPhone);
   if (!phone) {
     return { error: 'Please enter a valid phone number.' };
   }
@@ -75,7 +82,7 @@ async function processEnquiry(data: {
   } else {
     await prisma.lead.create({
       data: {
-        name: data.name,
+        name,
         phone,
         propertyId: data.propertyId,
         source: data.channel
@@ -87,7 +94,7 @@ async function processEnquiry(data: {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          content: `🚨 **New Lead from ${data.name}**\nPhone: ${phone}\nProperty ID: \`${data.propertyId}\`\nSource: ${data.channel}`
+          content: `🚨 **New Lead from ${name}**\nPhone: ${phone}\nProperty ID: \`${data.propertyId}\`\nSource: ${data.channel}`
         })
       }).catch((e) => console.error("Webhook failed:", e));
     }

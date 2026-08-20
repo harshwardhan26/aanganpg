@@ -8,7 +8,7 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Phone, MessageCircle } from 'lucide-react';
-import { telLink, whatsappLink } from '@/lib/whatsapp';
+import { telLink, whatsappLink, buildPropertyPrefill, type PrefillData } from '@/lib/whatsapp';
 import { getAanganPhone } from '@/lib/contact';
 
 import { trackEvent } from '@/lib/posthog';
@@ -24,16 +24,15 @@ interface EnquiryActionsProps {
       mismatch waiting to happen. */
   listingUrl?: string | null;
   variant?: 'full' | 'primary-only' | 'secondary-only';
+  ownerPhone?: string | null;
+  prefillData?: PrefillData;
 }
 
 /**
- * Every contact route on a listing goes to Aangan, never to the owner.
- *
- * The owner's number is stored on the listing and is required to publish, but a
- * student never sees it: a student who calls the owner direct and closes the
- * deal in the doorway is a deal Aangan never knew happened.
+ * Call reaches the owner directly, WhatsApp reaches Aangan, both require sign-in first, 
+ * and the point of the gate is the lead record.
  */
-export function EnquiryActions({ propertyId, title, displayPrice, location, listingUrl, variant = 'full' }: EnquiryActionsProps) {
+export function EnquiryActions({ propertyId, title, displayPrice, location, listingUrl, variant = 'full', ownerPhone, prefillData }: EnquiryActionsProps) {
   const { status } = useSession();
   const { openAuthSheet } = useAuthSheet();
   const aanganPhone = getAanganPhone();
@@ -93,23 +92,32 @@ export function EnquiryActions({ propertyId, title, displayPrice, location, list
       {variant !== 'secondary-only' && (
         <div className="grid grid-cols-2 gap-3">
         <a 
-          href={telLink(aanganPhone) || '#'}
-          className={cn(buttonVariants({ variant: 'outline' }), "w-full text-text-main border-border h-12")}
-          onClick={handleCall}
+          href={telLink(ownerPhone) || '#'}
+          className={cn(buttonVariants({ variant: 'outline' }), "w-full text-text-main border-border h-12", !ownerPhone && "opacity-50 cursor-not-allowed")}
+          onClick={(e) => {
+            if (!ownerPhone) {
+              e.preventDefault();
+              alert('Owner phone not available');
+              return;
+            }
+            handleCall(e);
+          }}
         >
           <Phone className="mr-2 h-5 w-5" />
-          Call Aangan
+          Call Owner
         </a>
         <a
           href={
             whatsappLink(
               aanganPhone,
-              [
-                `I want to see this room — "${title}"${displayPrice ? `, ${displayPrice}` : ''}`,
-                listingUrl,
-              ]
-                .filter(Boolean)
-                .join('\n'),
+              prefillData
+                ? buildPropertyPrefill(prefillData)
+                : [
+                    `I want to see this room — "${title}"${displayPrice ? `, ${displayPrice}` : ''}`,
+                    listingUrl,
+                  ]
+                    .filter(Boolean)
+                    .join('\n')
             ) || '#'
           }
           target="_blank"

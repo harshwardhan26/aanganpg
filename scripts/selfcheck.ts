@@ -1,9 +1,11 @@
 import assert from "node:assert";
 import { canonicalPhone } from "../src/lib/phone";
+import { buildPropertyPrefill } from "../src/lib/whatsapp";
 import { slugify, resolveSlug } from "../src/lib/slug";
 import { pgPublishIssues } from "../src/lib/property-options";
 import { buildRoomWhere, buildRoomOrderBy } from "../src/lib/room-filters";
 import { cloudinaryUrl } from "../src/lib/image";
+import { publicImage } from "../src/lib/publicImage";
 
 try { process.loadEnvFile(); } catch {}
 
@@ -155,6 +157,22 @@ async function main() {
   // cloudinaryUrl tests
   assert(cloudinaryUrl("https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg", 400) === "https://res.cloudinary.com/demo/image/upload/f_auto,q_auto,w_400/v1312461204/sample.jpg", "cloudinaryUrl rewrites properly");
   assert(cloudinaryUrl("https://example.com/image.jpg", 400) === "https://example.com/image.jpg", "cloudinaryUrl ignores non-cloudinary");
+
+  // publicImage tests
+  assert(publicImage("logo-icon.png") === "/logo-icon.png", "publicImage resolves an existing file");
+  assert(publicImage("images/definitely-not-here.jpg") === null, "publicImage returns null for a missing file");
+
+  // buildPropertyPrefill tests
+  const prefill = buildPropertyPrefill({
+    title: "Testing PG",
+    deposit: null,
+    foodType: null,
+    listingUrl: "https://aangan.com/pg/testing-pg"
+  });
+  assert(!prefill.includes("Deposit:"), "Prefill should not include Deposit label if null");
+  assert(!prefill.includes("Jevan:"), "Prefill should not include Jevan label if null");
+  assert(prefill.includes("Testing PG"), "Prefill should include title");
+  assert(prefill.includes("https://aangan.com/pg/testing-pg"), "Prefill should include URL");
 
   console.log("Self check passed");
 }

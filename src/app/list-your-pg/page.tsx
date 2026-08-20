@@ -5,7 +5,7 @@ import { Phone, MessageCircle, CheckCircle2, AlertCircle } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "List Your PG or Room | Aangan Kolhapur",
-  description: "List your Kolhapur PG or hostel on Aangan for free. We photograph your rooms and bring students to your door.",
+  description: "List your Kolhapur PG or hostel on Aangan. Free photographs and free listing this season. Students contact you directly.",
   alternates: {
     canonical: "/list-your-pg"
   }
@@ -42,24 +42,20 @@ export default function ListYourPgPage() {
                   <div className="flex h-10 w-10 bg-green-100 text-green-700 rounded-full items-center justify-center shrink-0">
                     <CheckCircle2 className="h-5 w-5" />
                   </div>
-                  What we do
+                  How it works
                 </h3>
                 <ul className="space-y-4 text-text-muted">
                   <li className="flex items-start gap-3">
                     <span className="h-6 w-6 rounded-full bg-light flex items-center justify-center shrink-0 mt-0.5 border border-border text-text-main text-xs font-semibold">1</span>
-                    <span>We photograph your rooms <strong className="text-text-main">for free</strong>.</span>
+                    <span>Free photographs and free listing <strong className="text-text-main">this season</strong>. We plan to charge later with prior notice.</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <span className="h-6 w-6 rounded-full bg-light flex items-center justify-center shrink-0 mt-0.5 border border-border text-text-main text-xs font-semibold">2</span>
-                    <span>Listing your property is <strong className="text-text-main">100% free</strong>.</span>
+                    <span><strong className="text-text-main">No money changes hands through Aangan.</strong> Rent, deposit and every rupee go directly from the student to you.</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <span className="h-6 w-6 rounded-full bg-light flex items-center justify-center shrink-0 mt-0.5 border border-border text-text-main text-xs font-semibold">3</span>
-                    <span>Students contact Aangan. We <strong className="text-text-main">bring them to you</strong>.</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <span className="h-6 w-6 rounded-full bg-light flex items-center justify-center shrink-0 mt-0.5 border border-border text-text-main text-xs font-semibold">4</span>
-                    <span>You only meet students who have <strong className="text-text-main">already seen the room</strong> and asked to visit.</span>
+                    <span><strong className="text-text-main">The student contacts you directly.</strong> There is no middleman and no appointment through Aangan.</span>
                   </li>
                 </ul>
               </div>
@@ -70,16 +66,16 @@ export default function ListYourPgPage() {
                   <div className="flex h-10 w-10 bg-amber-100 text-amber-700 rounded-full items-center justify-center shrink-0">
                     <AlertCircle className="h-5 w-5" />
                   </div>
-                  What we ask
+                  What to expect
                 </h3>
                 <ul className="space-y-4 text-text-muted">
                   <li className="flex items-start gap-3">
                     <div className="h-2 w-2 rounded-full bg-amber-400 shrink-0 mt-2"></div>
-                    <span>Let us visit your property <strong className="text-text-main">at least once</strong> for verification.</span>
+                    <span>A photo visit takes <strong className="text-text-main">about twenty minutes</strong>. We come in person.</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <div className="h-2 w-2 rounded-full bg-amber-400 shrink-0 mt-2"></div>
-                    <span>Answer a student&apos;s call or message within <strong className="text-text-main">about an hour</strong>.</span>
+                    <span>You are in control. You can remove your listing with <strong className="text-text-main">one phone call</strong> and it comes down.</span>
                   </li>
                 </ul>
               </div>

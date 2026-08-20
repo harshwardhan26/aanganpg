@@ -26,7 +26,7 @@ export const metadata: Metadata = {
   },
   description:
     "PGs, hostels and student rooms near every college in Kolhapur. Every one visited in " +
-    "person and photographed by us. Call Aangan and we arrange the visit. Students pay " +
+    "person and photographed by us. Contact owners directly. Students pay " +
     "no brokerage.",
 };
 

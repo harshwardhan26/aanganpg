@@ -129,12 +129,17 @@ model Lead {
   propertyId String?
   property   Property? @relation(fields: [propertyId], references: [id])
   status     String    @default("New")
+  stage      String    @default("NEW")
   source     String    @default("contact")
   notes      String?
+  followupDate  DateTime?
+  lastMessageAt DateTime?
+  rawMessage    String?
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
 
   @@index([phone, propertyId])
+  @@index([propertyId, createdAt])
 }
 
 model SavedProperty {

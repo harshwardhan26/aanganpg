@@ -75,11 +75,16 @@ export function Footer() {
                   Privacy Policy
                 </Link>
               </li>
+              <li>
+                <Link href="/terms" className="block py-2 hover:text-white transition-colors">
+                  Grievance Officer
+                </Link>
+              </li>
             </ul>
           </div>
         </div>
         <div className="mt-12 pt-8 border-t border-light/20 text-sm text-light/70 flex items-center justify-between">
-          <p>&copy; {new Date().getFullYear()} Aangan. Students pay us nothing.</p>
+          <p suppressHydrationWarning>&copy; {new Date().getFullYear()} Aangan. Students pay us nothing.</p>
         </div>
       </div>
     </footer>

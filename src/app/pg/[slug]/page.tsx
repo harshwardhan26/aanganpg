@@ -56,7 +56,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     description:
       room.description ||
       `${room.occupancyType ?? "Student"} room${near} in Kolhapur at ${rupees(room.price)} a month. ` +
-        `Visited in person by Aangan. Call Aangan to see it — students pay no brokerage.`,
+        `Visited in person by Aangan. Contact the owner directly to see it — students pay no brokerage.`,
     alternates: { canonical: `/pg/${room.slug}` },
     openGraph: ogImage
       ? { images: [{ url: ogImage, width: 1200, height: 675, alt: room.title }] }
@@ -111,6 +111,19 @@ export default async function RoomPage({ params }: Props) {
         ? "https://schema.org/SoldOut"
         : "https://schema.org/InStock",
     },
+  };
+
+  const prefillData = {
+    title: room.title,
+    displayPrice: priceLabel,
+    location: room.location,
+    landmark: room.landmark,
+    occupancyType: room.occupancyType,
+    genderPreference: room.genderPreference,
+    deposit: room.deposit,
+    foodType: room.foodType,
+    walkMinutes: room.walkMinutes,
+    listingUrl,
   };
 
   return (
@@ -285,8 +298,8 @@ export default async function RoomPage({ params }: Props) {
           <aside className="mt-10 lg:mt-0">
             <div className="hidden rounded-xl border border-border border-t-4 border-t-primary-strong bg-white p-5 shadow-md lg:sticky lg:top-24 lg:block">
               <p className="mb-4 text-sm leading-relaxed text-text-muted">
-                Tell Aangan you want to see this room and we arrange the visit with{" "}
-                {room.ownerName || "the owner"}. Students pay us nothing.
+                Contact {room.ownerName || "the owner"} directly to see this room.
+                <strong className="block mt-2 text-text-main font-medium">Safety note: Aangan never asks a student for money, and never collects booking amounts or deposits.</strong>
               </p>
               <EnquiryActions
                 propertyId={room.id}
@@ -294,6 +307,8 @@ export default async function RoomPage({ params }: Props) {
                 displayPrice={priceLabel}
                 location={room.location}
                 listingUrl={listingUrl}
+                ownerPhone={room.ownerPhone}
+                prefillData={prefillData}
               />
             </div>
 
@@ -305,6 +320,8 @@ export default async function RoomPage({ params }: Props) {
                 displayPrice={priceLabel}
                 location={room.location}
                 listingUrl={listingUrl}
+                ownerPhone={room.ownerPhone}
+                prefillData={prefillData}
                 variant="secondary-only"
               />
             </div>
@@ -318,6 +335,8 @@ export default async function RoomPage({ params }: Props) {
                 displayPrice={priceLabel}
                 location={room.location}
                 listingUrl={listingUrl}
+                ownerPhone={room.ownerPhone}
+                prefillData={prefillData}
                 variant="primary-only"
               />
             </div>

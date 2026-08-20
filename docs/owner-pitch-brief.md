@@ -197,20 +197,16 @@ Write the answers down the same day.
 
 ---
 
-## 10. Season — say this out loud to yourself before you start
+## 10. Season — CORRECTED 19 August, read `september-window.md`
 
-It is late August. The main admission rush is largely over for this year. Most
-students who needed a room in June and July already have one.
+The earlier version of this section said the admission rush was over. That was
+wrong. MHT-CET CAP Round III and IV and the institute-level round all run
+between now and the 15 September cut-off, and each allotment date puts a fresh
+group of students in Kolhapur with three or four days to find a room.
 
-That is not a reason to wait. It is a reason to change the pitch:
-
-> "आत्ता सिझन संपत आलाय, म्हणूनच आत्ता फोटो काढून ठेवू. पुढच्या वर्षी जून-जुलैला
-> तुमची रूम तयार असेल — आणि तोपर्यंत मधल्या काळात कोणी विद्यार्थी आला तर तो
-> तुमच्याकडेच येईल."
-
-Signing owners now and photographing now means you enter next June with a full
-catalogue instead of an empty site. That is the real goal of this month's
-meetings — not revenue.
+The calendar, the three arrival waves, and the deadline-based pitch that
+replaces the one in section 2 are all in **`docs/september-window.md`**. Read
+that before any meeting. Where the two files disagree, that one is right.
 
 ---
 
