@@ -24,7 +24,7 @@ const PICKS = [
   { href: '/search?genderPreference=Female', label: 'Girls PG', file: 'images/pick-girls.jpg', Icon: UserRound, tint: 'from-[#cc4040] to-[#8f2b2b]' },
   { href: '/search?genderPreference=Male', label: 'Boys PG', file: 'images/pick-boys.jpg', Icon: Users, tint: 'from-slate-700 to-slate-900' },
   { href: '/search?food=yes', label: 'With mess', file: 'images/pick-mess.jpg', Icon: UtensilsCrossed, tint: 'from-amber-700 to-amber-900' },
-  { href: '/search?maxPrice=6000', label: 'Under ₹6,000', file: 'images/pick-budget.jpg', Icon: IndianRupee, tint: 'from-emerald-700 to-emerald-900' },
+  { href: '/search?maxPrice=3000', label: 'Under ₹3,000', file: 'images/pick-budget.jpg', Icon: IndianRupee, tint: 'from-emerald-700 to-emerald-900' },
 ];
 
 const STEPS = [
