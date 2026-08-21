@@ -1,5 +1,6 @@
 import prisma from "@/lib/prisma";
 import Link from "next/link";
+import LeadRow from "./LeadRow";
 
 export default async function AdminLeadsPage() {
   // Fetch properties that have leads
@@ -53,28 +54,9 @@ export default async function AdminLeadsPage() {
                 </div>
               </div>
               
-              <div className="divide-y divide-slate-100">
+              <div className="flex flex-col">
                 {property.leads.map(lead => (
-                  <div key={lead.id} className="px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 hover:bg-slate-50 transition-colors">
-                    <div>
-                      <p className="font-semibold text-slate-900">{lead.name}</p>
-                      <p className="text-slate-600 font-mono text-sm">{lead.phone}</p>
-                      {lead.notes && <p className="text-slate-500 text-sm italic mt-1">{lead.notes}</p>}
-                    </div>
-                    <div className="text-left sm:text-right">
-                      <span className="inline-block bg-slate-200 text-slate-700 text-xs px-2 py-0.5 rounded uppercase tracking-wider font-semibold mb-1">
-                        {lead.source}
-                      </span>
-                      <p className="text-slate-400 text-xs">
-                        {lead.createdAt.toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
-                      </p>
-                      <div className="mt-1">
-                         <span className={`inline-block text-xs px-2 py-0.5 rounded font-semibold ${lead.status === 'New' ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-600'}`}>
-                           {lead.status}
-                         </span>
-                      </div>
-                    </div>
-                  </div>
+                  <LeadRow key={lead.id} lead={lead} />
                 ))}
               </div>
             </div>

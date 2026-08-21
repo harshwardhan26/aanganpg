@@ -295,6 +295,45 @@ export async function updateLeadStatus(id: string, status: string) {
   revalidatePath("/admin/leads");
 }
 
+const leadUpdateSchema = z.object({
+  notes: z.string().nullable().optional(),
+  stage: z.string().optional(),
+  followupDate: z.date().nullable().optional(),
+});
+
+export async function updateLeadDetails(id: string, rawData: unknown) {
+  await requireAdmin();
+  const parsed = leadUpdateSchema.safeParse(rawData);
+  if (!parsed.success) throw new Error("Invalid lead data");
+
+  const data = parsed.data;
+  
+  // Webhook notification for CONVERTED
+  if (data.stage === 'CONVERTED') {
+    const existing = await prisma.lead.findUnique({ where: { id }, include: { property: true } });
+    if (existing && existing.stage !== 'CONVERTED' && process.env.LEAD_WEBHOOK_URL) {
+      fetch(process.env.LEAD_WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content: `🎉 **LEAD CONVERTED!** 🎉\n${existing.name} (${existing.phone}) has moved in to ${existing.property?.title || 'a PG'}! Great job.`
+        })
+      }).catch((e) => console.error("Webhook failed:", e));
+    }
+  }
+
+  await prisma.lead.update({
+    where: { id },
+    data: {
+      ...(data.notes !== undefined && { notes: data.notes }),
+      ...(data.stage !== undefined && { stage: data.stage }),
+      ...(data.followupDate !== undefined && { followupDate: data.followupDate }),
+    }
+  });
+
+  revalidatePath("/admin/leads");
+}
+
 export async function promoteUser(phoneInput: string) {
   await requireAdmin();
   const phone = canonicalPhone(phoneInput);
