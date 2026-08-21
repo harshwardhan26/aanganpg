@@ -56,6 +56,16 @@ function AuthSheet({ open, onOpenChange, onSuccess }: { open: boolean, onOpenCha
       setPhone("");
       setCode("");
       setError("");
+      
+      if (window.recaptchaVerifier) {
+        try {
+          window.recaptchaVerifier.clear();
+        } catch (e) {
+          // ignore error during cleanup
+        }
+        // @ts-expect-error - reset to undefined
+        window.recaptchaVerifier = undefined;
+      }
     }
   }, [open]);
 
@@ -174,10 +184,12 @@ function AuthSheet({ open, onOpenChange, onSuccess }: { open: boolean, onOpenCha
 
             {/* Recaptcha */}
             <div id="recaptcha-container" ref={(el) => {
-              if (el && !window.recaptchaVerifier) {
-                window.recaptchaVerifier = new RecaptchaVerifier(auth, el, {
-                  size: 'invisible',
-                });
+              if (el) {
+                if (!window.recaptchaVerifier) {
+                  window.recaptchaVerifier = new RecaptchaVerifier(auth, el, {
+                    size: 'invisible',
+                  });
+                }
               }
             }}></div>
 
