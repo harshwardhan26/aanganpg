@@ -59,7 +59,7 @@ function AuthSheet({ open, onOpenChange, onSuccess }: { open: boolean, onOpenCha
       
       if (window.recaptchaVerifier) {
         try {
-          window.recaptchaVerifier.clear();
+          (window.recaptchaVerifier as RecaptchaVerifier).clear();
         } catch (e) {
           // ignore error during cleanup
         }
