@@ -103,7 +103,16 @@ function AuthSheet({ open, onOpenChange, onSuccess }: { open: boolean, onOpenCha
       setStep("code");
     } catch (e: unknown) {
       console.error(e);
-      setError((e as Error).message || "Something went wrong.");
+      const msg = (e as Error).message;
+      if (
+        msg === "Please enter a valid Indian phone number." ||
+        msg === "Too many requests. Please try again later." ||
+        msg === "Unable to send OTP."
+      ) {
+        setError(msg);
+      } else {
+        setError("Something went wrong. Our technical team has been notified.");
+      }
     } finally {
       setLoading(false);
     }
