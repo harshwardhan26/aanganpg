@@ -1,16 +1,21 @@
 "use server";
 
+import { z } from "zod";
 import prisma from "@/lib/prisma";
-import { buildRoomWhere, buildRoomOrderBy, type RoomFilters } from "@/lib/room-filters";
+import { buildRoomWhere, buildRoomOrderBy, roomFiltersSchema, type RoomFilters } from "@/lib/room-filters";
 
 export type { RoomFilters };
 
+const slugSchema = z.string().min(1);
+
 export async function getRooms(filters: RoomFilters = {}) {
+  const parsed = roomFiltersSchema.safeParse(filters);
+  if (!parsed.success) throw new Error("Invalid filters");
   return prisma.property.findMany({
-    where: buildRoomWhere(filters),
+    where: buildRoomWhere(parsed.data),
     take: 50,
     include: { college: true, images: true },
-    orderBy: buildRoomOrderBy(filters),
+    orderBy: buildRoomOrderBy(parsed.data),
   });
 }
 
@@ -22,8 +27,10 @@ export async function getRooms(filters: RoomFilters = {}) {
  * end. Only soft-deleted rows disappear.
  */
 export async function getRoomBySlug(slug: string) {
+  const parsed = slugSchema.safeParse(slug);
+  if (!parsed.success) return null;
   return prisma.property.findUnique({
-    where: { slug, deletedAt: null },
+    where: { slug: parsed.data, deletedAt: null },
     include: { college: true, images: true },
   });
 }
@@ -42,11 +49,15 @@ export async function getColleges() {
 }
 
 export async function getCollegeBySlug(slug: string) {
-  return prisma.college.findUnique({ where: { slug } });
+  const parsed = slugSchema.safeParse(slug);
+  if (!parsed.success) return null;
+  return prisma.college.findUnique({ where: { slug: parsed.data } });
 }
 
 export async function getRoomsNearCollege(slug: string) {
-  return getRooms({ college: slug });
+  const parsed = slugSchema.safeParse(slug);
+  if (!parsed.success) return [];
+  return getRooms({ college: parsed.data });
 }
 
 export async function getLocations() {

@@ -7,6 +7,14 @@ import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
 import { prisma } from '@/lib/prisma';
 import { canonicalPhone } from '@/lib/phone';
+import { z } from 'zod';
+
+const enquiryInputSchema = z.object({
+  propertyId: z.string().min(1),
+  channel: z.enum(['call', 'whatsapp', 'share', 'form', 'referral']),
+  name: z.string().optional(),
+  phone: z.string().optional(),
+});
 
 // Guarded rather than eager: without Upstash configured, dev and the build must
 // still run. Rate limiting is skipped, not faked.
@@ -20,12 +28,10 @@ const ratelimit = redis ? new Ratelimit({
   analytics: true,
 }) : null;
 
-async function processEnquiry(data: {
-  propertyId: string;
-  channel: 'call' | 'whatsapp' | 'share' | 'form' | 'referral';
-  name?: string;
-  phone?: string;
-}, ip: string) {
+async function processEnquiry(raw: unknown, ip: string) {
+  const parsed = enquiryInputSchema.safeParse(raw);
+  if (!parsed.success) return { error: 'Invalid input' };
+  const data = parsed.data;
   if (ratelimit) {
     const { success } = await ratelimit.limit(`enquiry_${ip}`);
     if (!success) {
@@ -103,14 +109,9 @@ async function processEnquiry(data: {
   return { success: true };
 }
 
-export async function recordEnquiry(data: {
-  propertyId: string;
-  channel: 'call' | 'whatsapp' | 'share' | 'form' | 'referral';
-  name?: string;
-  phone?: string;
-}) {
+export async function recordEnquiry(raw: unknown) {
   const headersList = await headers();
   const forwardedFor = headersList.get('x-forwarded-for');
   const ip = forwardedFor ? forwardedFor.split(',')[0].trim() : '127.0.0.1';
-  return processEnquiry(data, ip);
+  return processEnquiry(raw, ip);
 }

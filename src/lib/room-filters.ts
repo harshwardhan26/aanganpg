@@ -1,16 +1,19 @@
+import { z } from "zod";
 import type { Prisma } from "@prisma/client";
 
-export type RoomFilters = {
-  college?: string; // college slug
-  location?: string;
-  genderPreference?: string;
-  maxPrice?: number;
-  food?: "yes" | "no";
-  occupancy?: string;
-  amenities?: string[];
-  rules?: string[];
-  sort?: string;
-};
+export const roomFiltersSchema = z.object({
+  college: z.string().optional(),
+  location: z.string().optional(),
+  genderPreference: z.string().optional(),
+  maxPrice: z.number().optional(),
+  food: z.enum(["yes", "no"]).optional(),
+  occupancy: z.string().optional(),
+  amenities: z.array(z.string()).optional(),
+  rules: z.array(z.string()).optional(),
+  sort: z.string().optional(),
+});
+
+export type RoomFilters = z.infer<typeof roomFiltersSchema>;
 
 /**
  * The `where` clause behind every room listing on the site.

@@ -119,20 +119,53 @@ async function uniqueSlug(title: string, locality: string | null, ownId: string 
 
 export async function markFull(id: string) {
   await requireAdmin();
-  await prisma.property.update({ where: { id }, data: { vacantBeds: 0 } });
+  const property = await prisma.property.update({ 
+    where: { id }, 
+    data: { vacantBeds: 0 },
+    select: { slug: true, college: { select: { slug: true } } }
+  });
+  
+  updateTag(ROOMS_TAG);
   revalidatePath("/admin/listings");
+  revalidatePath("/search");
+  revalidatePath("/");
+  revalidatePath(`/pg/${property.slug}`);
+  if (property.college) revalidatePath(`/kolhapur/${property.college.slug}`);
+  revalidatePath("/sitemap.xml");
 }
 
 export async function markClosed(id: string) {
   await requireAdmin();
-  await prisma.property.update({ where: { id }, data: { closedAt: new Date() } });
+  const property = await prisma.property.update({ 
+    where: { id }, 
+    data: { closedAt: new Date() },
+    select: { slug: true, college: { select: { slug: true } } }
+  });
+  
+  updateTag(ROOMS_TAG);
   revalidatePath("/admin/listings");
+  revalidatePath("/search");
+  revalidatePath("/");
+  revalidatePath(`/pg/${property.slug}`);
+  if (property.college) revalidatePath(`/kolhapur/${property.college.slug}`);
+  revalidatePath("/sitemap.xml");
 }
 
 export async function softDelete(id: string) {
   await requireAdmin();
-  await prisma.property.update({ where: { id }, data: { deletedAt: new Date() } });
+  const property = await prisma.property.update({ 
+    where: { id }, 
+    data: { deletedAt: new Date() },
+    select: { slug: true, college: { select: { slug: true } } }
+  });
+  
+  updateTag(ROOMS_TAG);
   revalidatePath("/admin/listings");
+  revalidatePath("/search");
+  revalidatePath("/");
+  revalidatePath(`/pg/${property.slug}`);
+  if (property.college) revalidatePath(`/kolhapur/${property.college.slug}`);
+  revalidatePath("/sitemap.xml");
 }
 
 

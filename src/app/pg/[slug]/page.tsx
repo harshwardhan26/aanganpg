@@ -85,6 +85,8 @@ export default async function RoomPage({ params }: Props) {
   if (!room) notFound();
 
   const isClosed = room.closedAt != null;
+  const isFull = room.vacantBeds === 0;
+  const showContact = !isClosed && !isFull;
   const nearby = room.college
     ? (await getRoomsNearCollege(room.college.slug)).filter((r) => r.id !== room.id).slice(0, 3)
     : [];
@@ -134,7 +136,7 @@ export default async function RoomPage({ params }: Props) {
   };
 
   return (
-    <main className="bg-white">
+    <main className="bg-white pb-28 lg:pb-0">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -301,7 +303,7 @@ export default async function RoomPage({ params }: Props) {
         </div>
 
         {/* ---------------- contact ---------------- */}
-        {!isClosed && (
+        {showContact && (
           <aside className="mt-10 lg:mt-0">
             <div className="hidden rounded-xl border border-border border-t-4 border-t-primary-strong bg-white p-5 shadow-md lg:sticky lg:top-24 lg:block">
               <p className="mb-4 text-sm leading-relaxed text-text-muted">

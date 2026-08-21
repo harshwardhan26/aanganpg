@@ -4,8 +4,15 @@ import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 
-export async function toggleSavedProperty(propertyId: string, isSaving: boolean) {
+const propertyIdSchema = z.string().min(1);
+
+export async function toggleSavedProperty(rawPropertyId: string, isSaving: boolean) {
+  const parsed = propertyIdSchema.safeParse(rawPropertyId);
+  if (!parsed.success) throw new Error("Invalid property ID");
+  const propertyId = parsed.data;
+
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     throw new Error("You must be logged in to save rooms.");

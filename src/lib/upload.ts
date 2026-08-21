@@ -50,18 +50,18 @@ export async function uploadImage(file: File): Promise<string> {
   form.append('upload_preset', UPLOAD_PRESET!);
 
   let res: Response | null = null;
-  let attempt = 0;
+  const retries = 2;
   
-  while (attempt < 2) {
+  for (let attempt = 0; attempt < retries; attempt++) {
     try {
       res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
         method: 'POST',
         body: form,
       });
       break; // Network success, proceed to check res.ok
-    } catch (e) {
-      attempt++;
-      if (attempt >= 2) {
+    } catch {
+      // Only throw on the final attempt
+      if (attempt === retries - 1) {
         throw new Error('Could not reach the image server. Check your connection and try again.');
       }
       // Brief pause before retry

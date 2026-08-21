@@ -20,7 +20,7 @@ export const authOptions: NextAuthOptions = {
         if (!credentials?.idToken) return null;
 
         // Test admin bypass
-        if (credentials.idToken === "TEST_ADMIN_TOKEN") {
+        if (process.env.NODE_ENV === "development" && credentials.idToken === "TEST_ADMIN_TOKEN") {
           const testPhone = process.env.ADMIN_PHONE || "9999999999";
           let user = await prisma.user.findUnique({ where: { phone: testPhone } });
           if (!user) {
