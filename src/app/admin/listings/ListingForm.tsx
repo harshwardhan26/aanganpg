@@ -97,6 +97,9 @@ export default function ListingForm({
   const [uploadProgress, setUploadProgress] = useState("");
   const [serverIssues, setServerIssues] = useState<string[]>([]);
   const [isRestored, setIsRestored] = useState(false);
+  const [showCustomLocationInput, setShowCustomLocationInput] = useState(
+    Boolean(initialData?.location && !KOLHAPUR_LOCALITIES.includes(initialData.location))
+  );
 
   const storageKey = `aangan-admin-form-${initialData?.id || "new"}`;
 
@@ -107,6 +110,9 @@ export default function ListingForm({
         // eslint-disable-next-line react-hooks/set-state-in-effect
         const parsed = JSON.parse(saved);
         setFormData(prev => ({ ...prev, ...parsed }));
+        if (parsed.location && !KOLHAPUR_LOCALITIES.includes(parsed.location)) {
+          setShowCustomLocationInput(true);
+        }
       }
     } catch (err) {
       console.warn("Failed to restore form data", err);
@@ -123,6 +129,17 @@ export default function ListingForm({
 
   const handleTextChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleLocationSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const val = e.target.value;
+    if (val === "Other") {
+      setShowCustomLocationInput(true);
+      setFormData({ ...formData, location: "" });
+    } else {
+      setShowCustomLocationInput(false);
+      setFormData({ ...formData, location: val });
+    }
   };
 
   const handleAmenityToggle = (amenity: string) => {
@@ -292,10 +309,35 @@ export default function ListingForm({
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Locality</label>
-            <select name="location" value={formData.location} onChange={handleTextChange} className="w-full border rounded-lg p-2 min-h-[44px]">
-              <option value="">Select...</option>
-              {KOLHAPUR_LOCALITIES.map(l => <option key={l} value={l}>{l}</option>)}
-            </select>
+            {!showCustomLocationInput ? (
+              <select 
+                value={formData.location} 
+                onChange={handleLocationSelect} 
+                className="w-full border rounded-lg p-2 min-h-[44px]"
+              >
+                <option value="">Select...</option>
+                {KOLHAPUR_LOCALITIES.map(l => <option key={l} value={l}>{l}</option>)}
+                <option value="Other">Other...</option>
+              </select>
+            ) : (
+              <div className="flex gap-2">
+                <input 
+                  name="location" 
+                  value={formData.location} 
+                  onChange={handleTextChange} 
+                  placeholder="Type custom locality..."
+                  className="flex-1 border border-slate-300 rounded-lg p-2 min-h-[44px]" 
+                  autoFocus
+                />
+                <button 
+                  type="button" 
+                  onClick={() => { setShowCustomLocationInput(false); setFormData({ ...formData, location: "" }); }}
+                  className="px-4 border border-slate-300 rounded-lg bg-slate-50 hover:bg-slate-100 text-sm font-medium text-slate-600 transition-colors"
+                >
+                  Back
+                </button>
+              </div>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Landmark</label>

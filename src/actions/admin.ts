@@ -13,7 +13,6 @@ import {
   GENDER_PREFERENCES,
   OCCUPANCY_TYPES,
   FOOD_TYPES,
-  KOLHAPUR_LOCALITIES,
 } from "@/lib/property-options";
 
 async function requireAdmin() {
@@ -68,7 +67,7 @@ const listingSchema = z.object({
   title: z.string().trim().min(3, "Give the listing a title."),
   price: optionalInt,
   yearlyPrice: optionalInt,
-  location: z.enum(KOLHAPUR_LOCALITIES).nullable().optional(),
+  location: optionalText,
   landmark: optionalText,
   lat: optionalFloat,
   lng: optionalFloat,
