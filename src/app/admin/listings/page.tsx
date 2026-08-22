@@ -20,12 +20,20 @@ export default async function AdminListingsPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold font-heading text-text-main">Listings</h2>
-        <Link 
-          href="/admin/listings/new" 
-          className="bg-primary-strong hover:bg-primary-hover text-white px-4 py-2 rounded-lg font-medium text-sm transition-colors"
-        >
-          + New Listing
-        </Link>
+        <div className="flex gap-2">
+          <a 
+            href="/api/admin/export/csv" 
+            className="hidden sm:inline-block bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-lg font-medium text-sm transition-colors"
+          >
+            Export CSV
+          </a>
+          <Link 
+            href="/admin/listings/new" 
+            className="bg-primary-strong hover:bg-primary-hover text-white px-4 py-2 rounded-lg font-medium text-sm transition-colors"
+          >
+            + New Listing
+          </Link>
+        </div>
       </div>
 
       {/* Desktop Table */}

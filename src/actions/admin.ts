@@ -134,7 +134,7 @@ export async function markFull(id: string) {
   });
   
   updateTag(ROOMS_TAG);
-  revalidatePath("/admin/listings");
+  revalidatePath("/admin/listings", "layout");
   revalidatePath("/search");
   revalidatePath("/");
   revalidatePath(`/pg/${property.slug}`);
@@ -151,7 +151,7 @@ export async function markClosed(id: string) {
   });
   
   updateTag(ROOMS_TAG);
-  revalidatePath("/admin/listings");
+  revalidatePath("/admin/listings", "layout");
   revalidatePath("/search");
   revalidatePath("/");
   revalidatePath(`/pg/${property.slug}`);
@@ -168,7 +168,7 @@ export async function softDelete(id: string) {
   });
   
   updateTag(ROOMS_TAG);
-  revalidatePath("/admin/listings");
+  revalidatePath("/admin/listings", "layout");
   revalidatePath("/search");
   revalidatePath("/");
   revalidatePath(`/pg/${property.slug}`);
@@ -284,7 +284,7 @@ export async function saveListing(raw: unknown, publish: boolean): Promise<SaveR
   // updateTag, not revalidateTag: an admin who just saved an edit must see it
   // on the next request, not the request after.
   updateTag(ROOMS_TAG);
-  revalidatePath("/admin/listings");
+  revalidatePath("/admin/listings", "layout");
   revalidatePath("/search");
   revalidatePath("/");
   revalidatePath(`/pg/${slug}`);
