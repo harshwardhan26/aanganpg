@@ -50,6 +50,10 @@ export const PG_AMENITIES = [
   'Cupboard',
   'Fridge',
   'Warden on site',
+  'Owner on-site',
+  'Security Guard',
+  'Gym',
+  'Study Room',
   'Lift'
 ] as const;
 

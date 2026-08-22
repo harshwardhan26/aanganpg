@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { saveListing } from "@/actions/admin";
 import { uploadImage, UPLOAD_CONFIGURED } from "@/lib/upload";
-import { pgPublishIssues, GENDER_PREFERENCES, FOOD_TYPES, OCCUPANCY_TYPES, PG_SHOT_LIST, KOLHAPUR_LOCALITIES } from "@/lib/property-options";
+import { pgPublishIssues, GENDER_PREFERENCES, FOOD_TYPES, OCCUPANCY_TYPES, PG_SHOT_LIST, KOLHAPUR_LOCALITIES, PG_AMENITIES } from "@/lib/property-options";
 import { looksLikeKolhapur } from "@/lib/maps";
 import { MapPin, Crosshair } from "lucide-react";
 
@@ -121,6 +121,16 @@ export default function ListingForm({
 
   const handleTextChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleAmenityToggle = (amenity: string) => {
+    setFormData(prev => {
+      const current = prev.amenities || [];
+      const updated = current.includes(amenity)
+        ? current.filter((a: string) => a !== amenity)
+        : [...current, amenity];
+      return { ...prev, amenities: updated };
+    });
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -342,9 +352,27 @@ export default function ListingForm({
         </div>
       </section>
 
+      {/* Amenities */}
+      <section className="space-y-4">
+        <h3 className="text-lg font-bold text-text-main font-heading border-b pb-2">4. Amenities</h3>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+          {PG_AMENITIES.map(amenity => (
+            <label key={amenity} className="flex items-start gap-2 cursor-pointer bg-slate-50 border border-slate-200 p-3 rounded-lg hover:bg-slate-100 transition-colors">
+              <input
+                type="checkbox"
+                checked={(formData.amenities || []).includes(amenity)}
+                onChange={() => handleAmenityToggle(amenity)}
+                className="w-4 h-4 mt-0.5 text-primary-strong rounded border-slate-300 focus:ring-primary-strong"
+              />
+              <span className="text-sm font-medium leading-tight select-none">{amenity}</span>
+            </label>
+          ))}
+        </div>
+      </section>
+
       {/* Warden & Gate */}
       <section className="space-y-4">
-        <h3 className="text-lg font-bold text-text-main font-heading border-b pb-2">4. Warden & Gate</h3>
+        <h3 className="text-lg font-bold text-text-main font-heading border-b pb-2">5. Warden & Gate</h3>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-medium mb-1">Gender Allowed</label>
@@ -366,7 +394,7 @@ export default function ListingForm({
 
       {/* Owner Contact */}
       <section className="space-y-4">
-        <h3 className="text-lg font-bold text-text-main font-heading border-b pb-2">5. Owner Contact</h3>
+        <h3 className="text-lg font-bold text-text-main font-heading border-b pb-2">6. Owner Contact</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium mb-1">Owner Name</label>
@@ -381,7 +409,7 @@ export default function ListingForm({
 
       {/* Photos */}
       <section className="space-y-4">
-        <h3 className="text-lg font-bold text-text-main font-heading border-b pb-2">6. Photos</h3>
+        <h3 className="text-lg font-bold text-text-main font-heading border-b pb-2">7. Photos</h3>
         
         <div className="flex flex-col md:flex-row gap-8">
           <div className="w-full md:w-1/3 space-y-3 bg-slate-50 p-4 rounded-xl border border-border">
