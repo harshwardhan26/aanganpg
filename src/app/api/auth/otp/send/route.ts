@@ -69,8 +69,8 @@ export async function POST(req: Request) {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        route: "otp",
-        variables_values: code,
+        route: "q",
+        message: `Your Aangan verification code is ${code}. Do not share this with anyone.`,
         numbers: rawNumber
       })
     });
@@ -90,8 +90,8 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error in OTP send:", error);
-    return new NextResponse("Internal Server Error", { status: 500 });
+    return new NextResponse(process.env.NODE_ENV === "development" ? error.message : "Internal Server Error", { status: 500 });
   }
 }
