@@ -90,10 +90,7 @@ function AuthSheet({ open, onOpenChange, onSuccess }: { open: boolean, onOpenCha
 
       const data = await rlRes.json();
       if (data.message === "OTP_PAUSED") {
-        toast({
-          title: "OTP Service Paused",
-          description: "Real SMS is temporarily paused. Please use code 123456 to login.",
-        });
+        window.alert("OTP Service Paused\n\nReal SMS is temporarily paused. Please use code 123456 to login.");
       }
 
       setStep("code");
