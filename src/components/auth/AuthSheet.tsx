@@ -88,6 +88,14 @@ function AuthSheet({ open, onOpenChange, onSuccess }: { open: boolean, onOpenCha
          throw new Error(errorText || "Unable to send OTP.");
       }
 
+      const data = await rlRes.json();
+      if (data.message === "OTP_PAUSED") {
+        toast({
+          title: "OTP Service Paused",
+          description: "Real SMS is temporarily paused. Please use code 123456 to login.",
+        });
+      }
+
       setStep("code");
     } catch (e: unknown) {
       console.error(e);

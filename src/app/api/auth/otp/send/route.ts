@@ -24,12 +24,8 @@ export async function POST(req: Request) {
       return new NextResponse("Too many requests", { status: 429 });
     }
 
-    // Generate a random 6 digit code
-    // If it's the test admin phone, use a fixed code 123456
-    const isTestAdmin = process.env.NODE_ENV === "development" && cleanPhone === "+919999999999";
-    const code = isTestAdmin 
-      ? "123456" 
-      : Math.floor(100000 + Math.random() * 900000).toString();
+    // PAUSED OTP MODE: Force the code to be 123456 for everyone to save money
+    const code = "123456";
 
     // Expire in 10 minutes
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
@@ -42,53 +38,10 @@ export async function POST(req: Request) {
       }
     });
 
-    if (isTestAdmin) {
-      return NextResponse.json({ success: true, message: "Test admin OTP sent" });
-    }
-
-    const apiKey = process.env.FAST2SMS_API_KEY;
-
-    if (!apiKey) {
-      if (process.env.NODE_ENV === "development") {
-        console.log(`[MOCK OTP] Sent code ${code} to ${cleanPhone}`);
-        return NextResponse.json({ success: true, message: "Mock OTP sent (check console)" });
-      } else {
-        console.error("FAST2SMS_API_KEY is missing in production");
-        return new NextResponse("SMS gateway not configured", { status: 500 });
-      }
-    }
-
-    // Send using Fast2SMS
-    // Fast2SMS requires 10 digit number without +91
-    const rawNumber = cleanPhone.replace("+91", "");
-
-    const res = await fetch("https://www.fast2sms.com/dev/bulkV2", {
-      method: "POST",
-      headers: {
-        "authorization": apiKey,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        route: "q",
-        message: `Your Aangan verification code is ${code}. Do not share this with anyone.`,
-        numbers: rawNumber
-      })
-    });
-
-    if (!res.ok) {
-      const errorData = await res.json().catch(() => ({ message: "Unknown Fast2SMS error" }));
-      console.error("Fast2SMS error:", res.status, errorData);
-      return new NextResponse(errorData.message || "Failed to send OTP via Fast2SMS", { status: 500 });
-    }
-
-    // Fast2SMS returns 200 even for some errors, check the 'return' flag
-    const responseData = await res.json();
-    if (responseData.return === false) {
-      console.error("Fast2SMS logic error:", responseData);
-      return new NextResponse(responseData.message || "Fast2SMS rejected the request", { status: 500 });
-    }
-
-    return NextResponse.json({ success: true });
+    console.log(`[MOCK OTP] Sent code ${code} to ${cleanPhone}`);
+    
+    // Return a special message so the frontend knows it's mocked
+    return NextResponse.json({ success: true, message: "OTP_PAUSED" });
 
   } catch (error: any) {
     console.error("Error in OTP send:", error);
