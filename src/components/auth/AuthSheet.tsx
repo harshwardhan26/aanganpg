@@ -4,8 +4,6 @@ import { createContext, useContext, useState, useEffect, ReactNode } from "react
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 
 import { signIn } from "next-auth/react";
-import { auth } from "@/lib/firebase-client";
-import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from "firebase/auth";
 import { canonicalPhone } from "@/lib/phone";
 import Image from "next/image";
 import Link from "next/link";
@@ -47,7 +45,6 @@ function AuthSheet({ open, onOpenChange, onSuccess }: { open: boolean, onOpenCha
   const [step, setStep] = useState<"phone" | "code">("phone");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
 
   useEffect(() => {
     if (!open) {
@@ -56,20 +53,10 @@ function AuthSheet({ open, onOpenChange, onSuccess }: { open: boolean, onOpenCha
       setPhone("");
       setCode("");
       setError("");
-      
-      if (window.recaptchaVerifier) {
-        try {
-          (window.recaptchaVerifier as RecaptchaVerifier).clear();
-        } catch (e) {
-          // ignore error during cleanup
-        }
-        // @ts-expect-error - reset to undefined
-        window.recaptchaVerifier = undefined;
-      }
     }
   }, [open]);
 
-  // Recaptcha initialization is moved to the div ref
+
 
   const handleSendCode = async () => {
     setError("");
@@ -80,14 +67,16 @@ function AuthSheet({ open, onOpenChange, onSuccess }: { open: boolean, onOpenCha
       
       if (canonical === "+919999999999") {
         const res = await signIn("credentials", {
-          idToken: "TEST_ADMIN_TOKEN",
+          phone: canonical,
+          code: "123456",
           redirect: false
         });
         if (res?.error) throw new Error(res.error);
         onSuccess();
         return;
       }
-      const rlRes = await fetch("/api/auth/otp/init", {
+      
+      const rlRes = await fetch("/api/auth/otp/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ phone: canonical })
@@ -98,8 +87,6 @@ function AuthSheet({ open, onOpenChange, onSuccess }: { open: boolean, onOpenCha
          throw new Error("Unable to send OTP.");
       }
 
-      const confirmation = await signInWithPhoneNumber(auth, canonical, window.recaptchaVerifier);
-      setConfirmationResult(confirmation);
       setStep("code");
     } catch (e: unknown) {
       console.error(e);
@@ -122,12 +109,9 @@ function AuthSheet({ open, onOpenChange, onSuccess }: { open: boolean, onOpenCha
     setError("");
     setLoading(true);
     try {
-      if (!confirmationResult) throw new Error("No confirmation result");
-      const result = await confirmationResult.confirm(code);
-      const idToken = await result.user.getIdToken();
-      
       const res = await signIn("credentials", {
-        idToken,
+        phone: canonicalPhone(phone),
+        code,
         redirect: false
       });
       
@@ -191,16 +175,7 @@ function AuthSheet({ open, onOpenChange, onSuccess }: { open: boolean, onOpenCha
               {loading ? "Sending..." : "Send OTP"}
             </Button>
 
-            {/* Recaptcha */}
-            <div id="recaptcha-container" ref={(el) => {
-              if (el) {
-                if (!window.recaptchaVerifier) {
-                  window.recaptchaVerifier = new RecaptchaVerifier(auth, el, {
-                    size: 'invisible',
-                  });
-                }
-              }
-            }}></div>
+
 
             {/* Terms */}
             <p className="text-[11px] text-center text-slate-400 leading-relaxed mt-2 mb-1">
@@ -264,10 +239,4 @@ function AuthSheet({ open, onOpenChange, onSuccess }: { open: boolean, onOpenCha
   );
 }
 
-// Add types for window recaptcha
-import { ApplicationVerifier } from "firebase/auth";
-declare global {
-  interface Window {
-    recaptchaVerifier: ApplicationVerifier;
-  }
-}
+
