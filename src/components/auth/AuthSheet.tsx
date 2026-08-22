@@ -83,23 +83,16 @@ function AuthSheet({ open, onOpenChange, onSuccess }: { open: boolean, onOpenCha
       });
       
       if (!rlRes.ok) {
+         const errorText = await rlRes.text();
          if (rlRes.status === 429) throw new Error("Too many requests. Please try again later.");
-         throw new Error("Unable to send OTP.");
+         throw new Error(errorText || "Unable to send OTP.");
       }
 
       setStep("code");
     } catch (e: unknown) {
       console.error(e);
       const msg = (e as Error).message;
-      if (
-        msg === "Please enter a valid Indian phone number." ||
-        msg === "Too many requests. Please try again later." ||
-        msg === "Unable to send OTP."
-      ) {
-        setError(msg);
-      } else {
-        setError("Something went wrong. Our technical team has been notified.");
-      }
+      setError(msg || "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }

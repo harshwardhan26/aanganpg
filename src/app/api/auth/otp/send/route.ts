@@ -76,9 +76,16 @@ export async function POST(req: Request) {
     });
 
     if (!res.ok) {
-      const errorText = await res.text();
-      console.error("Fast2SMS error:", res.status, errorText);
-      return new NextResponse("Failed to send OTP", { status: 500 });
+      const errorData = await res.json().catch(() => ({ message: "Unknown Fast2SMS error" }));
+      console.error("Fast2SMS error:", res.status, errorData);
+      return new NextResponse(errorData.message || "Failed to send OTP via Fast2SMS", { status: 500 });
+    }
+
+    // Fast2SMS returns 200 even for some errors, check the 'return' flag
+    const responseData = await res.json();
+    if (responseData.return === false) {
+      console.error("Fast2SMS logic error:", responseData);
+      return new NextResponse(responseData.message || "Fast2SMS rejected the request", { status: 500 });
     }
 
     return NextResponse.json({ success: true });
