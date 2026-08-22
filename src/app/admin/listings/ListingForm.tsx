@@ -26,6 +26,7 @@ export default function ListingForm({
     id: initialData?.id || "",
     title: initialData?.title || "",
     price: initialData?.price?.toString() || "",
+    yearlyPrice: initialData?.yearlyPrice?.toString() || "",
     location: initialData?.location || "",
     landmark: initialData?.landmark || "",
     collegeId: initialData?.collegeId || "",
@@ -104,7 +105,8 @@ export default function ListingForm({
       const saved = localStorage.getItem(storageKey);
       if (saved) {
         // eslint-disable-next-line react-hooks/set-state-in-effect
-        setFormData(JSON.parse(saved));
+        const parsed = JSON.parse(saved);
+        setFormData(prev => ({ ...prev, ...parsed }));
       }
     } catch (err) {
       console.warn("Failed to restore form data", err);
@@ -244,6 +246,10 @@ export default function ListingForm({
           <div>
             <label className="block text-sm font-medium mb-1">Monthly Rent (₹)</label>
             <input type="number" name="price" value={formData.price} onChange={handleTextChange} className="w-full border rounded-lg p-2 min-h-[44px]" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Yearly Rent (₹)</label>
+            <input type="number" name="yearlyPrice" value={formData.yearlyPrice || ""} onChange={handleTextChange} className="w-full border rounded-lg p-2 min-h-[44px]" />
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Occupancy</label>

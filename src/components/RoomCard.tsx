@@ -9,7 +9,8 @@ type RoomCardProps = {
     id: string;
     slug: string;
     title: string;
-    price: number;
+    price: number | null;
+    displayPrice: string | null;
     location: string | null;
     imageUrl: string | null;
     occupancyType: string | null;
@@ -73,9 +74,12 @@ export function RoomCard({ room }: RoomCardProps) {
       <div className="p-4 flex flex-col gap-2 flex-1">
         <div className="flex items-baseline justify-between gap-3">
           <h3 className="font-medium text-text-main line-clamp-2 leading-snug">{room.title}</h3>
-          <span className="font-semibold text-lg whitespace-nowrap text-text-main">
-            ₹{room.price.toLocaleString("en-IN")}
-            <span className="text-xs font-normal text-text-muted block text-right">/month</span>
+          <span className="font-semibold text-lg whitespace-nowrap text-text-main text-right">
+            {room.displayPrice?.split('/').map((part, i, arr) => (
+              <span key={i}>
+                {i === 0 ? part : <span className="text-xs font-normal text-text-muted block text-right">/{part}</span>}
+              </span>
+            )) || (room.price ? `₹${room.price.toLocaleString("en-IN")}/month` : "Price on request")}
           </span>
         </div>
         

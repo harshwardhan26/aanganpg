@@ -16,7 +16,8 @@ model Property {
   id               String          @id @default(cuid())
   slug             String          @unique
   title            String
-  price            Int
+  price            Int?
+  yearlyPrice      Int?
   displayPrice     String?
   location         String?
   occupancyType    String?

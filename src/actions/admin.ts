@@ -67,6 +67,7 @@ const listingSchema = z.object({
   id: optionalText,
   title: z.string().trim().min(3, "Give the listing a title."),
   price: optionalInt,
+  yearlyPrice: optionalInt,
   location: z.enum(KOLHAPUR_LOCALITIES).nullable().optional(),
   landmark: optionalText,
   lat: optionalFloat,
@@ -92,6 +93,14 @@ const listingSchema = z.object({
   ownerPhone: optionalText,
   description: optionalText,
   images: z.array(imageSchema).default([]),
+}).superRefine((data, ctx) => {
+  if (data.price == null && data.yearlyPrice == null) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "At least one of monthly rent or yearly rent must be filled.",
+      path: ["price"],
+    });
+  }
 });
 
 export type ListingInput = z.input<typeof listingSchema>;
@@ -221,8 +230,13 @@ export async function saveListing(raw: unknown, publish: boolean): Promise<SaveR
   const fields = {
     title: data.title,
     slug,
-    price: data.price ?? 0,
-    displayPrice: data.price != null ? `₹${data.price.toLocaleString("en-IN")}/month` : null,
+    price: data.price ?? null,
+    yearlyPrice: data.yearlyPrice ?? null,
+    displayPrice: data.price != null 
+      ? `₹${data.price.toLocaleString("en-IN")}/month` 
+      : data.yearlyPrice != null 
+        ? `₹${data.yearlyPrice.toLocaleString("en-IN")}/year` 
+        : null,
     location: data.location ?? null,
     landmark: data.landmark ?? null,
     lat: data.lat,

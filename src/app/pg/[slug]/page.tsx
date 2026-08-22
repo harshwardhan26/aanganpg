@@ -55,10 +55,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const ogImage = room.imageUrl ? cloudinaryUrl(room.imageUrl, 1200) : undefined;
 
   return {
-    title: `${room.title}${near} — ${rupees(room.price)}/month`,
+    title: `${room.title}${near} — ${room.displayPrice || 'Price on request'}`,
     description:
       room.description ||
-      `${room.occupancyType ?? "Student"} room${near} in Kolhapur at ${rupees(room.price)} a month. ` +
+      `${room.occupancyType ?? "Student"} room${near} in Kolhapur at ${room.displayPrice || 'available prices'}. ` +
         `Visited in person by Aangan. Contact the owner directly to see it — students pay no brokerage.`,
     alternates: { canonical: `/pg/${room.slug}` },
     openGraph: ogImage
@@ -91,7 +91,7 @@ export default async function RoomPage({ params }: Props) {
     ? (await getRoomsNearCollege(room.college.slug)).filter((r) => r.id !== room.id).slice(0, 3)
     : [];
 
-  const priceLabel = `${rupees(room.price)}/month`;
+  const priceLabel = room.displayPrice || "Price on request";
   // Absolute, because it is pasted into a WhatsApp message to us.
   const listingUrl = new URL(`/pg/${room.slug}`, getBaseUrl()).toString();
   const mapUrl = directionsUrl(room.lat, room.lng);
@@ -114,7 +114,7 @@ export default async function RoomPage({ params }: Props) {
     numberOfBedrooms: undefined,
     offers: {
       "@type": "Offer",
-      price: room.price,
+      price: room.price || room.yearlyPrice || 0,
       priceCurrency: "INR",
       availability: isClosed
         ? "https://schema.org/SoldOut"
@@ -171,9 +171,8 @@ export default async function RoomPage({ params }: Props) {
               </div>
               <div className="text-left sm:text-right shrink-0">
                 <span className="block text-2xl font-bold text-text-main">
-                  {rupees(room.price)}
+                  {room.displayPrice || "Price on request"}
                 </span>
-                <span className="text-sm text-text-muted">per bed / month</span>
               </div>
             </div>
 

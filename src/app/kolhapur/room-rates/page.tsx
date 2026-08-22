@@ -38,8 +38,9 @@ export default async function RatesPage() {
       const withMess = areaRooms.filter(r => r.foodType !== null);
       const withoutMess = areaRooms.filter(r => r.foodType === null);
       
-      const wmPrices = withMess.map(r => r.price);
-      const womPrices = withoutMess.map(r => r.price);
+      const getMonthly = (r: typeof areaRooms[0]) => r.price ?? (r.yearlyPrice ? Math.round(r.yearlyPrice / 12) : null);
+      const wmPrices = withMess.map(getMonthly).filter((p): p is number => p != null && p > 0);
+      const womPrices = withoutMess.map(getMonthly).filter((p): p is number => p != null && p > 0);
       const deposits = areaRooms.map(r => r.deposit).filter(d => d !== null && d > 0) as number[];
 
       return {
