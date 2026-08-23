@@ -4,7 +4,7 @@ import { headers } from 'next/headers';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { Ratelimit } from '@upstash/ratelimit';
-import { Redis } from '@upstash/redis';
+import { redis } from '@/lib/redis';
 import { prisma } from '@/lib/prisma';
 import { canonicalPhone } from '@/lib/phone';
 import { z } from 'zod';
@@ -15,12 +15,6 @@ const enquiryInputSchema = z.object({
   name: z.string().optional(),
   phone: z.string().optional(),
 });
-
-// Guarded rather than eager: without Upstash configured, dev and the build must
-// still run. Rate limiting is skipped, not faked.
-const redis = (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN)
-  ? Redis.fromEnv()
-  : null;
 
 const ratelimit = redis ? new Ratelimit({
   redis,
