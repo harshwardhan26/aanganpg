@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useAuthSheet } from '@/components/auth/AuthSheet';
+import { enquiryGate } from '@/lib/session';
 import { recordEnquiry } from '@/actions/enquiries';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -33,7 +34,7 @@ interface EnquiryActionsProps {
  * and the point of the gate is the lead record.
  */
 export function EnquiryActions({ propertyId, title, displayPrice, location, listingUrl, variant = 'full', ownerPhone, prefillData }: EnquiryActionsProps) {
-  const { status } = useSession();
+  const { data: session, status } = useSession();
   const { openAuthSheet } = useAuthSheet();
   const aanganPhone = getAanganPhone();
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -43,7 +44,7 @@ export function EnquiryActions({ propertyId, title, displayPrice, location, list
   const [errorMessage, setErrorMessage] = useState('');
 
   const handleCall = (e: React.MouseEvent) => {
-    if (status !== 'authenticated') {
+    if (enquiryGate(status, session?.user?.phone)) {
       e.preventDefault();
       openAuthSheet();
       return;
@@ -53,7 +54,7 @@ export function EnquiryActions({ propertyId, title, displayPrice, location, list
   };
 
   const handleWhatsApp = (e: React.MouseEvent) => {
-    if (status !== 'authenticated') {
+    if (enquiryGate(status, session?.user?.phone)) {
       e.preventDefault();
       openAuthSheet();
       return;

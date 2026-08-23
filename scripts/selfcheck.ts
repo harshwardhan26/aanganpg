@@ -7,6 +7,8 @@ import { buildRoomWhere, buildRoomOrderBy } from "../src/lib/room-filters";
 import { cloudinaryUrl } from "../src/lib/image";
 import { publicImage } from "../src/lib/publicImage";
 import { directionsUrl, looksLikeKolhapur } from "../src/lib/maps";
+import { enquiryGate } from "../src/lib/session";
+import { isAdminEmail } from "../src/lib/admin";
 
 try { process.loadEnvFile(); } catch {}
 
@@ -184,6 +186,23 @@ async function main() {
 
   assert(looksLikeKolhapur(16.7, 74.2) === true, "looksLikeKolhapur failed for valid pair");
   assert(looksLikeKolhapur(74.2, 16.7) === false, "looksLikeKolhapur failed to catch swapped pair");
+
+  // Enquiry gate tests
+  assert(enquiryGate("unauthenticated", null) === "signin", "enquiryGate must ask a signed-out visitor to sign in");
+  assert(enquiryGate("loading", "+919876543210") === "signin", "enquiryGate must not wave through a session still loading");
+  assert(enquiryGate("authenticated", null) === "phone", "enquiryGate must ask a Google user with no number for one");
+  assert(enquiryGate("authenticated", "not a number") === "phone", "enquiryGate must reject a stored value that is not dialable");
+  assert(enquiryGate("authenticated", "+919876543210") === null, "enquiryGate must pass a signed-in user with a real number");
+
+  // Admin allowlist tests
+  const list = "hppatilhpp@gmail.com, second@aanganpg.com";
+  assert(isAdminEmail("hppatilhpp@gmail.com", list) === true, "isAdminEmail must match the first entry");
+  assert(isAdminEmail("second@aanganpg.com", list) === true, "isAdminEmail must match a later entry despite the space");
+  assert(isAdminEmail("HPPatilHPP@Gmail.com", list) === true, "isAdminEmail must ignore case");
+  assert(isAdminEmail("someone@gmail.com", list) === false, "isAdminEmail must reject an email not on the list");
+  assert(isAdminEmail(null, list) === false, "isAdminEmail must reject a null email");
+  assert(isAdminEmail("hppatilhpp@gmail.com", "") === false, "isAdminEmail must grant nobody when the allowlist is empty");
+  assert(isAdminEmail("", list) === false, "isAdminEmail must reject an empty email against a non-empty list");
 
   console.log("Self check passed");
 }

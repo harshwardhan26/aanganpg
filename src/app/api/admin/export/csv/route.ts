@@ -5,11 +5,7 @@ import prisma from "@/lib/prisma";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.phone) {
-    return new NextResponse("Unauthorized", { status: 401 });
-  }
-  
-  if (session.user.phone !== process.env.ADMIN_PHONE && session.user.role !== "admin") {
+  if (session?.user?.role !== "admin") {
     return new NextResponse("Unauthorized", { status: 401 });
   }
 

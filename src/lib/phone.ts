@@ -10,8 +10,8 @@
  * one. The webhook then greeted them again mid-conversation.
  *
  * One canonical form fixes all of those at once: E.164, `+919876543210`. It is
- * what Firebase hands us, it is what the Meta API expects give or take the plus,
- * and it has exactly one spelling per number.
+ * what `canonicalPhone` produces at every entry point, it is what the Meta API
+ * expects give or take the plus, and it has exactly one spelling per number.
  *
  * Pure string work — no Node built-ins — so client components can import it too.
  */

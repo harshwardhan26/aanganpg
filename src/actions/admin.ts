@@ -17,11 +17,7 @@ import {
 
 async function requireAdmin() {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.phone) {
-    throw new Error("Unauthorized");
-  }
-  
-  if (session.user.phone !== process.env.ADMIN_PHONE && session.user.role !== "admin") {
+  if (session?.user?.role !== "admin") {
     throw new Error("Unauthorized");
   }
 }

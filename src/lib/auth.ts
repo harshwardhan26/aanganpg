@@ -1,88 +1,50 @@
 import { NextAuthOptions } from "next-auth";
-import CredentialsProvider from "next-auth/providers/credentials";
+import { PrismaAdapter } from "@next-auth/prisma-adapter";
+import GoogleProvider from "next-auth/providers/google";
 import prisma from "./prisma";
-import { canonicalPhone } from "./phone";
-
+import { isAdminEmail } from "./admin";
 
 export const authOptions: NextAuthOptions = {
+  adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" },
   pages: {
     signIn: "/",
   },
   providers: [
-    CredentialsProvider({
-      name: "OTP Auth",
-      credentials: {
-        phone: { label: "Phone", type: "text" },
-        code: { label: "Code", type: "text" },
-      },
-      async authorize(credentials) {
-        if (!credentials?.phone || !credentials?.code) return null;
-
-        const phone = canonicalPhone(credentials.phone);
-        if (!phone) return null;
-
-        // Test admin bypass
-        if (process.env.NODE_ENV === "development" && credentials.code === "123456" && phone === "+919999999999") {
-          const testPhone = process.env.ADMIN_PHONE || "9999999999";
-          let user = await prisma.user.findUnique({ where: { phone: testPhone } });
-          if (!user) {
-            user = await prisma.user.create({
-              data: { phone: testPhone, role: "admin" },
-            });
-          }
-          return { id: user.id, phone: user.phone || undefined, role: user.role };
-        }
-
-        try {
-          // Find valid OTP
-          const validOtp = await prisma.otpCode.findFirst({
-            where: {
-              phone,
-              code: credentials.code,
-              expiresAt: { gt: new Date() }
-            },
-            orderBy: { createdAt: "desc" }
-          });
-
-          if (!validOtp) return null;
-
-          // Delete all OTPs for this phone so they can't be reused
-          await prisma.otpCode.deleteMany({
-            where: { phone }
-          });
-          
-          let user = await prisma.user.findUnique({ where: { phone } });
-          
-          if (!user) {
-            user = await prisma.user.create({
-              data: { phone, role: "student" },
-            });
-          }
-          return { id: user.id, phone: user.phone || undefined, role: user.role };
-        } catch (e) {
-          console.error("Auth error:", e);
-          return null;
-        }
-      }
-    })
+    // The only way in. Google costs nothing per sign-in, which SMS did not, and
+    // it needs no DLT registration — the reason phone OTP was removed entirely.
+    // It gives us an email and a name but never a phone, so AuthSheet demands the
+    // number the moment they land back here — see `enquiryGate` in lib/session.ts.
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
         token.phone = user.phone;
-        // Role is threaded to the session for future role-based checks. 
-        // Currently, all new users are assigned 'student', so admin guards
-        // still rely on the ADMIN_PHONE env var.
         token.role = user.role;
+      }
+      // Recomputed on every call rather than only at sign-in, so adding an email
+      // to ADMIN_EMAILS takes effect on their next request instead of forcing a
+      // sign-out. This is the single place admin is decided; every guard in the
+      // app reads the `role` it sets.
+      token.role = isAdminEmail(token.email) ? "admin" : (token.role ?? "student");
+      // A Google user has no phone until they give us one. `update({ name, phone })`
+      // from the client lands here; without this the token keeps saying "no
+      // phone" until the session expires and the capture sheet reopens forever.
+      if (trigger === "update") {
+        if (session?.phone) token.phone = session.phone;
+        if (session?.name) token.name = session.name;
       }
       return token;
     },
     async session({ session, token }) {
       if (token && session.user) {
         session.user.id = token.id as string;
-        session.user.phone = token.phone as string;
+        session.user.phone = token.phone as string | undefined;
         session.user.role = token.role as string;
       }
       return session;

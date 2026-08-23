@@ -23,18 +23,10 @@ const ALL_VARS: { name: string; required: boolean; note: string }[] = [
 
   // ── Auth (app starts but login won't work) ──────────────────────
   { name: "NEXTAUTH_URL",                          required: false, note: "Base URL for NextAuth callbacks" },
+  { name: "GOOGLE_CLIENT_ID",                      required: true,  note: "Google OAuth client ID (student sign-in)" },
+  { name: "GOOGLE_CLIENT_SECRET",                  required: true,  note: "Google OAuth client secret" },
   { name: "NEXTAUTH_SECRET",                       required: false, note: "Secret for signing NextAuth tokens" },
 
-  // ── Firebase (auth flow breaks without these) ───────────────────
-  { name: "NEXT_PUBLIC_FIREBASE_API_KEY",           required: false, note: "Firebase client API key" },
-  { name: "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN",       required: false, note: "Firebase client auth domain" },
-  { name: "NEXT_PUBLIC_FIREBASE_PROJECT_ID",        required: false, note: "Firebase client project ID" },
-  { name: "NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET",    required: false, note: "Firebase client storage bucket" },
-  { name: "NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID", required: false, note: "Firebase client messaging sender ID" },
-  { name: "NEXT_PUBLIC_FIREBASE_APP_ID",            required: false, note: "Firebase client app ID" },
-  { name: "FIREBASE_PROJECT_ID",                    required: false, note: "Firebase admin project ID" },
-  { name: "FIREBASE_CLIENT_EMAIL",                  required: false, note: "Firebase admin service account email" },
-  { name: "FIREBASE_PRIVATE_KEY",                   required: false, note: "Firebase admin private key (with \\n)" },
 
   // ── Cloudinary (images won't upload/transform) ──────────────────
   { name: "NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME",      required: false, note: "Cloudinary cloud name" },
@@ -53,7 +45,7 @@ const ALL_VARS: { name: string; required: boolean; note: string }[] = [
 
   // ── App config ──────────────────────────────────────────────────
   { name: "NEXT_PUBLIC_AANGAN_PHONE",               required: false, note: "Aangan's public contact number" },
-  { name: "ADMIN_PHONE",                            required: false, note: "E.164 admin phone number" },
+  { name: "ADMIN_EMAILS",                           required: true,  note: "Comma-separated Google emails granted the admin panel" },
 ];
 
 const missing: string[] = [];

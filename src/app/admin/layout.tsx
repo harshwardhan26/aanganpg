@@ -6,11 +6,7 @@ import { redirect } from "next/navigation";
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await getServerSession(authOptions);
   
-  if (!session?.user?.phone) {
-    redirect("/");
-  }
-
-  if (session.user.phone !== process.env.ADMIN_PHONE && session.user.role !== "admin") {
+  if (session?.user?.role !== "admin") {
     redirect("/");
   }
 
