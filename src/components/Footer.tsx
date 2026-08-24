@@ -27,12 +27,12 @@ export function Footer() {
               </li>
               <li>
                 <Link href="/search?genderPreference=Female" className="block py-2 hover:text-white transition-colors">
-                  Girls PG
+                  Girls Hostels & Rooms
                 </Link>
               </li>
               <li>
                 <Link href="/search?genderPreference=Male" className="block py-2 hover:text-white transition-colors">
-                  Boys PG
+                  Boys Hostels & Rooms
                 </Link>
               </li>
               <li>

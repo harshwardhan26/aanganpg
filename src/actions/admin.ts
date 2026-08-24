@@ -104,7 +104,7 @@ export type ListingInput = z.input<typeof listingSchema>;
  * A slug that is unique in the database.
  *
  * The admin action used to build this inline with a regex and no collision
- * handling, so a second listing called "Girls PG" hit the unique constraint and
+ * handling, so a second listing called "Girls Hostel" hit the unique constraint and
  * threw a Prisma error at the person filling in the form.
  */
 async function uniqueSlug(title: string, locality: string | null, ownId: string | null) {
@@ -325,7 +325,7 @@ export async function updateLeadDetails(id: string, rawData: unknown) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          content: `🎉 **LEAD CONVERTED!** 🎉\n${existing.name} (${existing.phone}) has moved in to ${existing.property?.title || 'a PG'}! Great job.`
+          content: `🎉 **LEAD CONVERTED!** 🎉\n${existing.name} (${existing.phone}) has moved in to ${existing.property?.title || 'a hostel/room'}! Great job.`
         })
       }).catch((e) => console.error("Webhook failed:", e));
     }

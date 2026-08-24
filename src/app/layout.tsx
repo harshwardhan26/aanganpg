@@ -24,11 +24,11 @@ import { getBaseUrl } from "@/lib/url";
 export const metadata: Metadata = {
   metadataBase: new URL(getBaseUrl()),
   title: {
-    default: "Aangan — PG and student rooms in Kolhapur",
+    default: "Aangan — Hostels, Rooms and PGs in Kolhapur",
     template: "%s | Aangan",
   },
   description:
-    "PGs, hostels and student rooms near every college in Kolhapur. Every one visited in " +
+    "Hostels, Rooms and PGs near every college in Kolhapur. Every one visited in " +
     "person and photographed by us. Contact owners directly. Students pay " +
     "no brokerage.",
   appleWebApp: {

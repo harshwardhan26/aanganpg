@@ -122,8 +122,8 @@ export function pgPublishIssues(v: {
   }
 
   if (v.genderPreference === 'Female') {
-    if (!v.wardenName?.trim()) issues.push("Girls' PG listings need the warden's name.");
-    if (!v.gateClosingTime?.trim()) issues.push("Girls' PG listings need the gate closing time.");
+    if (!v.wardenName?.trim()) issues.push("Girls' Hostel/Room listings need the warden's name.");
+    if (!v.gateClosingTime?.trim()) issues.push("Girls' Hostel/Room listings need the gate closing time.");
   }
 
   return issues;

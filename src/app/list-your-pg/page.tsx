@@ -4,8 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Phone, MessageCircle, CheckCircle2, AlertCircle } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "List Your PG or Room | Aangan Kolhapur",
-  description: "List your Kolhapur PG or hostel on Aangan. Free photographs and free listing this season. Students contact you directly.",
+  title: "List Your Hostel, Room or PG | Aangan Kolhapur",
+  description: "List your Kolhapur hostel, room or PG on Aangan. Free photographs and free listing this season. Students contact you directly.",
   alternates: {
     canonical: "/list-your-pg"
   }
@@ -15,7 +15,7 @@ export default function ListYourPgPage() {
   const phone = getAanganPhone();
   const displayPhone = formatAanganPhoneForDisplay(phone);
 
-  const whatsappMessage = encodeURIComponent("नमस्कार, मला माझी पीजी/रूम अंगण वर लिस्ट करायची आहे. कृपया संपर्क करा.");
+  const whatsappMessage = encodeURIComponent("नमस्कार, मला माझी हॉस्टेल/रूम/पीजी अंगण वर लिस्ट करायची आहे. कृपया संपर्क करा.");
   const waLink = `https://wa.me/${phone.replace("+", "")}?text=${whatsappMessage}`;
 
   return (
@@ -26,7 +26,7 @@ export default function ListYourPgPage() {
           
           <div className="text-center sm:text-left space-y-6">
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-text-main leading-tight font-heading">
-              List your PG on Aangan
+              List your Hostel/Room/PG on Aangan
             </h1>
             <p className="text-xl text-text-muted max-w-2xl leading-relaxed">
               We photograph your rooms, put them in front of students, and bring the serious ones to you.

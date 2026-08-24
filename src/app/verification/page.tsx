@@ -49,7 +49,7 @@ export default function VerificationPage() {
                 What we do NOT check
               </h2>
               <ul className="space-y-4 text-text-main text-lg ml-11">
-                <li><strong className="font-semibold">No Tenant Vetting:</strong> We do not run background checks or vet the other students/tenants currently living in the PG.</li>
+                <li><strong className="font-semibold">No Tenant Vetting:</strong> We do not run background checks or vet the other students/tenants currently living in the hostel/room.</li>
                 <li><strong className="font-semibold">No Structural Inspections:</strong> We are not civil engineers or electricians. We do not inspect the wiring, the plumbing, or the structural integrity of the building.</li>
                 <li><strong className="font-semibold">No Safety Guarantees:</strong> We do not provide any guarantee regarding your physical safety, the security of your belongings, or the behavior of the owner.</li>
               </ul>

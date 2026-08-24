@@ -21,8 +21,8 @@ import {
 // this is the one image on it that isn't.
 
 const PICKS = [
-  { href: '/search?genderPreference=Female', label: 'Girls PG', file: 'images/pick-girls.jpg', Icon: UserRound, tint: 'from-[#cc4040] to-[#8f2b2b]' },
-  { href: '/search?genderPreference=Male', label: 'Boys PG', file: 'images/pick-boys.jpg', Icon: Users, tint: 'from-slate-700 to-slate-900' },
+  { href: '/search?genderPreference=Female', label: 'Girls Hostels & Rooms', file: 'images/pick-girls.jpg', Icon: UserRound, tint: 'from-[#cc4040] to-[#8f2b2b]' },
+  { href: '/search?genderPreference=Male', label: 'Boys Hostels & Rooms', file: 'images/pick-boys.jpg', Icon: Users, tint: 'from-slate-700 to-slate-900' },
   { href: '/search?food=yes', label: 'With mess', file: 'images/pick-mess.jpg', Icon: UtensilsCrossed, tint: 'from-amber-700 to-amber-900' },
   { href: '/search?maxPrice=3000', label: 'Under ₹3,000', file: 'images/pick-budget.jpg', Icon: IndianRupee, tint: 'from-emerald-700 to-emerald-900' },
 ];
@@ -99,7 +99,7 @@ export default async function Home() {
               Rooms that are<br />actually verified.
             </h1>
             <p className="text-base text-white/90 sm:text-lg">
-              Student PGs in Kolhapur. Zero brokerage.
+              Student Hostels, Rooms & PGs in Kolhapur. Zero brokerage.
             </p>
 
             <HeroSearchForm colleges={colleges} />
@@ -234,11 +234,11 @@ export default async function Home() {
         <div className="mx-auto max-w-[var(--content-max)] px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col items-start gap-6 rounded-2xl bg-text-main p-6 text-white shadow-xl sm:p-10 md:flex-row md:items-center md:justify-between">
             <div className="space-y-2">
-              <h2 className="font-heading text-xl font-bold sm:text-2xl">Own a PG?</h2>
+              <h2 className="font-heading text-xl font-bold sm:text-2xl">Own a Hostel, Room or PG?</h2>
               <p className="text-slate-300">Verified leads straight to your WhatsApp.</p>
             </div>
             <ListPgButton size="lg" className="w-full shrink-0 border-none bg-white font-medium text-text-main shadow-sm hover:bg-slate-100 md:w-auto">
-              List your PG
+              List your Hostel/Room/PG
             </ListPgButton>
           </div>
         </div>

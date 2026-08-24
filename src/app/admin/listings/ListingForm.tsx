@@ -107,8 +107,8 @@ export default function ListingForm({
     try {
       const saved = localStorage.getItem(storageKey);
       if (saved) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         const parsed = JSON.parse(saved);
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setFormData(prev => ({ ...prev, ...parsed }));
         if (parsed.location && !KOLHAPUR_LOCALITIES.includes(parsed.location)) {
           setShowCustomLocationInput(true);
@@ -258,7 +258,7 @@ export default function ListingForm({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium mb-1">Title</label>
-            <input name="title" value={formData.title} onChange={handleTextChange} className="w-full border rounded-lg p-2 min-h-[44px]" placeholder="e.g. 2 Bed Girls PG" />
+            <input name="title" value={formData.title} onChange={handleTextChange} className="w-full border rounded-lg p-2 min-h-[44px]" placeholder="e.g. 2 Bed Girls Hostel" />
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Monthly Rent (₹)</label>

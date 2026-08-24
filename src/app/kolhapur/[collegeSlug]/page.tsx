@@ -38,8 +38,8 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
   ].filter(Boolean);
 
   return {
-    title: `PG, hostel and rooms near ${name} | Aangan Kolhapur`,
-    description: `Find verified PG, hostels, and rooms near ${college.name} in ${college.area}, Kolhapur. View photos, amenities and real rents.`,
+    title: `Hostels, Rooms and PGs near ${name} | Aangan Kolhapur`,
+    description: `Find verified hostels, rooms, and PGs near ${college.name} in ${college.area}, Kolhapur. View photos, amenities and real rents.`,
     keywords: keywords.join(', '),
     alternates: {
       canonical: `/kolhapur/${college.slug}`,
@@ -121,7 +121,7 @@ export default async function CollegePage(props: PageProps) {
       <section className="bg-light pt-12 pb-16 lg:pt-20 lg:pb-24 border-b border-border text-center px-4">
         <div className="max-w-3xl mx-auto space-y-6">
           <h1 className="text-4xl sm:text-5xl font-bold text-text-main leading-tight font-heading">
-            PG, hostel and rooms near {name}
+            Hostels, Rooms and PGs near {name}
           </h1>
           <p className="text-lg text-text-muted">
             Find the best verified student accommodations in and around {college.area}, Kolhapur.
@@ -132,13 +132,13 @@ export default async function CollegePage(props: PageProps) {
               href={`/search?college=${college.slug}&genderPreference=Female`}
               className="px-5 py-2.5 bg-pink-50 border border-pink-200 rounded-full text-sm font-medium text-pink-700 hover:bg-pink-100 transition-colors"
             >
-              Girls PG
+              Girls Hostels & Rooms
             </Link>
             <Link 
               href={`/search?college=${college.slug}&genderPreference=Male`}
               className="px-5 py-2.5 bg-blue-50 border border-blue-200 rounded-full text-sm font-medium text-blue-700 hover:bg-blue-100 transition-colors"
             >
-              Boys PG
+              Boys Hostels & Rooms
             </Link>
             <Link 
               href={`/search?college=${college.slug}&food=yes`}
@@ -200,7 +200,7 @@ export default async function CollegePage(props: PageProps) {
             </p>
             <h3 className="text-lg font-semibold text-text-main pt-2">Typical Rent in this Area</h3>
             <p>
-              Rent bands vary depending on the amenities. Typically, a basic single room or shared PG near {name} will cost around <strong>₹4,000 to ₹6,000 per month</strong> without mess. If you opt for an accommodation with meals included (mess), expect to pay between <strong>₹6,000 to ₹9,000 per month</strong>. Always verify if the rent includes utilities like electricity and water.
+              Rent bands vary depending on the amenities. Typically, a basic single room, hostel or PG near {name} will cost around <strong>₹4,000 to ₹6,000 per month</strong> without mess. If you opt for an accommodation with meals included (mess), expect to pay between <strong>₹6,000 to ₹9,000 per month</strong>. Always verify if the rent includes utilities like electricity and water.
             </p>
           </div>
         </div>

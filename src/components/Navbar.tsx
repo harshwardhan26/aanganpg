@@ -16,8 +16,8 @@ export function Navbar() {
   // /mess, none of which exist — the whole nav was 404s.
   const links = [
     { href: "/search", label: "All rooms" },
-    { href: "/search?genderPreference=Female", label: "Girls PG" },
-    { href: "/search?genderPreference=Male", label: "Boys PG" },
+    { href: "/search?genderPreference=Female", label: "Girls Hostels & Rooms" },
+    { href: "/search?genderPreference=Male", label: "Boys Hostels & Rooms" },
     { href: "/search?food=yes", label: "With mess" },
   ];
 

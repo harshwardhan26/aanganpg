@@ -49,7 +49,7 @@ export type PrefillData = {
 /** Build the rich prefill message from a student to Aangan (Phase F1). */
 export function buildPropertyPrefill(p: PrefillData): string {
   const lines: string[] = [
-    'Namaskar, Aangan varun ha PG baghitla —',
+    'Namaskar, Aangan varun ha hostel/room baghitla —',
     '',
     p.title,
   ];

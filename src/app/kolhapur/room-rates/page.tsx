@@ -79,7 +79,7 @@ export default async function RatesPage() {
             कोल्हापूर रूम रेट लिस्ट २०२६ — एरिया नुसार
           </h1>
           <p className="text-lg text-text-muted">
-            Live rent statistics computed directly from verified PG and room listings across Kolhapur. We require at least 3 listings per category to show data, preventing misleading outliers.
+            Live rent statistics computed directly from verified hostel, room and PG listings across Kolhapur. We require at least 3 listings per category to show data, preventing misleading outliers.
           </p>
           <div className="pt-2">
             <Button render={<a href={shareUrl} target="_blank" rel="noopener noreferrer" />} className="bg-[#25D366] hover:bg-[#1DA851] text-[#05391a] font-bold text-base px-6 h-12 shadow-md">

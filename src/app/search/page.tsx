@@ -21,7 +21,7 @@ export async function generateMetadata(props: { searchParams: Promise<{ [key: st
 
   return {
     title,
-    description: 'Find student rooms and PGs',
+    description: 'Find student Hostels, Rooms & PGs',
     alternates: { canonical: '/search' },
   };
 }
@@ -47,7 +47,7 @@ export default async function SearchPage(props: PageProps) {
     })
   ]);
 
-  let h1Text = 'Student rooms and PGs';
+  let h1Text = 'Student Hostels, Rooms & PGs';
   const activeFilters: { label: string, key: string, value?: string }[] = [];
 
   if (searchParams.college) {
