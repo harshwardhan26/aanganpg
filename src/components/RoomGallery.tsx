@@ -59,8 +59,8 @@ export function RoomGallery({
           alt={current.tag ? `${title} — ${current.tag}` : title}
           fill
           // next/image with `fill` defaults to object-fit: fill, which stretches
-          // every room photo.
-          className="object-cover"
+          // every room photo. We use object-contain so vertical photos aren't cropped.
+          className="object-contain"
           sizes="(max-width: 1024px) 100vw, 900px"
           priority={index === 0}
         />
