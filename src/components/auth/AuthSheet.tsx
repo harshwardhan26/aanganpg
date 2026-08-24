@@ -24,6 +24,7 @@ export function AuthSheetProvider({ children }: { children: ReactNode }) {
   const { data: session, status } = useSession();
   const [open, setOpen] = useState(false);
   const [onSuccess, setOnSuccess] = useState<(() => void) | null>(null);
+  const [urlError, setUrlError] = useState("");
 
   const gate = enquiryGate(status, session?.user?.phone);
   // Google returns the student to the page they left, signed in but with no
@@ -36,8 +37,24 @@ export function AuthSheetProvider({ children }: { children: ReactNode }) {
     if (mustCompleteProfile) setOpen(true);
   }, [mustCompleteProfile]);
 
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      if (url.searchParams.has("error")) {
+        url.searchParams.delete("error");
+        url.searchParams.delete("callbackUrl");
+        window.history.replaceState({}, document.title, url.toString());
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setUrlError("Sign in was cancelled or failed. Please try again.");
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setOpen(true);
+      }
+    }
+  }, []);
+
   const openAuthSheet = (callback?: () => void) => {
     setOnSuccess(() => callback || null);
+    setUrlError("");
     setOpen(true);
   };
 
@@ -48,15 +65,16 @@ export function AuthSheetProvider({ children }: { children: ReactNode }) {
         open={open}
         mustCompleteProfile={mustCompleteProfile}
         onOpenChange={(next) => {
-          // A half-finished account is the one state worth trapping them in:
-          // they chose to sign in, and the number is the whole point.
           if (!next && mustCompleteProfile) return;
+          if (!next) setUrlError("");
           setOpen(next);
         }}
         onSuccess={() => {
           setOpen(false);
+          setUrlError("");
           if (onSuccess) onSuccess();
         }}
+        initialError={urlError}
       />
     </AuthContext.Provider>
   );
@@ -83,12 +101,19 @@ function AuthSheet({
   mustCompleteProfile: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
+  initialError?: string;
 }) {
   const { data: session, update } = useSession();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (initialError) setError(initialError);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialError]);
 
   const googleName = session?.user?.name ?? "";
 
