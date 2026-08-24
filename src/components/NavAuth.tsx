@@ -36,7 +36,7 @@ export function NavAuth({ className, mode = "all" }: { className?: string, mode?
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56 mt-2 bg-white z-50 shadow-md border border-slate-200">
           {isAdmin && (
-            <DropdownMenuItem asChild={false} className="p-0 cursor-pointer">
+            <DropdownMenuItem className="p-0 cursor-pointer">
               <Link href="/admin/listings" className="flex items-center gap-2 w-full h-full px-2 py-1.5">
                 <LayoutDashboard className="h-4 w-4" />
                 Dashboard
@@ -44,14 +44,14 @@ export function NavAuth({ className, mode = "all" }: { className?: string, mode?
             </DropdownMenuItem>
           )}
           
-          <DropdownMenuItem asChild={false} className="p-0 cursor-pointer">
+          <DropdownMenuItem className="p-0 cursor-pointer">
             <Link href="/saved" className="flex items-center gap-2 w-full h-full px-2 py-1.5">
               <Heart className="h-4 w-4" />
               Saved
             </Link>
           </DropdownMenuItem>
 
-          <DropdownMenuItem asChild={false} className="p-0 cursor-pointer">
+          <DropdownMenuItem className="p-0 cursor-pointer">
             <Link href="/list-your-pg" className="flex items-center gap-2 w-full h-full px-2 py-1.5 text-primary-strong">
               <PlusCircle className="h-4 w-4" />
               List Property — FREE
