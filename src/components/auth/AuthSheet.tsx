@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 
-import { signIn, useSession } from "next-auth/react";
+import { signIn, signOut, useSession } from "next-auth/react";
 import { enquiryGate } from "@/lib/session";
 import { saveUserProfile } from "@/actions/user";
 import Image from "next/image";
@@ -206,6 +206,19 @@ function AuthSheet({
               disabled={loading || phone.length < 10 || name.trim().length < 2}
             >
               {loading ? "Saving..." : "Save & Continue"}
+            </Button>
+
+            <Button
+              type="button"
+              variant="ghost"
+              className="w-full text-slate-500 hover:text-slate-700 hover:bg-slate-100 text-[13px] h-9 -mt-2"
+              onClick={() => {
+                setLoading(true);
+                signOut({ callbackUrl: window.location.href });
+              }}
+              disabled={loading}
+            >
+              Wrong account? Sign out
             </Button>
           </div>
         ) : (
