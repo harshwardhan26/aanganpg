@@ -45,7 +45,7 @@ export function AuthSheetProvider({ children }: { children: ReactNode }) {
         url.searchParams.delete("callbackUrl");
         window.history.replaceState({}, document.title, url.toString());
         // eslint-disable-next-line react-hooks/set-state-in-effect
-        setUrlError("Sign in was cancelled or failed. Please try again.");
+        setUrlError("Something went wrong. We have notified our team.");
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setOpen(true);
       }
@@ -160,7 +160,7 @@ function AuthSheet({
       await update({ name: result.name, phone: result.phone });
       onSuccess();
     } catch (e: unknown) {
-      setError((e as Error).message || "Could not save your details. Please try again.");
+      setError((e as Error).message || "Something went wrong. We have notified our team.");
     } finally {
       setLoading(false);
     }

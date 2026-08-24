@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { Menu } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
@@ -12,6 +13,20 @@ import { ListPgButton } from "./ListPgButton";
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const { data: session } = useSession();
+
+  const getInitials = (name?: string | null) => {
+    if (!name) return "";
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    if (parts[0].length >= 2) {
+      return parts[0][0].toUpperCase() + parts[0][1].toLowerCase();
+    }
+    return parts[0].toUpperCase();
+  };
+
   // Every one of these is a real route. They used to be /all, /girls, /boys and
   // /mess, none of which exist — the whole nav was 404s.
   const links = [
@@ -53,8 +68,17 @@ export function Navbar() {
           </div>
 
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
-            <SheetTrigger className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "lg:hidden")}>
-              <Menu className="h-6 w-6" />
+            <SheetTrigger className={cn(
+              session?.user?.name 
+                ? "flex items-center justify-center w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-primary-strong lg:hidden"
+                : buttonVariants({ variant: "ghost", size: "icon" }), 
+              !session?.user?.name && "lg:hidden"
+            )}>
+              {session?.user?.name ? (
+                <span className="text-[15px] tracking-wide">{getInitials(session.user.name)}</span>
+              ) : (
+                <Menu className="h-6 w-6" />
+              )}
               <span className="sr-only">Toggle navigation menu</span>
             </SheetTrigger>
             <SheetContent side="right" className="w-[85vw] sm:w-[350px] bg-white p-6 outline-none">
