@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { useAuthSheet } from "@/components/auth/AuthSheet";
 import { Star, MessageCircle } from "lucide-react";
 import { checkReviewEligibility, submitReview, type ReviewEligibility } from "@/actions/review";
+import { deleteReview } from "@/actions/admin-review";
 import { useRouter } from "next/navigation";
 
 type ReviewSectionProps = {
@@ -82,6 +83,19 @@ export function ReviewSection({ propertyId, reviews, reviewStats }: ReviewSectio
         setError((err as Error).message || "Failed to submit review.");
       }
     });
+  };
+
+  const isAdmin = session?.user?.role === "admin";
+
+  const handleDeleteReview = async (reviewId: string) => {
+    if (!confirm("Are you sure you want to delete this review?")) return;
+    
+    try {
+      await deleteReview(reviewId);
+      router.refresh();
+    } catch (err: unknown) {
+      setError((err as Error).message || "Failed to delete review.");
+    }
   };
 
   return (
@@ -218,6 +232,15 @@ export function ReviewSection({ propertyId, reviews, reviewStats }: ReviewSectio
                     </span>
                   </div>
                 </div>
+                {isAdmin && (
+                  <button 
+                    onClick={() => handleDeleteReview(review.id)}
+                    className="text-red-500 hover:text-red-700 text-xs font-medium px-2 py-1 rounded hover:bg-red-50 transition-colors shrink-0"
+                    title="Delete review"
+                  >
+                    Delete
+                  </button>
+                )}
               </div>
               {review.comment && (
                 <p className="text-slate-700 text-sm whitespace-pre-wrap mt-2">{review.comment}</p>

@@ -50,14 +50,14 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${poppins.variable} ${poppinsHeading.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
-        <PostHogProvider>
-          <Providers>
+        <Providers>
+          <PostHogProvider>
             <Navbar />
             {children}
             <Footer />
             <PWAPrompt />
-          </Providers>
-        </PostHogProvider>
+          </PostHogProvider>
+        </Providers>
       </body>
     </html>
   );

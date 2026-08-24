@@ -4,6 +4,7 @@ import { Suspense, useEffect } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { initPostHog } from '@/lib/posthog';
 import posthog from 'posthog-js';
+import { useSession } from "next-auth/react";
 
 /**
  * `useSearchParams` opts the whole subtree out of static rendering unless it
@@ -29,9 +30,22 @@ function PageviewTracker() {
 }
 
 export function PostHogProvider({ children }: { children: React.ReactNode }) {
+  const { data: session } = useSession();
+
   useEffect(() => {
     initPostHog();
   }, []);
+
+  useEffect(() => {
+    if (session?.user?.id) {
+      posthog.identify(session.user.id, {
+        email: session.user.email,
+        name: session.user.name,
+      });
+    } else {
+      posthog.reset();
+    }
+  }, [session]);
 
   return (
     <>

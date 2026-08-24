@@ -12,7 +12,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <header className="bg-white border-b border-border py-4 px-4 sm:px-6 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <header className="bg-white border-b border-border shadow-sm">
+        <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <Link href="/admin" className="text-xl font-bold font-heading text-text-main">
           Aangan Admin
         </Link>
@@ -20,7 +21,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <Link href="/admin/leads" className="hover:text-text-main whitespace-nowrap">Leads</Link>
           <Link href="/admin/listings" className="hover:text-text-main whitespace-nowrap">Listings</Link>
           <Link href="/admin/users" className="hover:text-text-main whitespace-nowrap">Users</Link>
+          {session?.user?.email === "hppatilhpp@gmail.com" && (
+            <Link href="/admin/analytics" className="hover:text-text-main whitespace-nowrap text-primary-strong">Analytics</Link>
+          )}
         </nav>
+        </div>
       </header>
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {children}

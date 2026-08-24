@@ -113,7 +113,6 @@ function AuthSheet({
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (initialError) setError(initialError);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialError]);
 
   const googleName = session?.user?.name ?? "";

@@ -81,8 +81,7 @@ export async function deleteReview(reviewId: string) {
     if (review.property.college) {
       revalidatePath(`/kolhapur/${review.property.college.slug}`);
     }
-    revalidatePath("/");
-    revalidatePath("/search");
+    revalidatePath("/", "layout");
   }
 }
 
