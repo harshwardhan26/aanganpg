@@ -96,6 +96,7 @@ function AuthSheet({
   mustCompleteProfile,
   onOpenChange,
   onSuccess,
+  initialError,
 }: {
   open: boolean;
   mustCompleteProfile: boolean;

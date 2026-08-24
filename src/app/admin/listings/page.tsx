@@ -1,6 +1,7 @@
 import prisma from "@/lib/prisma";
 import Link from "next/link";
 import { markFull, markClosed, softDelete } from "@/actions/admin";
+import { ReviewCodeButton } from "./ReviewCodeButton";
 
 export default async function AdminListingsPage() {
   // eslint-disable-next-line react-hooks/purity
@@ -102,6 +103,7 @@ export default async function AdminListingsPage() {
                         <form action={softDelete.bind(null, listing.id)} className="inline-block">
                           <button className="text-red-600 hover:text-red-800 text-xs font-medium">Delete</button>
                         </form>
+                        <ReviewCodeButton propertyId={listing.id} />
                       </>
                     )}
                   </td>
@@ -172,6 +174,11 @@ export default async function AdminListingsPage() {
                   <form action={markClosed.bind(null, listing.id)} className="flex-1 flex">
                     <button className="w-full bg-slate-100 text-slate-800 hover:bg-slate-200 px-4 py-2 min-h-[44px] rounded font-medium text-sm transition-colors">Close</button>
                   </form>
+                )}
+                {!isDeleted && (
+                  <div className="flex-1 flex justify-center items-center bg-indigo-50 border border-indigo-100 rounded">
+                    <ReviewCodeButton propertyId={listing.id} />
+                  </div>
                 )}
               </div>
             </div>

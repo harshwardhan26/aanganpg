@@ -28,7 +28,7 @@ export function ListPgButton({ className, variant = "outline", size = "default",
       }}
       className={cn(buttonVariants({ variant, size }), className)}
     >
-      {children || 'List your PG \u2014 FREE'}
+      {children || 'List Property \u2014 FREE'}
     </Link>
   );
 }

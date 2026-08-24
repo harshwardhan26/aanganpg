@@ -23,12 +23,18 @@ type RoomCardProps = {
       shortName: string | null;
       name: string;
     } | null;
+    reviews?: { rating: number }[];
   };
 };
 
 export function RoomCard({ room }: RoomCardProps) {
   const isFull = room.vacantBeds === 0;
   
+  const reviewCount = room.reviews?.length || 0;
+  const reviewAvg = reviewCount > 0 
+    ? room.reviews!.reduce((acc, r) => acc + r.rating, 0) / reviewCount 
+    : 0;
+
   return (
     <Link 
       href={`/pg/${room.slug}`}
@@ -81,6 +87,15 @@ export function RoomCard({ room }: RoomCardProps) {
               </span>
             )) || (room.price ? `₹${room.price.toLocaleString("en-IN")}/month` : "Price on request")}
           </span>
+        </div>
+        
+        <div className="flex justify-between items-center -mt-1">
+          {reviewCount > 0 && (
+            <div className="flex items-center gap-1.5 text-sm font-medium text-slate-700 bg-slate-50 px-2 py-0.5 rounded border border-slate-200 w-fit">
+              <span className="text-yellow-500">★</span> 
+              <span>{reviewAvg.toFixed(1)} <span className="text-slate-500 font-normal">({reviewCount})</span></span>
+            </div>
+          )}
         </div>
         
         {(room.location || room.college) && (

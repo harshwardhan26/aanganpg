@@ -16,22 +16,22 @@ export function Navbar() {
   // /mess, none of which exist — the whole nav was 404s.
   const links = [
     { href: "/search", label: "All rooms" },
-    { href: "/search?genderPreference=Female", label: "Girls Hostels & Rooms" },
-    { href: "/search?genderPreference=Male", label: "Boys Hostels & Rooms" },
+    { href: "/search?genderPreference=Female", label: "Girls Hostels" },
+    { href: "/search?genderPreference=Male", label: "Boys Hostels" },
     { href: "/search?food=yes", label: "With mess" },
   ];
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-light/95 backdrop-blur supports-[backdrop-filter]:bg-light/60">
-      <div className="mx-auto flex h-16 max-w-[var(--content-max)] items-center px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-1 items-center">
+      <div className="mx-auto flex h-16 w-full items-center px-6 md:px-10 max-w-7xl">
+        <div className="flex flex-1 items-center justify-start">
           <Link href="/" className="text-primary-strong py-2 flex items-center gap-2.5 w-fit">
             <Logo height={32} />
             <span className="hidden sm:inline-block text-xs font-semibold text-text-muted mt-0.5 tracking-wide">Kolhapur</span>
           </Link>
         </div>
         
-        <nav className="hidden lg:flex flex-none items-center justify-center gap-5 xl:gap-6 mx-4">
+        <nav className="hidden lg:flex flex-1 items-center justify-center gap-6 xl:gap-8 mx-4">
           {links.map((link) => (
             <Link
               key={link.href}
@@ -43,9 +43,8 @@ export function Navbar() {
           ))}
         </nav>
         
-        <div className="flex flex-1 items-center justify-end gap-0 sm:gap-4">
+        <div className="flex flex-1 items-center justify-end gap-2 sm:gap-4">
           <div className="hidden lg:flex items-center gap-4">
-            <ListPgButton className="border-border text-text-main hover:bg-light whitespace-nowrap" />
             <NavAuth />
           </div>
 

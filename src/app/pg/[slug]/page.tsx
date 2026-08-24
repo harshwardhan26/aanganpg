@@ -11,6 +11,9 @@ import { RoomCard } from "@/components/RoomCard";
 import { directionsUrl } from "@/lib/maps";
 import { MapPin } from "lucide-react";
 import { getBaseUrl } from "@/lib/url";
+import { ReviewSection } from "@/components/ReviewSection";
+import { getPropertyReviews } from "@/actions/review";
+import { getReviewStats } from "@/actions/admin-review";
 
 // Next 16: `params` is a Promise and must be awaited before its properties are
 // read. Reading it synchronously logged a sync-dynamic-apis warning on every
@@ -91,6 +94,9 @@ export default async function RoomPage({ params }: Props) {
     ? (await getRoomsNearCollege(room.college.slug)).filter((r) => r.id !== room.id).slice(0, 3)
     : [];
 
+  const reviews = await getPropertyReviews(room.id);
+  const reviewStats = await getReviewStats(room.id);
+
   const priceLabel = room.displayPrice || "Price on request";
   // Absolute, because it is pasted into a WhatsApp message to us.
   const listingUrl = new URL(`/pg/${room.slug}`, getBaseUrl()).toString();
@@ -120,6 +126,13 @@ export default async function RoomPage({ params }: Props) {
         ? "https://schema.org/SoldOut"
         : "https://schema.org/InStock",
     },
+    ...(reviewStats.count > 0 ? {
+      aggregateRating: {
+        "@type": "AggregateRating",
+        ratingValue: reviewStats.average,
+        reviewCount: reviewStats.count,
+      }
+    } : {}),
   };
 
   const prefillData = {
@@ -291,6 +304,12 @@ export default async function RoomPage({ params }: Props) {
               </p>
             </section>
           )}
+
+          <ReviewSection 
+            propertyId={room.id} 
+            reviews={reviews} 
+            reviewStats={reviewStats} 
+          />
 
           <p className="text-sm text-text-muted -my-2">
             Every room here was visited in person and photographed by us.{" "}

@@ -14,7 +14,7 @@ export async function getRooms(filters: RoomFilters = {}) {
   return prisma.property.findMany({
     where: buildRoomWhere(parsed.data),
     take: 50,
-    include: { college: true, images: true },
+    include: { college: true, images: true, reviews: { select: { rating: true } } },
     orderBy: buildRoomOrderBy(parsed.data),
   });
 }
