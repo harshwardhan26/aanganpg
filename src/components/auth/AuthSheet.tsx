@@ -107,6 +107,16 @@ function AuthSheet({
     }
   }, [open]);
 
+  useEffect(() => {
+    // If the user clicks 'Continue with Google', goes to the Google page, 
+    // but clicks the browser Back button instead of logging in, the page 
+    // is restored from cache and stays stuck on 'Redirecting...'. 
+    // This resets the button when the page becomes visible again.
+    const handlePageShow = () => setLoading(false);
+    window.addEventListener("pageshow", handlePageShow);
+    return () => window.removeEventListener("pageshow", handlePageShow);
+  }, []);
+
   const handleGoogle = () => {
     setLoading(true);
     // Google redirects the whole page, so `onSuccess` cannot fire in this load.
