@@ -200,13 +200,13 @@ export default async function Home() {
               </Link>
             </div>
             <div className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 lg:grid-cols-3 lg:gap-6 [&::-webkit-scrollbar]:hidden">
-              <div className="w-0 shrink-0 sm:hidden" />
+              <div className="w-0.5 shrink-0 sm:hidden" />
               {recentRooms.map(room => (
-                <div key={room.id} className="w-[78vw] shrink-0 snap-start sm:w-auto">
+                <div key={room.id} className="w-[78vw] shrink-0 snap-center sm:w-auto sm:snap-start">
                   <RoomCard room={room} />
                 </div>
               ))}
-              <div className="w-0 shrink-0 sm:hidden" />
+              <div className="w-0.5 shrink-0 sm:hidden" />
             </div>
           </div>
         </section>
