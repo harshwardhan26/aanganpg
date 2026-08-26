@@ -3,6 +3,13 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { csvField } from "@/lib/escape";
+import { slidingLimiter, allowRequest } from "@/lib/rate-limit";
+
+// One request pulls every owner's phone number out of the database in a single
+// file — the widest data egress this app has. Six an hour is more exports than
+// anyone runs by hand and few enough that a leaked admin session cannot quietly
+// pull the list on a loop.
+const ratelimit = slidingLimiter(6, "1 h");
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -10,10 +17,20 @@ export async function GET() {
     return new NextResponse("Unauthorized", { status: 401 });
   }
 
+  if (!(await allowRequest(ratelimit, `csv_export_${session.user.id}`))) {
+    return new NextResponse("Too many exports. Please try again later.", { status: 429 });
+  }
+
   const listings = await prisma.property.findMany({
     include: { college: true },
     orderBy: { createdAt: "desc" }
   });
+
+  // Who took the owner list, and when. Sentry and the platform logs both keep
+  // this, so an export that was not us leaves a trace rather than nothing.
+  console.info(
+    `[export] ${listings.length} listings exported by ${session.user.email ?? session.user.id} at ${new Date().toISOString()}`,
+  );
 
   const headers = [
     "Title",

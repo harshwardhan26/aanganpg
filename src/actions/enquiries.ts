@@ -11,10 +11,13 @@ import { trustedIp } from '@/lib/request';
 import { z } from 'zod';
 
 const enquiryInputSchema = z.object({
-  propertyId: z.string().min(1),
+  propertyId: z.string().trim().min(1).max(64),
   channel: z.enum(['call', 'whatsapp', 'share', 'form', 'referral']),
-  name: z.string().optional(),
-  phone: z.string().optional(),
+  // Capped because these land in `Lead.name`/`Lead.phone`, which are unbounded
+  // text columns. `canonicalPhone` rejects anything that is not an Indian
+  // mobile anyway, so the phone cap only stops the payload before it is parsed.
+  name: z.string().max(120).optional(),
+  phone: z.string().max(24).optional(),
 });
 
 const ratelimit = slidingLimiter(5, '1 m');

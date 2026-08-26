@@ -11,6 +11,7 @@ import { directionsUrl, looksLikeKolhapur } from "../src/lib/maps";
 import { enquiryGate } from "../src/lib/session";
 import { isAdminEmail, resolveRole, isOwner } from "../src/lib/admin";
 import { trustedIp } from "../src/lib/request";
+import { allowRequest } from "../src/lib/rate-limit";
 
 try { process.loadEnvFile(); } catch {}
 
@@ -267,6 +268,25 @@ async function main() {
   assert(trustedIp({ "x-forwarded-for": "1.2.3.4" }) === "1.2.3.4", "a single hop is the only hop");
   assert(trustedIp({}) === "unknown", "no headers must collapse to one shared bucket, not a per-caller one");
   assert(trustedIp({ "x-forwarded-for": "  " }) === "unknown", "a blank forwarded header must not become a bucket key");
+
+  // Rate limiting with no limiter configured. This is the branch that decides
+  // whether a dropped Upstash env var quietly removes every brake on the site,
+  // and it was the last piece of security-critical logic here with no assertion.
+  // The production branch logs on purpose; muted here so a passing CI run does
+  // not print something that reads like a real failure.
+  const realError = console.error;
+  console.error = () => {};
+  const devAllows = await allowRequest(null, "k", false);
+  const prodRefuses = await allowRequest(null, "k", true);
+  console.error = realError;
+  assert(devAllows === true, "no limiter in development must allow the request");
+  assert(prodRefuses === false, "no limiter in production must REFUSE the request");
+
+  // And with one: whatever the limiter says, unchanged.
+  const yes = { limit: async () => ({ success: true }) } as unknown as Parameters<typeof allowRequest>[0];
+  const no = { limit: async () => ({ success: false }) } as unknown as Parameters<typeof allowRequest>[0];
+  assert((await allowRequest(yes, "k", true)) === true, "a limiter that allows must be obeyed");
+  assert((await allowRequest(no, "k", false)) === false, "a limiter that refuses must be obeyed even in development");
 
   console.log("Self check passed");
 }

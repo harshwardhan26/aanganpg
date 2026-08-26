@@ -23,17 +23,16 @@ type RoomCardProps = {
       shortName: string | null;
       name: string;
     } | null;
-    reviews?: { rating: number }[];
+    ratingAvg: number | null;
+    ratingCount: number;
   };
 };
 
 export function RoomCard({ room }: RoomCardProps) {
   const isFull = room.vacantBeds === 0;
   
-  const reviewCount = room.reviews?.length || 0;
-  const reviewAvg = reviewCount > 0 
-    ? room.reviews!.reduce((acc, r) => acc + r.rating, 0) / reviewCount 
-    : 0;
+  const reviewCount = room.ratingCount;
+  const reviewAvg = room.ratingAvg ?? 0;
 
   return (
     <Link 

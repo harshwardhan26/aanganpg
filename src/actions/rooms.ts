@@ -34,7 +34,10 @@ export async function getRooms(filters: RoomFilters = {}, page = 1) {
     where: buildRoomWhere(parsed.data),
     skip: (current - 1) * PAGE_SIZE,
     take: PAGE_SIZE + 1,
-    include: { college: true, images: true, reviews: { select: { rating: true } } },
+    // No `reviews` include: the card renders `ratingAvg`/`ratingCount`, which
+    // are columns on Property. Including reviews meant every review of every
+    // listing crossed the wire to produce one number per card.
+    include: { college: true, images: true },
     orderBy: buildRoomOrderBy(parsed.data),
   });
 

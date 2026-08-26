@@ -29,13 +29,20 @@ export function slidingLimiter(requests: number, window: Window) {
  * So: open in development, closed in production. A limiter that cannot run is a
  * limiter that must refuse.
  */
-export async function allowRequest(limiter: Ratelimit | null, key: string): Promise<boolean> {
+export async function allowRequest(
+  limiter: Ratelimit | null,
+  key: string,
+  // A parameter rather than a direct env read so the two limiter-less branches
+  // can be asserted without mutating process.env. This is the single most
+  // consequential decision in this file; it should not be the untested one.
+  isProduction: boolean = process.env.NODE_ENV === "production",
+): Promise<boolean> {
   if (limiter) {
     const { success } = await limiter.limit(key);
     return success;
   }
 
-  if (process.env.NODE_ENV === "production") {
+  if (isProduction) {
     console.error("[rate-limit] Upstash is not configured; refusing the request. Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN.");
     return false;
   }

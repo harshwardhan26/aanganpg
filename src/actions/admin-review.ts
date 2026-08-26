@@ -6,6 +6,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { syncPropertyRating } from "@/lib/rating";
 
 /** Same shape guard as `actions/admin.ts`: a cuid we issued, never free text. */
 const idSchema = z.string().trim().min(1).max(64);
@@ -97,13 +98,19 @@ export async function deleteReview(reviewId: string) {
   const parsedId = idSchema.safeParse(reviewId);
   if (!parsedId.success) throw new Error("Invalid review id");
 
-  const review = await prisma.review.delete({
-    where: { id: parsedId.data },
-    include: {
-      property: {
-        select: { slug: true, college: { select: { slug: true } } }
+  const review = await prisma.$transaction(async (tx) => {
+    const deleted = await tx.review.delete({
+      where: { id: parsedId.data },
+      include: {
+        property: {
+          select: { slug: true, college: { select: { slug: true } } }
+        }
       }
-    }
+    });
+    // Same transaction as the delete: a listing must never keep a rating
+    // average that counts a review no longer there.
+    await syncPropertyRating(tx, deleted.propertyId);
+    return deleted;
   });
 
   if (review.property) {
@@ -115,15 +122,21 @@ export async function deleteReview(reviewId: string) {
   }
 }
 
+/**
+ * The listing page's rating summary.
+ *
+ * Reads the denormalised columns rather than re-aggregating: `syncPropertyRating`
+ * keeps them correct in the same transaction as every review write, so there is
+ * no window in which these disagree with the reviews below them on the page.
+ */
 export async function getReviewStats(propertyId: string) {
-  const result = await prisma.review.aggregate({
-    where: { propertyId },
-    _avg: { rating: true },
-    _count: { rating: true }
+  const property = await prisma.property.findUnique({
+    where: { id: propertyId },
+    select: { ratingAvg: true, ratingCount: true },
   });
 
   return {
-    average: result._avg.rating || 0,
-    count: result._count.rating || 0
+    average: property?.ratingAvg ?? 0,
+    count: property?.ratingCount ?? 0,
   };
 }

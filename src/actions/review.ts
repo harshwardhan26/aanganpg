@@ -6,6 +6,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { slidingLimiter, allowRequest } from "@/lib/rate-limit";
+import { syncPropertyRating } from "@/lib/rating";
 
 // A review is a once-per-property act, so anything above a handful an hour is
 // someone working through guessed codes rather than someone writing reviews.
@@ -104,14 +105,17 @@ export async function submitReview(propertyId: string, rating: number, comment: 
   // catch its violation and say the same thing the check would have, instead of
   // showing the student a raw Prisma error string.
   try {
-    await prisma.review.create({
-      data: {
-        propertyId,
-        userId: session.user.id,
-        rating,
-        comment: comment?.trim() || null,
-        verifiedVia
-      }
+    await prisma.$transaction(async (tx) => {
+      await tx.review.create({
+        data: {
+          propertyId,
+          userId: session.user!.id,
+          rating,
+          comment: comment?.trim() || null,
+          verifiedVia
+        }
+      });
+      await syncPropertyRating(tx, propertyId);
     });
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
@@ -137,14 +141,25 @@ export async function submitReview(propertyId: string, rating: number, comment: 
   return { success: true };
 }
 
+/**
+ * Reviews as the listing page renders them, and nothing more.
+ *
+ * `select`, not `include`. These rows are handed to `ReviewSection`, a client
+ * component — React serialises the whole prop into the RSC payload no matter
+ * which fields the component actually reads, so an `include` shipped every
+ * reviewer's `userId` and the `verifiedVia` audit field to every visitor's
+ * browser. Nothing on screen uses either.
+ */
 export async function getPropertyReviews(propertyId: string) {
   return await prisma.review.findMany({
     where: { propertyId },
     orderBy: { createdAt: 'desc' },
-    include: {
-      user: {
-        select: { name: true }
-      }
-    }
+    select: {
+      id: true,
+      rating: true,
+      comment: true,
+      createdAt: true,
+      user: { select: { name: true } },
+    },
   });
 }

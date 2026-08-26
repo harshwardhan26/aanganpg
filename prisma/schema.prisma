@@ -49,6 +49,13 @@ model Property {
   verifiedAt DateTime?
   verifiedBy String?
 
+  // Denormalised from Review, maintained on every review write.
+  // The search page renders many cards at once, and computing these live meant
+  // `include: { reviews: true }` on every row — every review of every listing
+  // pulled across the wire to produce one number per card.
+  ratingAvg   Float? 
+  ratingCount Int     @default(0)
+
   deletedAt DateTime?
   closedAt  DateTime?
   createdAt DateTime  @default(now())

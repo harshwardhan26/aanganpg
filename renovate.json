@@ -1,0 +1,23 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "timezone": "Asia/Kolkata",
+  "schedule": ["before 6am on the first day of the month"],
+  "prConcurrentLimit": 3,
+  "packageRules": [
+    {
+      "description": "Patch and minor updates land together, once a month. Majors stay separate so Next, Prisma and React upgrades get read rather than merged.",
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "non-major dependencies"
+    },
+    {
+      "description": "Never open a major PR during admission season — May to August is when this site earns, and is the worst possible time to take a framework upgrade.",
+      "matchUpdateTypes": ["major"],
+      "schedule": ["every weekend in September", "every weekend in October"]
+    }
+  ],
+  "vulnerabilityAlerts": {
+    "schedule": ["at any time"],
+    "labels": ["security"]
+  }
+}
