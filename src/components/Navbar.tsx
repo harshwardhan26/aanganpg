@@ -38,7 +38,7 @@ export function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-light/95 backdrop-blur supports-[backdrop-filter]:bg-light/60">
-      <div className="mx-auto flex h-16 w-full items-center px-6 md:px-10 max-w-7xl">
+      <div className="flex h-16 w-full items-center px-6 md:px-16 lg:px-24 xl:px-32 2xl:px-40">
         <div className="flex flex-1 items-center justify-start">
           <Link href="/" className="text-primary-strong py-2 flex items-center gap-2.5 w-fit">
             <Logo height={32} />

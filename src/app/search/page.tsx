@@ -10,7 +10,7 @@ export async function generateMetadata(props: { searchParams: Promise<{ [key: st
   const searchParams = await props.searchParams;
   const collegeSlug = searchParams.college as string;
   let title = 'Search rooms';
-  
+
   if (collegeSlug) {
     const colleges = await getCachedColleges();
     const matchedCollege = colleges.find(c => c.slug === collegeSlug);
@@ -57,22 +57,22 @@ export default async function SearchPage(props: PageProps) {
     }
     activeFilters.push({ label: matchedCollege?.shortName || matchedCollege?.name || 'College', key: 'college' });
   }
-  
+
   if (searchParams.maxPrice) activeFilters.push({ label: `Under ₹${searchParams.maxPrice}`, key: 'maxPrice' });
   if (searchParams.genderPreference) activeFilters.push({ label: searchParams.genderPreference as string === 'Any' ? 'Co-ed' : searchParams.genderPreference as string, key: 'genderPreference' });
   if (searchParams.food) activeFilters.push({ label: searchParams.food === 'yes' ? 'With Mess' : 'Without Mess', key: 'food' });
   if (searchParams.occupancy) activeFilters.push({ label: searchParams.occupancy as string, key: 'occupancy' });
-  
+
   const amenities = typeof searchParams.amenities === 'string' ? [searchParams.amenities] : searchParams.amenities || [];
   amenities.forEach((a: string) => activeFilters.push({ label: a, key: 'amenities', value: a }));
-  
+
   const rules = typeof searchParams.rules === 'string' ? [searchParams.rules] : searchParams.rules || [];
   rules.forEach((r: string) => activeFilters.push({ label: r, key: 'rules', value: r }));
 
   return (
     <main className="min-h-screen bg-light">
       <div className="max-w-[var(--content-max)] mx-auto px-4 sm:px-6 lg:px-8 py-8 flex items-start gap-8">
-        
+
         {/* Desktop Sidebar */}
         <aside className="hidden lg:block w-72 shrink-0 border-r border-border pr-8 lg:sticky lg:top-24 h-[calc(100vh-6rem)]">
           <SearchFilters searchParams={searchParams} colleges={colleges} />
@@ -115,19 +115,19 @@ export default async function SearchPage(props: PageProps) {
           )}
 
           {rooms.length > 0 ? (
-             <div className="grid grid-cols-1 sm:grid-cols-[repeat(auto-fill,minmax(272px,1fr))] gap-6">
-                {rooms.map(room => <RoomCard key={room.id} room={room} />)}
-             </div>
+            <div className="grid grid-cols-1 sm:grid-cols-[repeat(auto-fill,minmax(272px,1fr))] gap-6">
+              {rooms.map(room => <RoomCard key={room.id} room={room} />)}
+            </div>
           ) : (
-             <div className="text-center py-16 px-4 bg-white rounded-xl border border-border">
-               <h2 className="text-lg font-semibold text-text-main mb-2">No rooms match these exact filters</h2>
-               <p className="text-text-muted mb-6">
-                 Try widening your budget, dropping the mess filter, or checking a different locality.
-               </p>
-               <Button size="sm" className="border-border text-text-main hover:bg-muted bg-white border shadow-sm" render={<Link href="/search" />} nativeButton={false}>
-                 Clear all filters
-               </Button>
-             </div>
+            <div className="text-center py-16 px-4 bg-white rounded-xl border border-border">
+              <h2 className="text-lg font-semibold text-text-main mb-2">No rooms match these exact filters</h2>
+              <p className="text-text-muted mb-6">
+                Try widening your budget, dropping the mess filter, or checking a different locality.
+              </p>
+              <Button size="sm" className="border-border text-text-main hover:bg-muted bg-white border shadow-sm" render={<Link href="/search" />} nativeButton={false}>
+                Clear all filters
+              </Button>
+            </div>
           )}
         </div>
 
