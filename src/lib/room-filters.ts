@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { Prisma } from "@prisma/client";
+import { GENDER_PREFERENCES, OCCUPANCY_TYPES } from "./property-options";
 
 export const roomFiltersSchema = z.object({
   college: z.string().optional(),
@@ -14,6 +15,37 @@ export const roomFiltersSchema = z.object({
 });
 
 export type RoomFilters = z.infer<typeof roomFiltersSchema>;
+
+/** `?amenities=Wifi` and `?amenities=Wifi&amenities=Geyser` must both be arrays. */
+const asArray = (v: unknown) => (v === undefined ? undefined : Array.isArray(v) ? v : [v]);
+
+/**
+ * A URL's worth of filters, sanitised.
+ *
+ * Every field falls back to `undefined` instead of failing, because a bad query
+ * string must render an unfiltered page — never a 500. `/search?maxPrice=abc`
+ * used to reach `z.number()` as `NaN`, throw "Invalid filters", and hand Google
+ * a 500 on the most-indexed page on the site.
+ *
+ * The caps are the second half of the job. These values become `unstable_cache`
+ * keys, so an unbounded value space is an unbounded number of cache entries that
+ * anyone can mint by editing the address bar.
+ */
+export function parseRoomFilters(
+  params: Record<string, string | string[] | undefined>,
+): RoomFilters {
+  return {
+    college: z.string().max(60).optional().catch(undefined).parse(params.college),
+    location: z.string().max(60).optional().catch(undefined).parse(params.location),
+    genderPreference: z.enum(GENDER_PREFERENCES).optional().catch(undefined).parse(params.genderPreference),
+    maxPrice: z.coerce.number().int().positive().max(1_000_000).optional().catch(undefined).parse(params.maxPrice),
+    food: z.enum(["yes", "no"]).optional().catch(undefined).parse(params.food),
+    occupancy: z.enum(OCCUPANCY_TYPES).optional().catch(undefined).parse(params.occupancy),
+    amenities: z.array(z.string().max(40)).max(20).optional().catch(undefined).parse(asArray(params.amenities)),
+    rules: z.array(z.string().max(40)).max(20).optional().catch(undefined).parse(asArray(params.rules)),
+    sort: z.enum(["price_asc"]).optional().catch(undefined).parse(params.sort),
+  };
+}
 
 /**
  * The `where` clause behind every room listing on the site.

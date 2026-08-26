@@ -3,12 +3,14 @@ import { canonicalPhone } from "../src/lib/phone";
 import { buildPropertyPrefill } from "../src/lib/whatsapp";
 import { slugify, resolveSlug } from "../src/lib/slug";
 import { pgPublishIssues } from "../src/lib/property-options";
-import { buildRoomWhere, buildRoomOrderBy } from "../src/lib/room-filters";
+import { buildRoomWhere, buildRoomOrderBy, parseRoomFilters } from "../src/lib/room-filters";
+import { csvField, jsonLdScript } from "../src/lib/escape";
 import { cloudinaryUrl } from "../src/lib/image";
 import { publicImage } from "../src/lib/publicImage";
 import { directionsUrl, looksLikeKolhapur } from "../src/lib/maps";
 import { enquiryGate } from "../src/lib/session";
-import { isAdminEmail } from "../src/lib/admin";
+import { isAdminEmail, resolveRole, isOwner } from "../src/lib/admin";
+import { trustedIp } from "../src/lib/request";
 
 try { process.loadEnvFile(); } catch {}
 
@@ -197,6 +199,74 @@ async function main() {
   assert(isAdminEmail(null, list) === false, "isAdminEmail must reject a null email");
   assert(isAdminEmail("hppatilhpp@gmail.com", "") === false, "isAdminEmail must grant nobody when the allowlist is empty");
   assert(isAdminEmail("", list) === false, "isAdminEmail must reject an empty email against a non-empty list");
+
+  // Role resolution. The point of these is the SECOND one: the old form read the
+  // role back off the token it had written last request, so a revoked admin kept
+  // admin until the JWT expired. resolveRole takes one input and has no memory.
+  const prevAdmins = process.env.ADMIN_EMAILS;
+  process.env.ADMIN_EMAILS = list;
+  assert(resolveRole("hppatilhpp@gmail.com") === "admin", "resolveRole must grant admin to an allowlisted email");
+  process.env.ADMIN_EMAILS = "second@aanganpg.com";
+  assert(resolveRole("hppatilhpp@gmail.com") === "student", "resolveRole must revoke the moment the email leaves the allowlist");
+  process.env.ADMIN_EMAILS = "";
+  assert(resolveRole("hppatilhpp@gmail.com") === "student", "resolveRole must grant nobody when the allowlist is empty");
+  assert(resolveRole(null) === "student", "resolveRole must reject a null email");
+  process.env.ADMIN_EMAILS = prevAdmins;
+
+  // Search filters must degrade, never throw. Every one of these used to be a
+  // 500 on /search or an unbounded unstable_cache key.
+  assert.deepStrictEqual(parseRoomFilters({ maxPrice: "abc" }).maxPrice, undefined, "a non-numeric maxPrice must drop, not throw");
+  assert.deepStrictEqual(parseRoomFilters({ maxPrice: "6000" }).maxPrice, 6000, "a numeric maxPrice must survive as a number");
+  assert.deepStrictEqual(parseRoomFilters({ maxPrice: "-5" }).maxPrice, undefined, "a negative maxPrice must drop");
+  assert.deepStrictEqual(parseRoomFilters({ food: "maybe" }).food, undefined, "an off-menu food value must drop");
+  assert.deepStrictEqual(parseRoomFilters({ food: "yes" }).food, "yes", "a valid food value must survive");
+  assert.deepStrictEqual(parseRoomFilters({ genderPreference: "Other" }).genderPreference, undefined, "an unknown gender must drop");
+  assert.deepStrictEqual(parseRoomFilters({ amenities: "Wifi" }).amenities, ["Wifi"], "a single amenity must become an array");
+  assert.deepStrictEqual(parseRoomFilters({ amenities: ["Wifi", "Geyser"] }).amenities, ["Wifi", "Geyser"], "repeated amenities must stay an array");
+  assert.deepStrictEqual(parseRoomFilters({ college: "x".repeat(500) }).college, undefined, "an oversized college must drop rather than become a cache key");
+  assert.deepStrictEqual(parseRoomFilters({}), {
+    college: undefined, location: undefined, genderPreference: undefined, maxPrice: undefined,
+    food: undefined, occupancy: undefined, amenities: undefined, rules: undefined, sort: undefined,
+  }, "an empty query must produce an empty filter set");
+
+  // CSV export must not hand Excel a formula.
+  assert(csvField("=cmd|'/c calc'!A1") === `"'=cmd|'/c calc'!A1"`, "csvField must neutralise a leading =");
+  assert(csvField("+919876543210") === `"'+919876543210"`, "csvField must neutralise a leading + on a phone number");
+  assert(csvField("-5") === `"'-5"`, "csvField must neutralise a leading -");
+  assert(csvField("@handle") === `"'@handle"`, "csvField must neutralise a leading @");
+  assert(csvField('Sai PG "Deluxe"') === `"Sai PG ""Deluxe"""`, "csvField must still double embedded quotes");
+  assert(csvField("Rajarampuri") === `"Rajarampuri"`, "csvField must leave ordinary text alone");
+  assert(csvField(null) === `""`, "csvField must render null as an empty field");
+  assert(csvField(0) === `"0"`, "csvField must render 0, not an empty field");
+
+  // JSON-LD must not be escapable out of its own script tag.
+  assert(
+    !jsonLdScript({ name: "PG</script><script>alert(1)</script>" }).includes("</script>"),
+    "jsonLdScript must not let a title close the script tag",
+  );
+  assert.deepStrictEqual(
+    JSON.parse(jsonLdScript({ name: "A<B" })),
+    { name: "A<B" },
+    "jsonLdScript must still parse back to the original object",
+  );
+
+  // Owner gate. Analytics is tighter than the admin panel, and the fallback
+  // matters: a deploy with no OWNER_EMAIL must still resolve to a real person.
+  assert(isOwner("first@aangan.com", undefined, "first@aangan.com, second@aangan.com") === true, "isOwner must fall back to the first ADMIN_EMAILS entry");
+  assert(isOwner("second@aangan.com", undefined, "first@aangan.com, second@aangan.com") === false, "isOwner must not grant a later ADMIN_EMAILS entry");
+  assert(isOwner("second@aangan.com", "second@aangan.com", "first@aangan.com") === true, "an explicit OWNER_EMAIL must win over the allowlist");
+  assert(isOwner("SECOND@Aangan.com", "second@aangan.com") === true, "isOwner must ignore case");
+  assert(isOwner(null, "second@aangan.com") === false, "isOwner must reject a null email");
+  assert(isOwner("anyone@aangan.com", "", "") === false, "isOwner must grant nobody when neither value is set");
+
+  // Trusted client IP. The rightmost hop is the one our own proxy appended; the
+  // leftmost is whatever the caller typed, and keying a rate limit on it let
+  // anyone mint a fresh bucket per request.
+  assert(trustedIp({ "x-real-ip": "9.9.9.9", "x-forwarded-for": "1.2.3.4, 5.6.7.8" }) === "9.9.9.9", "x-real-ip must win when present");
+  assert(trustedIp({ "x-forwarded-for": "1.2.3.4, 5.6.7.8" }) === "5.6.7.8", "must take the rightmost forwarded hop, not the client-controlled first");
+  assert(trustedIp({ "x-forwarded-for": "1.2.3.4" }) === "1.2.3.4", "a single hop is the only hop");
+  assert(trustedIp({}) === "unknown", "no headers must collapse to one shared bucket, not a per-caller one");
+  assert(trustedIp({ "x-forwarded-for": "  " }) === "unknown", "a blank forwarded header must not become a bucket key");
 
   console.log("Self check passed");
 }

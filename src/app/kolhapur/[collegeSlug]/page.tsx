@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 import { getBaseUrl } from "@/lib/url";
+import { jsonLdScript } from "@/lib/escape";
 
 type PageProps = {
   params: Promise<{ collegeSlug: string }>;
@@ -108,12 +109,12 @@ export default async function CollegePage(props: PageProps) {
     <main className="min-h-screen bg-white pb-24">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbs) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdScript(breadcrumbs) }}
       />
       {rooms.length > 0 && (
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(itemList) }}
+          dangerouslySetInnerHTML={{ __html: jsonLdScript(itemList) }}
         />
       )}
 

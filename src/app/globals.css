@@ -70,4 +70,33 @@
     @apply font-body;
     overflow-x: clip;
   }
+
+  /*
+   * A visible focus ring on keyboard navigation only.
+   *
+   * `:focus-visible`, not `:focus`, so a mouse click on a button does not leave
+   * a ring behind — that is the reason people reach for `outline: none`, which
+   * takes the ring away from keyboard users too. Two colours so the ring is
+   * visible against both the light page and the coral buttons.
+   */
+  :focus-visible {
+    outline: 2px solid var(--primary-strong);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  /*
+   * Honour the system "reduce motion" setting. Vestibular disorders are not
+   * rare, and every animation on this site is decorative.
+   */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 }

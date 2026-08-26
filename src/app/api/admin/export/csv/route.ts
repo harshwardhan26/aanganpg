@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { csvField } from "@/lib/escape";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -30,17 +31,19 @@ export async function GET() {
   const rows = listings.map(l => {
     const status = l.deletedAt ? "Deleted" : l.closedAt ? "Closed" : l.vacantBeds === 0 ? "Full" : "Active";
     return [
-      `"${l.title.replace(/"/g, '""')}"`,
-      l.price || "",
-      l.yearlyPrice || "",
-      `"${(l.location || "").replace(/"/g, '""')}"`,
-      `"${(l.college?.name || "").replace(/"/g, '""')}"`,
-      `"${(l.ownerName || "").replace(/"/g, '""')}"`,
-      l.ownerPhone || "",
-      l.vacantBeds === null ? "" : l.vacantBeds,
+      l.title,
+      l.price,
+      l.yearlyPrice,
+      l.location,
+      l.college?.name,
+      l.ownerName,
+      // Quoted like everything else: a leading "+" on an E.164 number is exactly
+      // the character a spreadsheet reads as a formula.
+      l.ownerPhone,
+      l.vacantBeds,
       status,
       l.createdAt.toISOString().split('T')[0]
-    ].join(",");
+    ].map(csvField).join(",");
   });
 
   const csv = [headers, ...rows].join("\n");

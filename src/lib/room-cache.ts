@@ -16,7 +16,7 @@ import { getRooms, getColleges, type RoomFilters } from "@/actions/rooms";
 export const ROOMS_TAG = "rooms";
 
 export const getCachedRooms = unstable_cache(
-  async (filters: RoomFilters) => getRooms(filters),
+  async (filters: RoomFilters, page = 1) => getRooms(filters, page),
   ["search-rooms"],
   { tags: [ROOMS_TAG], revalidate: 300 },
 );

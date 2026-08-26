@@ -81,7 +81,7 @@ export function RoomCard({ room }: RoomCardProps) {
         <div className="flex items-baseline justify-between gap-3">
           <h3 className="font-medium text-text-main line-clamp-2 leading-snug">{room.title}</h3>
           <span className="font-semibold text-lg whitespace-nowrap text-text-main text-right">
-            {room.displayPrice?.split('/').map((part, i, arr) => (
+            {room.displayPrice?.split('/').map((part, i) => (
               <span key={i}>
                 {i === 0 ? part : <span className="text-xs font-normal text-text-muted block text-right">/{part}</span>}
               </span>

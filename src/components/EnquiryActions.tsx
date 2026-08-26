@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import * as Sentry from '@sentry/nextjs';
 import { useSession } from 'next-auth/react';
 import { useAuthSheet } from '@/components/auth/AuthSheet';
 import { enquiryGate } from '@/lib/session';
@@ -43,6 +44,18 @@ export function EnquiryActions({ propertyId, title, displayPrice, location, list
   const [statusState, setStatusState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
 
+  /**
+   * The call and WhatsApp buttons navigate away the instant they are clicked, so
+   * the lead write cannot be awaited — but it must not be dropped either. A
+   * bare floating promise means a failed write is invisible: no error, no lead,
+   * and the enquiry that funds this product is simply gone. Report it instead.
+   */
+  const captureLead = (channel: 'call' | 'whatsapp' | 'share') => {
+    recordEnquiry({ propertyId, channel }).catch((err) => {
+      Sentry.captureException(err, { tags: { channel }, extra: { propertyId } });
+    });
+  };
+
   const handleCall = (e: React.MouseEvent) => {
     if (enquiryGate(status, session?.user?.phone)) {
       e.preventDefault();
@@ -50,7 +63,7 @@ export function EnquiryActions({ propertyId, title, displayPrice, location, list
       return;
     }
     trackEvent('pg_contact_clicked', { channel: 'call', propertyId });
-    recordEnquiry({ propertyId, channel: 'call' });
+    captureLead('call');
   };
 
   const handleWhatsApp = (e: React.MouseEvent) => {
@@ -60,7 +73,7 @@ export function EnquiryActions({ propertyId, title, displayPrice, location, list
       return;
     }
     trackEvent('pg_contact_clicked', { channel: 'whatsapp', propertyId });
-    recordEnquiry({ propertyId, channel: 'whatsapp' });
+    captureLead('whatsapp');
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -92,21 +105,29 @@ export function EnquiryActions({ propertyId, title, displayPrice, location, list
     <div className="space-y-4">
       {variant !== 'secondary-only' && (
         <div className="grid grid-cols-2 gap-3">
-        <a 
-          href={telLink(ownerPhone) || '#'}
-          className={cn(buttonVariants({ variant: 'outline' }), "w-full text-text-main border-border h-12", !ownerPhone && "opacity-50 cursor-not-allowed")}
-          onClick={(e) => {
-            if (!ownerPhone) {
-              e.preventDefault();
-              alert('Owner phone not available');
-              return;
-            }
-            handleCall(e);
-          }}
-        >
-          <Phone className="mr-2 h-5 w-5" />
-          Call Owner
-        </a>
+        {/* A listing with no number is not a broken button, it is a button that
+            does not apply — so it says so in place rather than firing an
+            alert(), which blocks the page and reads as an error the student
+            caused. `aria-disabled` over `disabled` keeps it reachable by
+            keyboard so the label is announced. */}
+        {telLink(ownerPhone) ? (
+          <a
+            href={telLink(ownerPhone)!}
+            className={cn(buttonVariants({ variant: 'outline' }), "w-full text-text-main border-border h-12")}
+            onClick={handleCall}
+          >
+            <Phone className="mr-2 h-5 w-5" />
+            Call Owner
+          </a>
+        ) : (
+          <span
+            aria-disabled="true"
+            className={cn(buttonVariants({ variant: 'outline' }), "w-full h-12 cursor-not-allowed text-text-muted border-border opacity-70")}
+          >
+            <Phone className="mr-2 h-5 w-5" />
+            No number listed
+          </span>
+        )}
         <a
           href={
             whatsappLink(
@@ -154,7 +175,7 @@ export function EnquiryActions({ propertyId, title, displayPrice, location, list
           type="button"
           onClick={() => {
             trackEvent('room_shared', { propertyId });
-            recordEnquiry({ propertyId, channel: 'share' });
+            captureLead('share');
             const text = [title, [displayPrice, location].filter(Boolean).join(' · '), window.location.href]
               .filter(Boolean)
               .join('\n');

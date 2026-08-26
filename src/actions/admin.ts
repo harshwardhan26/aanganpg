@@ -13,7 +13,17 @@ import {
   GENDER_PREFERENCES,
   OCCUPANCY_TYPES,
   FOOD_TYPES,
+  LEAD_STAGES,
 } from "@/lib/property-options";
+
+/**
+ * Every id that crosses a server-action boundary.
+ *
+ * These are cuids we generated, so the shape is known and anything else is
+ * either a bug or a probe. Without this the value went straight into a Prisma
+ * `where` and the failure mode was an uncaught driver error, i.e. a 500.
+ */
+const idSchema = z.string().trim().min(1).max(64);
 
 async function requireAdmin() {
   const session = await getServerSession(authOptions);
@@ -52,10 +62,31 @@ const optionalFloat = z
     return Number.isFinite(n) ? n : null;
   });
 
+/**
+ * The hosts `next/image` is configured to load, in `next.config.ts`.
+ *
+ * Kept in step with `remotePatterns` deliberately. A bare `.url()` accepted any
+ * host — and any scheme, `javascript:` included — so the database could hold an
+ * image URL that the renderer would then refuse with "Invalid src prop", which
+ * is a 500 on the listing page rather than an error on the form that caused it.
+ * Rejecting at write time puts the message in front of the person who can fix it.
+ */
+const IMAGE_HOSTS = ["res.cloudinary.com", "images.unsplash.com"];
+
 const imageSchema = z.object({
-  url: z.string().url(),
+  url: z
+    .string()
+    .url()
+    .refine((u) => {
+      try {
+        const parsed = new URL(u);
+        return parsed.protocol === "https:" && IMAGE_HOSTS.includes(parsed.hostname);
+      } catch {
+        return false;
+      }
+    }, `Images must be https URLs on ${IMAGE_HOSTS.join(" or ")}.`),
   // "bathroom" and "thali" are the two the publish guard reads.
-  tag: z.string().nullable().optional(),
+  tag: z.string().max(40).nullable().optional(),
 });
 
 const listingSchema = z.object({
@@ -123,8 +154,10 @@ async function uniqueSlug(title: string, locality: string | null, ownId: string 
 
 export async function markFull(id: string) {
   await requireAdmin();
+  const parsedId = idSchema.safeParse(id);
+  if (!parsedId.success) throw new Error("Invalid listing id");
   const property = await prisma.property.update({ 
-    where: { id }, 
+    where: { id: parsedId.data }, 
     data: { vacantBeds: 0 },
     select: { slug: true, college: { select: { slug: true } } }
   });
@@ -140,8 +173,10 @@ export async function markFull(id: string) {
 
 export async function markClosed(id: string) {
   await requireAdmin();
+  const parsedId = idSchema.safeParse(id);
+  if (!parsedId.success) throw new Error("Invalid listing id");
   const property = await prisma.property.update({ 
-    where: { id }, 
+    where: { id: parsedId.data }, 
     data: { closedAt: new Date() },
     select: { slug: true, college: { select: { slug: true } } }
   });
@@ -157,8 +192,10 @@ export async function markClosed(id: string) {
 
 export async function softDelete(id: string) {
   await requireAdmin();
+  const parsedId = idSchema.safeParse(id);
+  if (!parsedId.success) throw new Error("Invalid listing id");
   const property = await prisma.property.update({ 
-    where: { id }, 
+    where: { id: parsedId.data }, 
     data: { deletedAt: new Date() },
     select: { slug: true, college: { select: { slug: true } } }
   });
@@ -297,20 +334,19 @@ export async function saveListing(raw: unknown, publish: boolean): Promise<SaveR
   return { ok: true, id: property.id };
 }
 
-export async function updateLeadStatus(id: string, status: string) {
-  await requireAdmin();
-  await prisma.lead.update({ where: { id }, data: { status } });
-  revalidatePath("/admin/leads");
-}
-
 const leadUpdateSchema = z.object({
-  notes: z.string().nullable().optional(),
-  stage: z.string().optional(),
+  notes: z.string().max(5000).nullable().optional(),
+  // An enum, not a string: the CONVERTED branch below is the only thing that
+  // fires the "they moved in" alert, so a stage the UI never offers is a lead
+  // that silently falls out of the pipeline.
+  stage: z.enum(LEAD_STAGES).optional(),
   followupDate: z.date().nullable().optional(),
 });
 
 export async function updateLeadDetails(id: string, rawData: unknown) {
   await requireAdmin();
+  const leadId = idSchema.safeParse(id);
+  if (!leadId.success) throw new Error("Invalid lead id");
   const parsed = leadUpdateSchema.safeParse(rawData);
   if (!parsed.success) throw new Error("Invalid lead data");
 
@@ -318,7 +354,7 @@ export async function updateLeadDetails(id: string, rawData: unknown) {
   
   // Webhook notification for CONVERTED
   if (data.stage === 'CONVERTED') {
-    const existing = await prisma.lead.findUnique({ where: { id }, include: { property: true } });
+    const existing = await prisma.lead.findUnique({ where: { id: leadId.data }, include: { property: true } });
     if (existing && existing.stage !== 'CONVERTED' && process.env.LEAD_WEBHOOK_URL) {
       fetch(process.env.LEAD_WEBHOOK_URL, {
         method: 'POST',
@@ -331,7 +367,7 @@ export async function updateLeadDetails(id: string, rawData: unknown) {
   }
 
   await prisma.lead.update({
-    where: { id },
+    where: { id: leadId.data },
     data: {
       ...(data.notes !== undefined && { notes: data.notes }),
       ...(data.stage !== undefined && { stage: data.stage }),
@@ -340,20 +376,4 @@ export async function updateLeadDetails(id: string, rawData: unknown) {
   });
 
   revalidatePath("/admin/leads");
-}
-
-export async function promoteUser(phoneInput: string) {
-  await requireAdmin();
-  const phone = canonicalPhone(phoneInput);
-  if (!phone) return { error: "Invalid phone number" };
-
-  const user = await prisma.user.findUnique({ where: { phone } });
-  if (!user) return { error: "User not found" };
-
-  await prisma.user.update({
-    where: { phone },
-    data: { role: "admin" }
-  });
-
-  return { success: true };
 }

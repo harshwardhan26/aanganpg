@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import { isOwner } from "@/lib/admin";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await getServerSession(authOptions);
@@ -20,8 +21,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <nav className="flex items-center gap-5 sm:gap-6 text-sm font-medium text-text-muted overflow-x-auto pb-1 sm:pb-0">
           <Link href="/admin/leads" className="hover:text-text-main whitespace-nowrap">Leads</Link>
           <Link href="/admin/listings" className="hover:text-text-main whitespace-nowrap">Listings</Link>
-          <Link href="/admin/users" className="hover:text-text-main whitespace-nowrap">Users</Link>
-          {session?.user?.email === "hppatilhpp@gmail.com" && (
+          {isOwner(session?.user?.email) && (
             <Link href="/admin/analytics" className="hover:text-text-main whitespace-nowrap text-primary-strong">Analytics</Link>
           )}
         </nav>

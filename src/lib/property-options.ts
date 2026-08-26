@@ -143,3 +143,13 @@ export const publishablePgSchema = basePgSchema.superRefine((data, ctx) => {
     });
   }
 });
+
+/**
+ * The lead pipeline, in order.
+ *
+ * Shared rather than duplicated between the admin UI and the action that writes
+ * it: `stage` was a free-text column, so a typo produced a lead in a stage no
+ * filter matched and the CONVERTED webhook never fired for it.
+ */
+export const LEAD_STAGES = ['NEW', 'CONTACTED', 'VISITED', 'CONVERTED', 'LOST'] as const;
+export type LeadStage = (typeof LEAD_STAGES)[number];

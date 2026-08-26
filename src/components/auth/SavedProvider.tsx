@@ -35,6 +35,9 @@ export function SavedProvider({ children }: { children: ReactNode }) {
         .then(data => {
           setSavedIds(new Set(data.ids || []));
         })
+        // An unreachable endpoint leaves the hearts empty rather than throwing
+        // an unhandled rejection into the console on every page load.
+        .catch(() => setSavedIds(new Set()))
         .finally(() => setIsLoading(false));
     }
   }, [status]);

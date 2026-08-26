@@ -2,12 +2,13 @@ import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { isOwner } from "@/lib/admin";
 
 export default async function AnalyticsPage() {
   const session = await getServerSession(authOptions);
   
-  // Strict authorization check for this page only
-  if (session?.user?.email !== "hppatilhpp@gmail.com") {
+  // Stricter than the admin gate: analytics is the owner's alone.
+  if (!isOwner(session?.user?.email)) {
     redirect("/admin/listings");
   }
 

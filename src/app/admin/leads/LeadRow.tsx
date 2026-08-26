@@ -1,19 +1,33 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useTransition, useState } from "react";
+import type { Lead, Property } from "@prisma/client";
 import { updateLeadDetails } from "@/actions/admin";
+import { LEAD_STAGES, type LeadStage } from "@/lib/property-options";
 import { MessageCircle, Phone, Calendar as CalendarIcon, Save } from "lucide-react";
 
-const STAGES = [
-  { value: "NEW", label: "New", color: "bg-blue-100 text-blue-800" },
-  { value: "CONTACTED", label: "Contacted", color: "bg-amber-100 text-amber-800" },
-  { value: "VISITED", label: "Visited PG", color: "bg-purple-100 text-purple-800" },
-  { value: "CONVERTED", label: "Converted", color: "bg-green-100 text-green-800" },
-  { value: "LOST", label: "Lost", color: "bg-slate-100 text-slate-800" },
-];
+/** Labels and colours for `LEAD_STAGES`, which is the list the action validates against. */
+const STAGE_STYLE: Record<LeadStage, { label: string; color: string }> = {
+  NEW: { label: "New", color: "bg-blue-100 text-blue-800" },
+  CONTACTED: { label: "Contacted", color: "bg-amber-100 text-amber-800" },
+  VISITED: { label: "Visited PG", color: "bg-purple-100 text-purple-800" },
+  CONVERTED: { label: "Converted", color: "bg-green-100 text-green-800" },
+  LOST: { label: "Lost", color: "bg-slate-100 text-slate-800" },
+};
 
-export default function LeadRow({ lead }: { lead: any }) {
+const STAGES = LEAD_STAGES.map((value) => ({ value, ...STAGE_STYLE[value] }));
+
+/**
+ * `property` is passed in, not read off `lead`.
+ *
+ * This component used to be typed `lead: any` and reach for `lead.property`,
+ * which the leads page never includes — the query fetches properties WITH their
+ * leads, so the leads inside carry no property back. `lead.property` was always
+ * undefined, so the WhatsApp button silently sent every student the "are you
+ * still looking?" fallback instead of the owner's name and number. The parent
+ * already has the property in hand; handing it over is the whole fix.
+ */
+export default function LeadRow({ lead, property }: { lead: Lead; property: Property }) {
   const [isPending, startTransition] = useTransition();
   const [notes, setNotes] = useState(lead.notes || "");
   const [followupDate, setFollowupDate] = useState(
@@ -44,9 +58,9 @@ export default function LeadRow({ lead }: { lead: any }) {
 
   const disclaimer = `🚨 *Disclaimer*: Aangan NEVER asks for any deposit or booking money. Please do not pay anyone claiming to be from Aangan. 🚨`;
 
-  const ownerMessage = lead.property
-    ? `Hi ${lead.name}, here are the details for ${lead.property.title} you requested on Aangan.\n\nOwner: ${lead.property.ownerName || "the owner"}\nPhone: ${lead.property.ownerPhone}\n\nPlease contact them directly to schedule a visit or ask about the deposit!\n\n${disclaimer}`
-    : `Hi ${lead.name}, you enquired about rooms on Aangan. Are you still looking?`;
+  const ownerMessage = property.ownerPhone
+    ? `Hi ${lead.name}, here are the details for ${property.title} you requested on Aangan.\n\nOwner: ${property.ownerName || "the owner"}\nPhone: ${property.ownerPhone}\n\nPlease contact them directly to schedule a visit or ask about the deposit!\n\n${disclaimer}`
+    : `Hi ${lead.name}, you enquired about ${property.title} on Aangan. Are you still looking?`;
     
   const waUrl = `https://wa.me/${lead.phone.replace("+", "")}?text=${encodeURIComponent(ownerMessage)}`;
   const telUrl = `tel:${lead.phone}`;

@@ -30,3 +30,16 @@ jobs:
       
     - name: Self Check
       run: npm run check
+
+    - name: Env Check
+      run: npm run env
+      env:
+        DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+        NEXT_PUBLIC_SITE_URL: https://example.com
+        GOOGLE_CLIENT_ID: ci
+        GOOGLE_CLIENT_SECRET: ci
+        NEXTAUTH_SECRET: ci
+        ADMIN_EMAILS: ci@example.com
+
+    - name: Audit
+      run: npm audit --audit-level=high --omit=dev

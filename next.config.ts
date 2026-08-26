@@ -37,13 +37,39 @@ const nextConfig: NextConfig = {
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           { key: "X-Frame-Options", value: "DENY" },
           { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains; preload" },
-          // ponytail: A full Content-Security-Policy is a bigger job than it looks. The site loads
-          // PostHog, Sentry, Cloudinary images, and Google Fonts. Sign-in is a top-level redirect to
-          // accounts.google.com, which CSP does not govern, so no directive is needed for it.
-          // Verify a real Google sign-in round trip with a clean console before enforcing this.
+          // Enforcing, not Report-Only. The report-only version had been running
+          // long enough to say what the site actually loads; a policy that only
+          // reports is a policy that stops nothing.
+          //
+          // 'unsafe-inline' in script-src is not removable yet: Next injects
+          // inline bootstrap scripts, and nonce-ing them means going fully
+          // dynamic and giving up the static rendering that /pg/[slug] depends
+          // on. img-src carries the two hosts next.config allows for images plus
+          // Google's avatar CDN, which next-auth puts in the session.
+          //
+          // ponytail: 'unsafe-eval' stays until something proves it unnecessary —
+          // dropping it is a one-line change plus a full click-through.
           {
-            key: "Content-Security-Policy-Report-Only",
-            value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.googleapis.com https://us.i.posthog.com; connect-src 'self' https://*.googleapis.com https://*.sentry.io https://us.i.posthog.com https://res.cloudinary.com; img-src 'self' data: https://res.cloudinary.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; frame-src 'self';",
+            key: "Content-Security-Policy",
+            value: [
+              "default-src 'self'",
+              "base-uri 'self'",
+              "form-action 'self'",
+              "frame-ancestors 'none'",
+              "object-src 'none'",
+              // *.posthog.com rather than the two exact hosts: posthog-js falls back to
+              // app.posthog.com when NEXT_PUBLIC_POSTHOG_HOST is unset, and pins the
+              // region host when it is. Naming only today's value means analytics dies
+              // silently on the deploy where that variable goes missing.
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.googleapis.com https://*.posthog.com",
+              "connect-src 'self' https://*.googleapis.com https://*.sentry.io https://*.posthog.com https://api.cloudinary.com https://res.cloudinary.com",
+              "img-src 'self' data: blob: https://res.cloudinary.com https://images.unsplash.com https://lh3.googleusercontent.com",
+              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+              "font-src 'self' data: https://fonts.gstatic.com",
+              "frame-src 'self'",
+              "worker-src 'self' blob:",
+              "upgrade-insecure-requests",
+            ].join("; "),
           },
         ],
       },

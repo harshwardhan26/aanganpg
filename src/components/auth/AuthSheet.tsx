@@ -46,7 +46,6 @@ export function AuthSheetProvider({ children }: { children: ReactNode }) {
         window.history.replaceState({}, document.title, url.toString());
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setUrlError("Something went wrong. We have notified our team.");
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setOpen(true);
       }
     }

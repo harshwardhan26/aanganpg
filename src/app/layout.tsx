@@ -52,8 +52,19 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         <Providers>
           <PostHogProvider>
+            {/*
+              * Visually hidden until focused. A keyboard or screen-reader user
+              * otherwise tabs through the whole navbar on every page before
+              * reaching the rooms, which is the only thing they came for.
+              */}
+            <a
+              href="#main-content"
+              className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-white focus:px-4 focus:py-2 focus:font-semibold focus:text-text-main focus:shadow-lg"
+            >
+              Skip to main content
+            </a>
             <Navbar />
-            {children}
+            <div id="main-content">{children}</div>
             <Footer />
             <PWAPrompt />
           </PostHogProvider>

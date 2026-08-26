@@ -8,15 +8,37 @@ export type { RoomFilters };
 
 const slugSchema = z.string().min(1);
 
-export async function getRooms(filters: RoomFilters = {}) {
+/**
+ * Rooms per page. One screenful of scrolling on a phone, not a wall.
+ *
+ * Not exported: every export of a `"use server"` module must be an async
+ * function, and exporting this constant silently stripped the module of all its
+ * exports at build time.
+ */
+const PAGE_SIZE = 24;
+
+/**
+ * One page of rooms, plus whether there is another.
+ *
+ * `take: 50` used to be a ceiling rather than a page: the 51st listing was
+ * unreachable from any URL, which is a silent cap the moment Kolhapur has more
+ * than fifty rooms. Fetching PAGE_SIZE + 1 answers "is there a next page"
+ * without a second count query.
+ */
+export async function getRooms(filters: RoomFilters = {}, page = 1) {
   const parsed = roomFiltersSchema.safeParse(filters);
   if (!parsed.success) throw new Error("Invalid filters");
-  return prisma.property.findMany({
+
+  const current = Math.max(1, Math.trunc(page));
+  const rows = await prisma.property.findMany({
     where: buildRoomWhere(parsed.data),
-    take: 50,
+    skip: (current - 1) * PAGE_SIZE,
+    take: PAGE_SIZE + 1,
     include: { college: true, images: true, reviews: { select: { rating: true } } },
     orderBy: buildRoomOrderBy(parsed.data),
   });
+
+  return { rooms: rows.slice(0, PAGE_SIZE), hasMore: rows.length > PAGE_SIZE, page: current };
 }
 
 /**
@@ -54,10 +76,11 @@ export async function getCollegeBySlug(slug: string) {
   return prisma.college.findUnique({ where: { slug: parsed.data } });
 }
 
+/** First page only. Both callers render a short "nearby" strip, never a list. */
 export async function getRoomsNearCollege(slug: string) {
   const parsed = slugSchema.safeParse(slug);
   if (!parsed.success) return [];
-  return getRooms({ college: parsed.data });
+  return (await getRooms({ college: parsed.data })).rooms;
 }
 
 export async function getLocations() {

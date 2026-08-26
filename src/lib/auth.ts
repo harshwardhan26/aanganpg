@@ -2,7 +2,7 @@ import { NextAuthOptions } from "next-auth";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import GoogleProvider from "next-auth/providers/google";
 import prisma from "./prisma";
-import { isAdminEmail } from "./admin";
+import { resolveRole } from "./admin";
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -25,13 +25,12 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = user.id;
         token.phone = user.phone;
-        token.role = user.role;
       }
-      // Recomputed on every call rather than only at sign-in, so adding an email
-      // to ADMIN_EMAILS takes effect on their next request instead of forcing a
-      // sign-out. This is the single place admin is decided; every guard in the
-      // app reads the `role` it sets.
-      token.role = isAdminEmail(token.email) ? "admin" : (token.role ?? "student");
+      // Recomputed from the allowlist on every call, never read back off the
+      // token or the user row. Both adding and REMOVING an email take effect on
+      // the next request. This is the single place admin is decided; every guard
+      // in the app reads the `role` it sets.
+      token.role = resolveRole(token.email);
       // A Google user has no phone until they give us one. `update({ name, phone })`
       // from the client lands here; without this the token keeps saying "no
       // phone" until the session expires and the capture sheet reopens forever.

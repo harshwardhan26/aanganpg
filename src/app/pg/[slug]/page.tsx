@@ -8,8 +8,8 @@ import { SaveButton } from "@/components/SaveButton";
 import { RoomGallery } from "@/components/RoomGallery";
 import { EnquiryActions } from "@/components/EnquiryActions";
 import { RoomCard } from "@/components/RoomCard";
-import { directionsUrl } from "@/lib/maps";
-import { MapPin } from "lucide-react";
+import { DirectionsButton } from "@/components/DirectionsButton";
+import { jsonLdScript } from "@/lib/escape";
 import { getBaseUrl } from "@/lib/url";
 import { ReviewSection } from "@/components/ReviewSection";
 import { getPropertyReviews } from "@/actions/review";
@@ -100,7 +100,6 @@ export default async function RoomPage({ params }: Props) {
   const priceLabel = room.displayPrice || "Price on request";
   // Absolute, because it is pasted into a WhatsApp message to us.
   const listingUrl = new URL(`/pg/${room.slug}`, getBaseUrl()).toString();
-  const mapUrl = directionsUrl(room.lat, room.lng);
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -152,7 +151,7 @@ export default async function RoomPage({ params }: Props) {
     <main className="bg-white pb-28 lg:pb-0">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }}
       />
 
       <div className="relative">
@@ -337,17 +336,7 @@ export default async function RoomPage({ params }: Props) {
                 ownerPhone={room.ownerPhone}
                 prefillData={prefillData}
               />
-              {mapUrl && (
-                <a
-                  href={mapUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-3 flex w-full min-h-[44px] items-center justify-center gap-2 rounded-lg border border-border bg-white px-4 text-sm font-medium text-text-main shadow-sm transition-colors hover:bg-slate-50"
-                >
-                  <MapPin className="h-4 w-4" />
-                  Get directions
-                </a>
-              )}
+              <DirectionsButton lat={room.lat} lng={room.lng} />
             </div>
 
             {/* Mobile: inline secondary row */}
@@ -362,17 +351,7 @@ export default async function RoomPage({ params }: Props) {
                 prefillData={prefillData}
                 variant="secondary-only"
               />
-              {mapUrl && (
-                <a
-                  href={mapUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-3 flex w-full min-h-[44px] items-center justify-center gap-2 rounded-lg border border-border bg-white px-4 text-sm font-medium text-text-main shadow-sm transition-colors hover:bg-slate-50"
-                >
-                  <MapPin className="h-4 w-4" />
-                  Get directions
-                </a>
-              )}
+              <DirectionsButton lat={room.lat} lng={room.lng} />
             </div>
 
             {/* Mobile: fixed bar. The contact controls have to be reachable at
@@ -388,17 +367,7 @@ export default async function RoomPage({ params }: Props) {
                 prefillData={prefillData}
                 variant="primary-only"
               />
-              {mapUrl && (
-                <a
-                  href={mapUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-3 flex w-full min-h-[44px] items-center justify-center gap-2 rounded-lg border border-border bg-white px-4 text-sm font-medium text-text-main shadow-sm transition-colors hover:bg-slate-50"
-                >
-                  <MapPin className="h-4 w-4" />
-                  Get directions
-                </a>
-              )}
+              <DirectionsButton lat={room.lat} lng={room.lng} />
             </div>
           </aside>
         )}

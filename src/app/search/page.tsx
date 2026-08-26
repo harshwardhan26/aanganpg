@@ -1,4 +1,5 @@
 import { getCachedRooms, getCachedColleges } from '@/lib/room-cache';
+import { parseRoomFilters } from '@/lib/room-filters';
 import { RoomCard } from '@/components/RoomCard';
 import { SearchFilters } from '@/components/SearchFilters';
 import { MobileFilterSheet } from '@/components/MobileFilterSheet';
@@ -33,19 +34,25 @@ type PageProps = {
 export default async function SearchPage(props: PageProps) {
   const searchParams = await props.searchParams;
 
-  const [colleges, rooms] = await Promise.all([
+  const page = Math.max(1, Number(searchParams.page) || 1);
+
+  const [colleges, result] = await Promise.all([
     getCachedColleges(),
-    getCachedRooms({
-      college: searchParams.college as string,
-      genderPreference: searchParams.genderPreference as string,
-      maxPrice: searchParams.maxPrice ? parseInt(searchParams.maxPrice as string) : undefined,
-      food: searchParams.food as 'yes' | 'no',
-      occupancy: searchParams.occupancy as string,
-      amenities: typeof searchParams.amenities === 'string' ? [searchParams.amenities] : searchParams.amenities,
-      rules: typeof searchParams.rules === 'string' ? [searchParams.rules] : searchParams.rules,
-      sort: searchParams.sort as string,
-    })
+    getCachedRooms(parseRoomFilters(searchParams), page)
   ]);
+  const { rooms, hasMore } = result;
+
+  /** This URL with `page` swapped, so paging keeps every active filter. */
+  const pageHref = (n: number) => {
+    const params = new URLSearchParams();
+    Object.entries(searchParams).forEach(([k, v]) => {
+      if (k === 'page') return;
+      if (Array.isArray(v)) v.forEach(val => params.append(k, val));
+      else if (v) params.append(k, v);
+    });
+    if (n > 1) params.set('page', String(n));
+    return `/search${params.toString() ? `?${params.toString()}` : ''}`;
+  };
 
   let h1Text = 'Student Hostels, Rooms & PGs';
   const activeFilters: { label: string, key: string, value?: string }[] = [];
@@ -82,7 +89,10 @@ export default async function SearchPage(props: PageProps) {
         <div className="flex-1 pb-24 lg:pb-8">
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-text-main font-heading">{h1Text}</h1>
-            <p className="text-text-muted mt-1">{rooms.length} {rooms.length === 1 ? 'room' : 'rooms'} found</p>
+            <p className="text-text-muted mt-1">
+              {rooms.length} {rooms.length === 1 ? 'room' : 'rooms'}
+              {hasMore || page > 1 ? ` on page ${page}` : ' found'}
+            </p>
           </div>
 
           {activeFilters.length > 0 && (
@@ -128,6 +138,24 @@ export default async function SearchPage(props: PageProps) {
                 Clear all filters
               </Button>
             </div>
+          )}
+
+          {(page > 1 || hasMore) && (
+            <nav aria-label="Search results pages" className="mt-10 flex items-center justify-between gap-4">
+              {page > 1 ? (
+                <Button size="sm" className="border-border text-text-main hover:bg-muted bg-white border shadow-sm" render={<Link href={pageHref(page - 1)} rel="prev" />} nativeButton={false}>
+                  ← Previous
+                </Button>
+              ) : <span />}
+
+              <span className="text-sm text-text-muted">Page {page}</span>
+
+              {hasMore ? (
+                <Button size="sm" className="border-border text-text-main hover:bg-muted bg-white border shadow-sm" render={<Link href={pageHref(page + 1)} rel="next" />} nativeButton={false}>
+                  Next →
+                </Button>
+              ) : <span />}
+            </nav>
           )}
         </div>
 

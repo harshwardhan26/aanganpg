@@ -1,8 +1,7 @@
 "use server";
 
-import { Ratelimit } from "@upstash/ratelimit";
 import prisma from "@/lib/prisma";
-import { redis } from "@/lib/redis";
+import { slidingLimiter, allowRequest } from "@/lib/rate-limit";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { canonicalPhone } from "@/lib/phone";
@@ -10,9 +9,7 @@ import { canonicalPhone } from "@/lib/phone";
 // Claiming a number is a write against a unique column, and the failure mode is
 // someone walking the number space. Five attempts in ten minutes is generous for
 // a student correcting a typo and useless for enumeration.
-const ratelimit = redis
-  ? new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(5, "10 m") })
-  : null;
+const ratelimit = slidingLimiter(5, "10 m");
 
 /**
  * Attach a name and phone number to the signed-in account.
@@ -28,9 +25,8 @@ export async function saveUserProfile(
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return { error: "You must be signed in." };
 
-  if (ratelimit) {
-    const { success } = await ratelimit.limit(`profile_${session.user.id}`);
-    if (!success) return { error: "Too many attempts. Please try again in a few minutes." };
+  if (!(await allowRequest(ratelimit, `profile_${session.user.id}`))) {
+    return { error: "Too many attempts. Please try again in a few minutes." };
   }
 
   const name = rawName.trim();

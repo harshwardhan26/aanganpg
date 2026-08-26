@@ -9,18 +9,19 @@ import { cn } from "@/lib/utils";
 
 type SaveButtonProps = {
   propertyId: string;
-  initialSaved?: boolean;
   className?: string;
   size?: "sm" | "default";
 };
 
-export function SaveButton({ propertyId, initialSaved = false, className, size = "sm" }: SaveButtonProps) {
+export function SaveButton({ propertyId, className, size = "sm" }: SaveButtonProps) {
   const { data: session, status } = useSession();
   const { openAuthSheet } = useAuthSheet();
   const { savedIds, toggleSavedLocal } = useSaved();
-  
-  // Use context if available, otherwise fallback to initial
-  const isSaved = savedIds.has(propertyId) || initialSaved;
+
+  // `SavedProvider` is the only source. There used to be an `initialSaved` prop
+  // OR-ed in here, which no caller ever passed and which would have made
+  // unsaving impossible if one had — a true value it could not take back.
+  const isSaved = savedIds.has(propertyId);
 
   const handleToggle = async (e: React.MouseEvent) => {
     e.preventDefault(); // Prevent Link navigation if inside a Link

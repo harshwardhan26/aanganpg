@@ -36,7 +36,7 @@ const STEPS = [
 
 export default async function Home() {
   const [rooms, colleges, locations] = await Promise.all([
-    getRooms(),
+    getRooms().then((r) => r.rooms),
     getColleges(),
     getLocations(),
   ]);

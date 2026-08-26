@@ -25,7 +25,10 @@ const ALL_VARS: { name: string; required: boolean; note: string }[] = [
   { name: "NEXTAUTH_URL",                          required: false, note: "Base URL for NextAuth callbacks" },
   { name: "GOOGLE_CLIENT_ID",                      required: true,  note: "Google OAuth client ID (student sign-in)" },
   { name: "GOOGLE_CLIENT_SECRET",                  required: true,  note: "Google OAuth client secret" },
-  { name: "NEXTAUTH_SECRET",                       required: false, note: "Secret for signing NextAuth tokens" },
+  // Required, not optional: this signs the JWT that carries `role: "admin"`.
+  // Without it NextAuth refuses to start in production, and a weak or absent
+  // value is a forgeable admin session — the most security-critical variable here.
+  { name: "NEXTAUTH_SECRET",                       required: true,  note: "Secret signing NextAuth JWTs (carries the admin claim)" },
 
 
   // ── Cloudinary (images won't upload/transform) ──────────────────
@@ -46,6 +49,8 @@ const ALL_VARS: { name: string; required: boolean; note: string }[] = [
   // ── App config ──────────────────────────────────────────────────
   { name: "NEXT_PUBLIC_AANGAN_PHONE",               required: false, note: "Aangan's public contact number" },
   { name: "ADMIN_EMAILS",                           required: true,  note: "Comma-separated Google emails granted the admin panel" },
+  { name: "OWNER_EMAIL",                            required: false, note: "The single account that sees Analytics (defaults to the first ADMIN_EMAILS entry)" },
+  { name: "LEAD_WEBHOOK_URL",                       required: false, note: "Webhook posted to on each new lead" },
 ];
 
 const missing: string[] = [];
