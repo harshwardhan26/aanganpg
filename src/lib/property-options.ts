@@ -81,7 +81,7 @@ export const PG_SHOT_LIST = [
   'Building exterior, with the gate and the street',
   'Room — wide, lights on, curtains open',
   'Bathroom (required)',
-  'Kitchen or mess, with a real thali if food is provided',
+  'Kitchen or mess, with a real thali if possible',
   'Water storage, RO point, hot water source',
   'Terrace, common area or study space',
   'Two-wheeler parking, and the walk out toward the college',
@@ -94,7 +94,6 @@ export function pgPublishIssues(v: {
   genderPreference?: string | null;
   images?: unknown[];
   hasBathroomPhoto?: boolean;
-  hasThaliPhoto?: boolean;
   foodType?: string | null;
   wardenName?: string | null;
   gateClosingTime?: string | null;
@@ -107,7 +106,7 @@ export function pgPublishIssues(v: {
   }
 
   if ((v.images?.length ?? 0) < PG_MIN_PHOTOS) {
-    issues.push(`A student room needs at least ${PG_MIN_PHOTOS} photos, including the bathroom — and a thali if food is provided.`);
+    issues.push(`A student room needs at least ${PG_MIN_PHOTOS} photos, including the bathroom.`);
   }
 
   // `!v.hasBathroomPhoto`, not `=== false`. With the strict comparison a caller
@@ -115,10 +114,6 @@ export function pgPublishIssues(v: {
   // whole product is built on failed open.
   if (!v.hasBathroomPhoto) {
     issues.push("No listing goes live without a bathroom photo. It is the shot everyone hides; showing it is the whole point.");
-  }
-
-  if (v.foodType && !v.hasThaliPhoto) {
-    issues.push("A listing that claims a mess needs a photo of an actual thali.");
   }
 
   if (v.genderPreference === 'Female') {
@@ -133,7 +128,6 @@ export const basePgSchema = z.object({
   genderPreference: z.string().nullable().optional(),
   images: z.array(z.unknown()).optional(),
   hasBathroomPhoto: z.boolean().optional(),
-  hasThaliPhoto: z.boolean().optional(),
   foodType: z.string().nullable().optional(),
   wardenName: z.string().nullable().optional(),
   gateClosingTime: z.string().nullable().optional(),

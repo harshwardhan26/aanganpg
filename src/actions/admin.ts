@@ -199,7 +199,6 @@ export async function saveListing(raw: unknown, publish: boolean): Promise<SaveR
       genderPreference: data.genderPreference,
       images: data.images,
       hasBathroomPhoto: data.images.some((i) => i.tag === "bathroom"),
-      hasThaliPhoto: data.images.some((i) => i.tag === "thali"),
       foodType: data.foodType,
       wardenName: data.wardenName,
       gateClosingTime: data.gateClosingTime,

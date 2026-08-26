@@ -90,7 +90,6 @@ async function main() {
     ownerPhone: "9876543210",
     images: Array(6).fill("img"),
     hasBathroomPhoto: true,
-    hasThaliPhoto: true,
     foodType: "Veg",
     genderPreference: "Female",
     wardenName: "Mrs. Patil",
@@ -101,7 +100,6 @@ async function main() {
   assert(pgPublishIssues({ ...baseValid, ownerPhone: null }).length > 0, "Missing phone should fail");
   assert(pgPublishIssues({ ...baseValid, images: [] }).length > 0, "Missing photos should fail");
   assert(pgPublishIssues({ ...baseValid, hasBathroomPhoto: false }).length > 0, "Missing bathroom photo should fail");
-  assert(pgPublishIssues({ ...baseValid, hasThaliPhoto: false }).length > 0, "Missing thali photo should fail");
   assert(pgPublishIssues({ ...baseValid, wardenName: null }).length > 0, "Missing warden name should fail");
   assert(pgPublishIssues({ ...baseValid, gateClosingTime: null }).length > 0, "Missing gate time should fail");
 
@@ -111,14 +109,10 @@ async function main() {
     pgPublishIssues({ ...baseValid, hasBathroomPhoto: undefined }).length > 0,
     "Omitted bathroom flag must fail, not pass",
   );
+  // No mess claimed.
   assert(
-    pgPublishIssues({ ...baseValid, hasThaliPhoto: undefined }).length > 0,
-    "Omitted thali flag must fail when a mess is claimed",
-  );
-  // No mess claimed, so no thali is required.
-  assert(
-    pgPublishIssues({ ...baseValid, foodType: null, hasThaliPhoto: undefined }).length === 0,
-    "A room with no mess must not be asked for a thali photo",
+    pgPublishIssues({ ...baseValid, foodType: null }).length === 0,
+    "A room with no mess passes validation",
   );
 
   // A closed listing still resolves, so buildRoomWhere is the only place that

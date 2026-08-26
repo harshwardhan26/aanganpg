@@ -9,7 +9,7 @@ import { saveListing } from "@/actions/admin";
 import { uploadImage, UPLOAD_CONFIGURED } from "@/lib/upload";
 import { pgPublishIssues, GENDER_PREFERENCES, FOOD_TYPES, OCCUPANCY_TYPES, PG_SHOT_LIST, KOLHAPUR_LOCALITIES, PG_AMENITIES } from "@/lib/property-options";
 import { looksLikeKolhapur } from "@/lib/maps";
-import { MapPin, Crosshair } from "lucide-react";
+import { MapPin, Crosshair, ArrowLeft, ArrowRight } from "lucide-react";
 
 export default function ListingForm({ 
   initialData, 
@@ -197,13 +197,23 @@ export default function ListingForm({
     });
   };
 
+  const moveImage = (index: number, direction: 'left' | 'right') => {
+    setFormData(prev => {
+      const newImages = [...prev.images];
+      if (direction === 'left' && index > 0) {
+        [newImages[index - 1], newImages[index]] = [newImages[index], newImages[index - 1]];
+      } else if (direction === 'right' && index < newImages.length - 1) {
+        [newImages[index + 1], newImages[index]] = [newImages[index], newImages[index + 1]];
+      }
+      return { ...prev, images: newImages };
+    });
+  };
+
   const hasBathroomPhoto = formData.images.some((img: any) => img.tag === "bathroom");
-  const hasThaliPhoto = formData.images.some((img: any) => img.tag === "thali");
 
   const currentIssues = pgPublishIssues({
     ...formData,
     hasBathroomPhoto,
-    hasThaliPhoto,
   });
 
   const handleSubmit = async (publish: boolean) => {
@@ -491,6 +501,14 @@ export default function ListingForm({
                       <option value="bathroom">Bathroom</option>
                       <option value="thali">Thali / Mess</option>
                     </select>
+                    <div className="flex gap-2">
+                      <button type="button" onClick={() => moveImage(idx, 'left')} disabled={idx === 0} className="flex-1 border border-slate-200 bg-slate-50 text-slate-700 text-sm font-medium py-2 min-h-[44px] rounded hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center">
+                        <ArrowLeft className="w-4 h-4" />
+                      </button>
+                      <button type="button" onClick={() => moveImage(idx, 'right')} disabled={idx === formData.images.length - 1} className="flex-1 border border-slate-200 bg-slate-50 text-slate-700 text-sm font-medium py-2 min-h-[44px] rounded hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center">
+                        <ArrowRight className="w-4 h-4" />
+                      </button>
+                    </div>
                     <button type="button" onClick={() => removeImage(idx)} className="text-red-600 border border-red-200 bg-red-50 text-sm font-medium px-4 py-2 min-h-[44px] w-full rounded hover:bg-red-100 transition-colors">
                       Remove
                     </button>
