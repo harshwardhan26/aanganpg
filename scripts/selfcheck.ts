@@ -157,6 +157,19 @@ async function main() {
   const priceSort = buildRoomOrderBy({ sort: "price_asc" });
   assert.deepStrictEqual(priceSort, [{ price: "asc" }, { verifiedAt: { sort: "desc", nulls: "last" } }, { createdAt: "desc" }], "price sort failed");
 
+  // A room with no measured walk time is an unknown, not a zero-minute walk.
+  assert.deepStrictEqual(
+    buildRoomWhere({ maxWalk: 10 }).walkMinutes,
+    { lte: 10 },
+    "maxWalk must filter on walkMinutes",
+  );
+  const walkSort = buildRoomOrderBy({ sort: "walk_asc" });
+  assert.deepStrictEqual(
+    walkSort[0],
+    { walkMinutes: { sort: "asc", nulls: "last" } },
+    "walk sort must put unmeasured listings last, not first",
+  );
+
   // cloudinaryUrl tests
   assert(cloudinaryUrl("https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg", 400) === "https://res.cloudinary.com/demo/image/upload/f_auto,q_auto,w_400/v1312461204/sample.jpg", "cloudinaryUrl rewrites properly");
   assert(cloudinaryUrl("https://example.com/image.jpg", 400) === "https://example.com/image.jpg", "cloudinaryUrl ignores non-cloudinary");
@@ -230,8 +243,12 @@ async function main() {
   assert.deepStrictEqual(parseRoomFilters({ college: "x".repeat(500) }).college, undefined, "an oversized college must drop rather than become a cache key");
   assert.deepStrictEqual(parseRoomFilters({}), {
     college: undefined, location: undefined, genderPreference: undefined, maxPrice: undefined,
+    maxWalk: undefined,
     food: undefined, occupancy: undefined, amenities: undefined, rules: undefined, sort: undefined,
   }, "an empty query must produce an empty filter set");
+  assert.deepStrictEqual(parseRoomFilters({ maxWalk: "abc" }).maxWalk, undefined, "a non-numeric maxWalk must drop, not throw");
+  assert.deepStrictEqual(parseRoomFilters({ maxWalk: "10" }).maxWalk, 10, "a numeric maxWalk must survive as a number");
+  assert.deepStrictEqual(parseRoomFilters({ maxWalk: "9999" }).maxWalk, undefined, "an oversized maxWalk must drop rather than mint a cache key");
 
   // CSV export must not hand Excel a formula.
   assert(csvField("=cmd|'/c calc'!A1") === `"'=cmd|'/c calc'!A1"`, "csvField must neutralise a leading =");

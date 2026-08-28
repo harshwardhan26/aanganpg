@@ -115,6 +115,7 @@ export default async function SearchPage(props: PageProps) {
   }
 
   if (searchParams.maxPrice) activeFilters.push({ label: `Under ₹${searchParams.maxPrice}`, key: 'maxPrice' });
+  if (searchParams.maxWalk) activeFilters.push({ label: `Under ${searchParams.maxWalk} min walk`, key: 'maxWalk' });
   if (searchParams.genderPreference) activeFilters.push({ label: searchParams.genderPreference as string === 'Any' ? 'Co-ed' : searchParams.genderPreference as string, key: 'genderPreference' });
   if (searchParams.food) activeFilters.push({ label: searchParams.food === 'yes' ? 'With Mess' : 'Without Mess', key: 'food' });
   if (searchParams.occupancy) activeFilters.push({ label: searchParams.occupancy as string, key: 'occupancy' });

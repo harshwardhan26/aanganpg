@@ -113,6 +113,7 @@ const listingSchema = z.object({
     .union([z.enum(FOOD_TYPES), z.literal("None"), z.literal(""), z.null(), z.undefined()])
     .transform((v) => (v === "None" || v === "" || v === undefined ? null : v)),
   messNote: optionalText,
+  costNote: optionalText,
   wardenName: optionalText,
   gateClosingTime: optionalText,
   ownerName: optionalText,
@@ -282,6 +283,7 @@ export async function saveListing(raw: unknown, publish: boolean): Promise<SaveR
     rules: data.rules,
     foodType: data.foodType,
     messNote: data.messNote ?? null,
+    costNote: data.costNote ?? null,
     wardenName: data.wardenName ?? null,
     gateClosingTime: data.gateClosingTime ?? null,
     ownerName: data.ownerName ?? null,

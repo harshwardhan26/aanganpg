@@ -16,6 +16,7 @@ export function SearchFilters({
 
   const currentCollege = searchParams.college as string | undefined;
   const currentMaxPrice = searchParams.maxPrice as string | undefined;
+  const currentMaxWalk = searchParams.maxWalk as string | undefined;
   const currentGender = searchParams.genderPreference as string | undefined;
   const currentFood = searchParams.food as string | undefined;
   const currentOccupancy = searchParams.occupancy as string | undefined;
@@ -60,6 +61,7 @@ export function SearchFilters({
         >
           <option value="">Relevance</option>
           <option value="price_asc">Price: low to high</option>
+          <option value="walk_asc">Closest to college</option>
         </select>
       </div>
 
@@ -84,6 +86,29 @@ export function SearchFilters({
                 className="sr-only"
               />
               ₹{Number(budget).toLocaleString()}
+            </label>
+          ))}
+        </div>
+      </div>
+
+      {/* Walk to college. Same control as Max Rent on purpose — a first-year
+          with no two-wheeler picks a walk time the same way they pick a budget. */}
+      <div className="space-y-3">
+        <h3 className="font-semibold text-text-main">Walk to College</h3>
+        <div className="flex flex-wrap gap-2">
+          {[['5', 'Under 5 min'], ['10', 'Under 10 min'], ['20', 'Under 20 min']].map(([value, label]) => (
+            <label
+              key={value}
+              className="cursor-pointer px-4 py-3 rounded-full border text-sm transition-colors flex items-center justify-center min-h-[48px] border-border text-text-muted hover:border-text-muted has-[:checked]:border-primary-strong has-[:checked]:bg-primary-strong/10 has-[:checked]:text-primary-strong has-[:checked]:font-medium"
+            >
+              <input
+                type="radio"
+                name="maxWalk"
+                value={value}
+                defaultChecked={currentMaxWalk === value}
+                className="sr-only"
+              />
+              {label}
             </label>
           ))}
         </div>

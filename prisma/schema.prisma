@@ -40,6 +40,12 @@ model Property {
   messNote   String?
   vacantBeds Int?
 
+  /// The costs on top of rent — light bill, water, mess extra. Free text, not a
+  /// set of booleans: the real answers are "light bill split between 4 boys,
+  /// roughly ₹200 each", and a boolean per charge would need three more within
+  /// a month. This is the number a family actually budgets against.
+  costNote String?
+
   wardenName      String?
   gateClosingTime String?
 

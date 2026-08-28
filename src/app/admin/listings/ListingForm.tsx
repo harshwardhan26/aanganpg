@@ -64,6 +64,7 @@ export default function ListingForm({
     genderPreference: initialData?.genderPreference || "",
     occupancyType: initialData?.occupancyType || "",
     deposit: initialData?.deposit?.toString() || "",
+    costNote: initialData?.costNote || "",
     vacantBeds: initialData?.vacantBeds?.toString() || "",
     amenities: initialData?.amenities || [],
     rules: initialData?.rules || [],
@@ -358,6 +359,11 @@ export default function ListingForm({
           <div>
             <label className={LABEL} htmlFor="field-vacantBeds">Vacant beds</label>
             <input id="field-vacantBeds" type="number" name="vacantBeds" value={formData.vacantBeds} onChange={handleTextChange} className={FIELD} />
+          </div>
+          <div className="sm:col-span-2">
+            <label className={LABEL} htmlFor="field-costNote">Costs on top of rent</label>
+            <input id="field-costNote" name="costNote" value={formData.costNote} onChange={handleTextChange} placeholder="Light bill separate, roughly ₹250 per person" className={FIELD} />
+            <p className="mt-1 text-sm text-text-muted">Ask on the visit. Leave blank only if you genuinely did not find out.</p>
           </div>
           <div className="sm:col-span-2">
             <label className={LABEL} htmlFor="field-description">Description</label>

@@ -70,12 +70,21 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-/** One row of the parent block. Rendered only when there is an answer. */
-function Answer({ label, children }: { label: string; children: React.ReactNode }) {
+/**
+ * One row of the parent block. Rendered only when there is an answer.
+ *
+ * `mr` is the Marathi label. The person this block is written for is a parent in
+ * a village reading a forwarded WhatsApp link, and these seven words are the
+ * whole reason they can read it. Hardcoded, not a translation system: the labels
+ * are fixed, the listing content is not translated, and `next-intl` plus locale
+ * routing to serve ten strings would be a framework paying for nothing.
+ */
+function Answer({ label, mr, children }: { label: string; mr?: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-1 border-b border-border py-3 last:border-0 sm:flex-row sm:gap-4 sm:py-3.5">
       <dt className="shrink-0 text-sm font-medium uppercase tracking-wide text-text-muted sm:w-44">
         {label}
+        {mr && <span className="block normal-case tracking-normal text-text-muted/80">{mr}</span>}
       </dt>
       <dd className="text-text-main">{children}</dd>
     </div>
@@ -192,16 +201,21 @@ export default async function RoomPage({ params }: Props) {
                 nobody can attribute is the trust signal students already
                 discount. */}
             {room.verifiedAt && (
-              <p className="inline-flex items-center gap-2 rounded-full border border-border bg-light px-3 py-1.5 text-sm text-text-main">
-                <span className="h-2 w-2 rounded-full bg-primary-strong" aria-hidden />
-                Aangan visited{" "}
-                {room.verifiedAt.toLocaleDateString("en-IN", {
-                  day: "numeric",
-                  month: "short",
-                  year: "numeric",
-                })}
-                {room.verifiedBy ? ` · ${room.verifiedBy}` : ""}
-              </p>
+              <div className="inline-flex flex-col rounded-2xl border border-border bg-light px-3 py-1.5 text-sm text-text-main">
+                <p className="inline-flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-primary-strong" aria-hidden />
+                  Aangan visited{" "}
+                  {room.verifiedAt.toLocaleDateString("en-IN", {
+                    day: "numeric",
+                    month: "short",
+                    year: "numeric",
+                  })}
+                  {room.verifiedBy ? ` · ${room.verifiedBy}` : ""}
+                </p>
+                {/* The one claim on the page a parent has to believe, in the
+                    language they read it in. */}
+                <p className="pl-4 text-text-muted">आंगणने प्रत्यक्ष भेट दिली आहे</p>
+              </div>
             )}
           </header>
 
@@ -215,32 +229,40 @@ export default async function RoomPage({ params }: Props) {
             </h2>
             <dl className="mt-2">
               {room.college && (
-                <Answer label="College">
+                <Answer label="College" mr="कॉलेज">
                   {room.college.name}
                   {room.walkMinutes != null && ` — ${room.walkMinutes} min walk`}
                 </Answer>
               )}
-              {room.occupancyType && <Answer label="Sharing">{room.occupancyType}</Answer>}
-              <Answer label="Who it is for">
+              {room.occupancyType && (
+                <Answer label="Sharing" mr="शेअरिंग">{room.occupancyType}</Answer>
+              )}
+              <Answer label="Who it is for" mr="कोणासाठी">
                 {room.genderPreference === "Female"
                   ? "Girls only"
                   : room.genderPreference === "Male"
                     ? "Boys only"
                     : "Anyone"}
               </Answer>
-              <Answer label="Food">
+              <Answer label="Food" mr="जेवण">
                 {room.foodType
                   ? `${room.foodType}${room.messNote ? ` — ${room.messNote}` : ""}`
                   : "No mess. Cooking or outside food."}
               </Answer>
-              <Answer label="Warden">{room.wardenName || "None on site"}</Answer>
+              <Answer label="Warden" mr="वॉर्डन">{room.wardenName || "None on site"}</Answer>
               {room.gateClosingTime && (
-                <Answer label="Gate closes">{room.gateClosingTime}</Answer>
+                <Answer label="Gate closes" mr="गेट बंद">{room.gateClosingTime}</Answer>
               )}
-              <Answer label="Deposit">
+              <Answer label="Deposit" mr="अनामत">
                 {room.deposit != null ? rupees(room.deposit) : "Ask the owner"}
               </Answer>
-              <Answer label="Beds free">
+              {/* Directly under Deposit: these two together are the money
+                  question, and splitting them across the page is how a family
+                  finds out about the light bill after they have moved in. */}
+              <Answer label="Other costs" mr="इतर खर्च">
+                {room.costNote || "Ask the owner — rent may not include the light bill."}
+              </Answer>
+              <Answer label="Beds free" mr="जागा शिल्लक">
                 {room.vacantBeds == null
                   ? "Ask Aangan"
                   : room.vacantBeds === 0

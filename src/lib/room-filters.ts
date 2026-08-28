@@ -7,6 +7,7 @@ export const roomFiltersSchema = z.object({
   location: z.string().optional(),
   genderPreference: z.string().optional(),
   maxPrice: z.number().optional(),
+  maxWalk: z.number().optional(),
   food: z.enum(["yes", "no"]).optional(),
   occupancy: z.string().optional(),
   amenities: z.array(z.string()).optional(),
@@ -39,11 +40,14 @@ export function parseRoomFilters(
     location: z.string().max(60).optional().catch(undefined).parse(params.location),
     genderPreference: z.enum(GENDER_PREFERENCES).optional().catch(undefined).parse(params.genderPreference),
     maxPrice: z.coerce.number().int().positive().max(1_000_000).optional().catch(undefined).parse(params.maxPrice),
+    // Capped tighter than maxPrice for the same cache-key reason: a walk time is
+    // minutes, and nobody walks two hours to class.
+    maxWalk: z.coerce.number().int().positive().max(180).optional().catch(undefined).parse(params.maxWalk),
     food: z.enum(["yes", "no"]).optional().catch(undefined).parse(params.food),
     occupancy: z.enum(OCCUPANCY_TYPES).optional().catch(undefined).parse(params.occupancy),
     amenities: z.array(z.string().max(40)).max(20).optional().catch(undefined).parse(asArray(params.amenities)),
     rules: z.array(z.string().max(40)).max(20).optional().catch(undefined).parse(asArray(params.rules)),
-    sort: z.enum(["price_asc"]).optional().catch(undefined).parse(params.sort),
+    sort: z.enum(["price_asc", "walk_asc"]).optional().catch(undefined).parse(params.sort),
   };
 }
 
@@ -84,6 +88,12 @@ export function buildRoomWhere(filters: RoomFilters): Prisma.PropertyWhereInput 
     where.price = { lte: filters.maxPrice };
   }
 
+  // A room with no walk time recorded is not a 0-minute walk — it is an unknown,
+  // and asking for "under 10 min" must not return it.
+  if (filters.maxWalk) {
+    where.walkMinutes = { lte: filters.maxWalk };
+  }
+
   // null foodType means no mess at all — that IS the filter, which is why there
   // is no separate foodIncluded boolean.
   if (filters.food === "yes") {
@@ -113,6 +123,15 @@ export function buildRoomOrderBy(filters: RoomFilters): Prisma.PropertyOrderByWi
   if (filters.sort === "price_asc") {
     return [
       { price: "asc" },
+      { verifiedAt: { sort: "desc", nulls: "last" } },
+      { createdAt: "desc" }
+    ];
+  }
+  // nulls last, or every listing whose walk time nobody measured sorts to the
+  // top of "closest to college" — the exact opposite of what was asked for.
+  if (filters.sort === "walk_asc") {
+    return [
+      { walkMinutes: { sort: "asc", nulls: "last" } },
       { verifiedAt: { sort: "desc", nulls: "last" } },
       { createdAt: "desc" }
     ];

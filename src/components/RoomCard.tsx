@@ -16,6 +16,7 @@ type RoomCardProps = {
     occupancyType: string | null;
     genderPreference: string | null;
     foodType: string | null;
+    deposit: number | null;
     vacantBeds: number | null;
     verifiedAt: Date | null;
     walkMinutes: number | null;
@@ -123,6 +124,21 @@ export function RoomCard({ room }: RoomCardProps) {
           </p>
         )}
         
+        {/* Deposit belongs next to the rent, not two clicks away on the listing
+            page. It is the number that decides whether a family can take the
+            room at all, and shortlisting five rooms on rent alone means finding
+            it out five times over.
+            `!= null`, never a truthiness check: a ₹0 deposit is the strongest
+            thing this card can say, and `deposit &&` would hide it. */}
+        {room.deposit != null && (
+          <p className="text-sm text-text-muted">
+            Deposit{" "}
+            <span className="font-medium text-text-main">
+              {room.deposit === 0 ? "none" : `₹${room.deposit.toLocaleString("en-IN")}`}
+            </span>
+          </p>
+        )}
+
         <div className="mt-auto pt-3 flex flex-wrap gap-2">
           {room.occupancyType && (
             <span className="bg-slate-50 text-slate-600 text-xs font-medium px-2 py-1 rounded border border-border">
