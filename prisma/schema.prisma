@@ -140,6 +140,15 @@ model Lead {
   phone      String
   propertyId String?
   property   Property? @relation(fields: [propertyId], references: [id])
+  /// "student" — someone enquiring about a room, created by `recordEnquiry`.
+  /// "owner"   — a hostel owner being pitched, created by hand in the admin.
+  /// Both run the same follow-up pipeline (`stage`, `followupDate`, `notes`),
+  /// because the shape is genuinely the same: found them, spoke to them, met
+  /// them, they said yes, they said no.
+  kind       String    @default("student")
+  /// Owner leads only. The hostel is not a Property yet — signing them up is
+  /// the whole point of the call — so this is free text, not a relation.
+  hostelName String?
   status     String    @default("New")
   stage      String    @default("NEW")
   source     String    @default("contact")
@@ -156,6 +165,11 @@ model Lead {
   // both are sequential scans the moment the table stops being small.
   @@index([createdAt])
   @@index([stage])
+  // Every inbox query is scoped to one kind, then ordered by date or filtered
+  // by follow-up. Without these the split into Students/Owners turns each of
+  // those into a full scan.
+  @@index([kind, createdAt])
+  @@index([kind, followupDate])
 }
 
 model SavedProperty {

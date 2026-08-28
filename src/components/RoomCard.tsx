@@ -35,13 +35,21 @@ export function RoomCard({ room }: RoomCardProps) {
   const reviewAvg = room.ratingAvg ?? 0;
 
   return (
-    <Link 
-      href={`/pg/${room.slug}`}
+    <div
       className={cn(
-        "group flex flex-col border border-border rounded-xl overflow-hidden bg-white hover:shadow-md transition-shadow",
+        "group relative flex flex-col border border-border rounded-xl overflow-hidden bg-white hover:shadow-md transition-shadow",
         isFull && "opacity-75"
       )}
     >
+      {/* The whole card is the link, but as an overlay rather than a wrapper —
+          the save button is a <button>, and a button inside an <a> is invalid
+          markup that screen readers and browsers each resolve differently.
+          z-10 so the overlay sits above the image box, which is positioned and
+          later in the DOM; the save button sits above the overlay at z-20. */}
+      <Link href={`/pg/${room.slug}`} className="absolute inset-0 z-10">
+        <span className="sr-only">{room.title}</span>
+      </Link>
+
       {/* 4:3 aspect box reserved before load */}
       <div className="relative aspect-[4/3] bg-slate-100 overflow-hidden shrink-0">
         {room.imageUrl ? (
@@ -54,7 +62,7 @@ export function RoomCard({ room }: RoomCardProps) {
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center text-slate-400">
+          <div className="absolute inset-0 flex items-center justify-center text-slate-600">
             No photo
           </div>
         )}
@@ -71,7 +79,7 @@ export function RoomCard({ room }: RoomCardProps) {
           </div>
         )}
 
-        <div className="absolute top-3 right-3 z-10">
+        <div className="absolute top-3 right-3 z-20">
           <SaveButton propertyId={room.id} />
         </div>
       </div>
@@ -80,18 +88,26 @@ export function RoomCard({ room }: RoomCardProps) {
         <div className="flex items-baseline justify-between gap-3">
           <h3 className="font-medium text-text-main line-clamp-2 leading-snug">{room.title}</h3>
           <span className="font-semibold text-lg whitespace-nowrap text-text-main text-right">
-            {room.displayPrice?.split('/').map((part, i) => (
-              <span key={i}>
-                {i === 0 ? part : <span className="text-xs font-normal text-text-muted block text-right">/{part}</span>}
-              </span>
-            )) || (room.price ? `₹${room.price.toLocaleString("en-IN")}/month` : "Price on request")}
+            {/* An explicit ternary, not `?.split(…) || fallback`: `?.` guards
+                null and undefined only, and `"".split('/')` is `[""]` — a
+                truthy array — so an empty displayPrice rendered a blank price
+                instead of falling through to the numeric one. */}
+            {room.displayPrice
+              ? room.displayPrice.split('/').map((part, i) => (
+                  <span key={i}>
+                    {i === 0 ? part : <span className="text-xs font-normal text-text-muted block text-right">/{part}</span>}
+                  </span>
+                ))
+              : room.price
+                ? `₹${room.price.toLocaleString("en-IN")}/month`
+                : "Price on request"}
           </span>
         </div>
         
         <div className="flex justify-between items-center -mt-1">
           {reviewCount > 0 && (
             <div className="flex items-center gap-1.5 text-sm font-medium text-slate-700 bg-slate-50 px-2 py-0.5 rounded border border-slate-200 w-fit">
-              <span className="text-yellow-500">★</span> 
+              <span className="text-amber-600">★</span> 
               <span>{reviewAvg.toFixed(1)} <span className="text-slate-500 font-normal">({reviewCount})</span></span>
             </div>
           )}
@@ -125,6 +141,6 @@ export function RoomCard({ room }: RoomCardProps) {
           )}
         </div>
       </div>
-    </Link>
+    </div>
   );
 }

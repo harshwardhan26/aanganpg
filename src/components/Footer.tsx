@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Logo } from "./Logo";
+import { NAV_LINKS } from "@/lib/nav-links";
 
 export function Footer() {
   const pathname = usePathname();
@@ -19,27 +20,18 @@ export function Footer() {
           </div>
           <div>
             <h3 className="font-heading font-semibold mb-4 text-white">Explore</h3>
+            {/* The same four the navbar shows, from the same array — these used
+                to be hand-written here with their own wording, which is how the
+                footer ended up saying "Girls Hostels & Rooms" while the navbar
+                said "Girls Hostels". About is footer-only, so it stays inline. */}
             <ul className="space-y-1 text-sm text-light/70">
-              <li>
-                <Link href="/search" className="block py-2 hover:text-white transition-colors">
-                  All rooms
-                </Link>
-              </li>
-              <li>
-                <Link href="/search?genderPreference=Female" className="block py-2 hover:text-white transition-colors">
-                  Girls Hostels & Rooms
-                </Link>
-              </li>
-              <li>
-                <Link href="/search?genderPreference=Male" className="block py-2 hover:text-white transition-colors">
-                  Boys Hostels & Rooms
-                </Link>
-              </li>
-              <li>
-                <Link href="/search?food=yes" className="block py-2 hover:text-white transition-colors">
-                  With mess
-                </Link>
-              </li>
+              {NAV_LINKS.map((link) => (
+                <li key={link.href}>
+                  <Link href={link.href} className="block py-2 hover:text-white transition-colors">
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
               <li>
                 <Link href="/about" className="block py-2 hover:text-white transition-colors">
                   About Aangan

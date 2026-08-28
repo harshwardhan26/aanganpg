@@ -1,4 +1,10 @@
-import { getCachedRooms, getCachedColleges } from '@/lib/room-cache';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/auth';
+import { getCachedRooms, getCachedColleges, getCachedRoomPins, getCachedRoomsWithoutPins } from '@/lib/room-cache';
+import { approximateLocation } from '@/lib/geo';
+import { RoomMapLoader } from '@/components/RoomMapLoader';
+import { List, Map as MapIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { parseRoomFilters } from '@/lib/room-filters';
 import { RoomCard } from '@/components/RoomCard';
 import { SearchFilters } from '@/components/SearchFilters';
@@ -35,12 +41,55 @@ export default async function SearchPage(props: PageProps) {
   const searchParams = await props.searchParams;
 
   const page = Math.max(1, Number(searchParams.page) || 1);
+  const isMap = searchParams.view === 'map';
+  const filters = parseRoomFilters(searchParams);
 
-  const [colleges, result] = await Promise.all([
+  const [colleges, result, session, pinRows, withoutPins] = await Promise.all([
     getCachedColleges(),
-    getCachedRooms(parseRoomFilters(searchParams), page)
+    getCachedRooms(filters, page),
+    // Only the map needs to know who is looking, and only to decide whether the
+    // pins are exact. The list view has never shown a coordinate.
+    isMap ? getServerSession(authOptions) : Promise.resolve(null),
+    isMap ? getCachedRoomPins(filters) : Promise.resolve([]),
+    isMap ? getCachedRoomsWithoutPins(filters) : Promise.resolve(0),
   ]);
   const { rooms, hasMore } = result;
+
+  /**
+   * Blurred here, on the server, before the coordinates cross to the browser.
+   * Doing it in the map component would leave the real numbers sitting in the
+   * page payload for anyone who opened dev tools — the gate has to be applied
+   * where the data is selected, not where it is drawn.
+   */
+  const signedIn = Boolean(session?.user);
+  const pins = pinRows.map((r) => {
+    const exact = { lat: r.lat as number, lng: r.lng as number };
+    const shown = signedIn ? exact : approximateLocation(r.id, exact.lat, exact.lng);
+    return {
+      id: r.id,
+      slug: r.slug,
+      title: r.title,
+      price: r.price,
+      displayPrice: r.displayPrice,
+      imageUrl: r.imageUrl,
+      walkMinutes: r.walkMinutes,
+      lat: shown.lat,
+      lng: shown.lng,
+      collegeName: r.college?.shortName || r.college?.name || null,
+    };
+  });
+
+  /** This URL with the view swapped, keeping every active filter. */
+  const viewHref = (view: 'list' | 'map') => {
+    const params = new URLSearchParams();
+    Object.entries(searchParams).forEach(([k, v]) => {
+      if (k === 'view' || k === 'page') return;
+      if (Array.isArray(v)) v.forEach(val => params.append(k, val));
+      else if (v) params.append(k, v);
+    });
+    if (view === 'map') params.set('view', 'map');
+    return `/search${params.toString() ? `?${params.toString()}` : ''}`;
+  };
 
   /** This URL with `page` swapped, so paging keeps every active filter. */
   const pageHref = (n: number) => {
@@ -87,12 +136,42 @@ export default async function SearchPage(props: PageProps) {
 
         {/* Main Content */}
         <div className="flex-1 pb-24 lg:pb-8">
-          <div className="mb-6">
-            <h1 className="text-2xl font-bold text-text-main font-heading">{h1Text}</h1>
-            <p className="text-text-muted mt-1">
-              {rooms.length} {rooms.length === 1 ? 'room' : 'rooms'}
-              {hasMore || page > 1 ? ` on page ${page}` : ' found'}
-            </p>
+          <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h1 className="text-2xl font-bold text-text-main font-heading">{h1Text}</h1>
+              <p className="text-text-muted mt-1">
+                {isMap ? (
+                  <>{pins.length} {pins.length === 1 ? 'room' : 'rooms'} on the map</>
+                ) : (
+                  <>
+                    {rooms.length} {rooms.length === 1 ? 'room' : 'rooms'}
+                    {hasMore || page > 1 ? ` on page ${page}` : ' found'}
+                  </>
+                )}
+              </p>
+            </div>
+
+            {/* List | Map. Plain links, so the view lives in the URL alongside
+                every filter and survives a reload or a shared link. */}
+            <div className="flex gap-1 rounded-lg border border-border bg-white p-1">
+              {([['list', 'List', List], ['map', 'Map', MapIcon]] as const).map(([value, label, Icon]) => {
+                const active = isMap === (value === 'map');
+                return (
+                  <Link
+                    key={value}
+                    href={viewHref(value)}
+                    aria-current={active ? 'page' : undefined}
+                    className={cn(
+                      'inline-flex min-h-11 items-center gap-1.5 rounded-md px-4 text-sm font-medium transition-colors',
+                      active ? 'bg-primary-strong text-white' : 'text-text-muted hover:bg-slate-50',
+                    )}
+                  >
+                    <Icon className="h-4 w-4" />
+                    {label}
+                  </Link>
+                );
+              })}
+            </div>
           </div>
 
           {activeFilters.length > 0 && (
@@ -124,7 +203,28 @@ export default async function SearchPage(props: PageProps) {
             </div>
           )}
 
-          {rooms.length > 0 ? (
+          {isMap ? (
+            <div className="space-y-3">
+              <RoomMapLoader pins={pins} />
+              {/* pb clears the fixed "Filters" button, which is anchored
+                  bottom-right on mobile and otherwise sits on top of this line. */}
+              <p className="pb-16 text-xs text-text-muted lg:pb-0">
+                {signedIn
+                  ? 'Pins show the exact location.'
+                  : 'Pins are approximate. Sign in on a room to see its exact location and get directions.'}
+                {withoutPins > 0 && (
+                  <>
+                    {' '}
+                    {withoutPins} {withoutPins === 1 ? 'room has' : 'rooms have'} no location yet —{' '}
+                    <Link href={viewHref('list')} className="text-primary-strong underline underline-offset-4">
+                      see the list
+                    </Link>
+                    .
+                  </>
+                )}
+              </p>
+            </div>
+          ) : rooms.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-[repeat(auto-fill,minmax(272px,1fr))] gap-6">
               {rooms.map(room => <RoomCard key={room.id} room={room} />)}
             </div>
@@ -140,7 +240,7 @@ export default async function SearchPage(props: PageProps) {
             </div>
           )}
 
-          {(page > 1 || hasMore) && (
+          {!isMap && (page > 1 || hasMore) && (
             <nav aria-label="Search results pages" className="mt-10 flex items-center justify-between gap-4">
               {page > 1 ? (
                 <Button size="sm" className="border-border text-text-main hover:bg-muted bg-white border shadow-sm" render={<Link href={pageHref(page - 1)} rel="prev" />} nativeButton={false}>

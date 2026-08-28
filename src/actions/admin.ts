@@ -377,3 +377,85 @@ export async function updateLeadDetails(id: string, rawData: unknown) {
 
   revalidatePath("/admin/leads");
 }
+
+/**
+ * A hostel owner you are pitching, added by hand.
+ *
+ * The owner says "come back in three days" on the phone and there is nowhere to
+ * put that — so it lived in someone's memory until it didn't. This is the same
+ * `Lead` row a student enquiry creates, with `kind: "owner"`: it inherits the
+ * whole follow-up pipeline (stage, follow-up date, notes, the overdue and
+ * due-today queues) rather than growing a second one beside it.
+ *
+ * The hostel is free text, not a `propertyId`. It is not a listing yet — signing
+ * it up is the point of the call.
+ */
+const ownerLeadSchema = z.object({
+  name: z.string().trim().min(1, "Name is required").max(120),
+  phone: z.string().trim().min(1, "Phone is required").max(20),
+  hostelName: z.string().trim().max(160).optional(),
+  followupDate: z.string().trim().max(10).optional(),
+  notes: z.string().trim().max(5000).optional(),
+});
+
+export type CreateOwnerLeadResult = { ok: true; id: string } | { ok: false; error: string };
+
+export async function createOwnerLead(rawData: unknown): Promise<CreateOwnerLeadResult> {
+  await requireAdmin();
+
+  const parsed = ownerLeadSchema.safeParse(rawData);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Check the form." };
+  }
+  const data = parsed.data;
+
+  // One format, always — the same E.164 every other phone in this product uses,
+  // so `tel:` and `wa.me` links work without a second conversion at render time.
+  const phone = canonicalPhone(data.phone);
+  if (!phone) {
+    return { ok: false, error: "That phone number does not look like a mobile number." };
+  }
+
+  // Same number, same hostel, already on the list: reopening the form and
+  // retyping it should not produce a second card to chase.
+  const existing = await prisma.lead.findFirst({
+    where: { kind: "owner", phone, hostelName: data.hostelName || null },
+  });
+  if (existing) {
+    return { ok: false, error: `${existing.name} is already in your owner list.` };
+  }
+
+  const lead = await prisma.lead.create({
+    data: {
+      kind: "owner",
+      name: data.name,
+      phone,
+      hostelName: data.hostelName || null,
+      notes: data.notes || null,
+      // A plain "YYYY-MM-DD" parses as UTC midnight, which is the boundary
+      // `startOfUtcDay` compares against. Anything else and a lead due today
+      // reads as overdue for half the day in IST.
+      followupDate: data.followupDate ? new Date(data.followupDate) : null,
+      source: "outreach",
+      propertyId: null,
+    },
+  });
+
+  revalidatePath("/admin/leads");
+  revalidatePath("/admin");
+  return { ok: true, id: lead.id };
+}
+
+/** Deletes an owner lead outright. Student leads are evidence; these are a to-do list. */
+export async function deleteOwnerLead(id: string) {
+  await requireAdmin();
+  const leadId = idSchema.safeParse(id);
+  if (!leadId.success) throw new Error("Invalid lead id");
+
+  // Scoped to `kind: "owner"` so this can never reach a student enquiry, which
+  // is a record of someone contacting a hostel and is not ours to erase.
+  await prisma.lead.deleteMany({ where: { id: leadId.data, kind: "owner" } });
+
+  revalidatePath("/admin/leads");
+  revalidatePath("/admin");
+}

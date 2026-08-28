@@ -1,5 +1,5 @@
 import { unstable_cache } from "next/cache";
-import { getRooms, getColleges, type RoomFilters } from "@/actions/rooms";
+import { getRooms, getColleges, getRoomPins, countRoomsWithoutPins, type RoomFilters } from "@/actions/rooms";
 
 /**
  * Cached reads for `/search`.
@@ -27,4 +27,20 @@ export const getCachedColleges = unstable_cache(
   async () => getColleges(),
   ["search-colleges"],
   { tags: [ROOMS_TAG], revalidate: 3600 },
+);
+
+/**
+ * Map pins, sharing the `rooms` tag so publishing or closing a listing moves
+ * its pin at the same moment it moves its card.
+ */
+export const getCachedRoomPins = unstable_cache(
+  async (filters: RoomFilters) => getRoomPins(filters),
+  ["search-room-pins"],
+  { tags: [ROOMS_TAG], revalidate: 300 },
+);
+
+export const getCachedRoomsWithoutPins = unstable_cache(
+  async (filters: RoomFilters) => countRoomsWithoutPins(filters),
+  ["search-rooms-no-pins"],
+  { tags: [ROOMS_TAG], revalidate: 300 },
 );

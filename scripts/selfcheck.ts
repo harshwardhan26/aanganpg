@@ -2,16 +2,19 @@ import assert from "node:assert";
 import { canonicalPhone } from "../src/lib/phone";
 import { buildPropertyPrefill } from "../src/lib/whatsapp";
 import { slugify, resolveSlug } from "../src/lib/slug";
-import { pgPublishIssues } from "../src/lib/property-options";
+import { pgPublishIssues, pgPublishIssueList } from "../src/lib/property-options";
 import { buildRoomWhere, buildRoomOrderBy, parseRoomFilters } from "../src/lib/room-filters";
 import { csvField, jsonLdScript } from "../src/lib/escape";
 import { cloudinaryUrl } from "../src/lib/image";
 import { publicImage } from "../src/lib/publicImage";
 import { directionsUrl, looksLikeKolhapur } from "../src/lib/maps";
+import { approximateLocation, distanceMetres } from "../src/lib/geo";
 import { enquiryGate } from "../src/lib/session";
 import { isAdminEmail, resolveRole, isOwner } from "../src/lib/admin";
 import { trustedIp } from "../src/lib/request";
 import { allowRequest } from "../src/lib/rate-limit";
+import { parseLeadView, parseLeadKind, parseLeadGrouping, parseHostelSearch, buildLeadWhere, buildLeadOrderBy, groupByHostel, startOfUtcDay, followupState } from "../src/lib/lead-filters";
+import { parseListingView, parseListingSearch, buildListingWhere, listingStatus } from "../src/lib/listing-filters";
 
 try { process.loadEnvFile(); } catch {}
 
@@ -287,6 +290,258 @@ async function main() {
   const no = { limit: async () => ({ success: false }) } as unknown as Parameters<typeof allowRequest>[0];
   assert((await allowRequest(yes, "k", true)) === true, "a limiter that allows must be obeyed");
   assert((await allowRequest(no, "k", false)) === false, "a limiter that refuses must be obeyed even in development");
+
+  // --- Map pin blurring ---------------------------------------------------
+  //
+  // Signed-out visitors see an approximate pin. This is the gate that keeps
+  // exact locations behind sign-in, so it gets asserted rather than eyeballed.
+  const realLat = 16.6512;
+  const realLng = 74.2543;
+
+  // Deterministic: the same listing must land in the same wrong place every
+  // time. A random offset per render makes pins jump on reload and reads as a
+  // broken map rather than a private one.
+  const first = approximateLocation("cm3abc123", realLat, realLng);
+  const again = approximateLocation("cm3abc123", realLat, realLng);
+  assert.deepStrictEqual(first, again, "the same listing must blur to the same point every time");
+
+  // It must actually move. An offset of zero is a gate that looks shut.
+  const moved = distanceMetres({ lat: realLat, lng: realLng }, first);
+  assert(moved >= 150 && moved <= 350, `blur must land in the 150-350m band, got ${moved.toFixed(0)}m`);
+
+  // Two listings must not share an offset, or a whole street shifts as one
+  // block and the real positions are recoverable from the shape.
+  const other = approximateLocation("cm3zzz999", realLat, realLng);
+  assert(
+    distanceMetres(first, other) > 1,
+    "two different listings must blur in different directions",
+  );
+
+  // Nudging a pin must not push it out of Kolhapur — a 350m shift near the edge
+  // of the box would put a marker somewhere the city is not.
+  assert(
+    looksLikeKolhapur(first.lat, first.lng),
+    "a blurred pin must still sit inside the Kolhapur bounding box",
+  );
+
+  // Longitude degrees shrink with latitude; ignoring that skews every pin
+  // east-west. At 16.7N the correction is ~4%, so a pure-east offset must still
+  // measure the same distance as a pure-north one.
+  for (const id of ["a", "b", "c", "d", "e", "f", "g", "h"]) {
+    const p = approximateLocation(id, realLat, realLng);
+    const d = distanceMetres({ lat: realLat, lng: realLng }, p);
+    assert(d >= 149 && d <= 351, `every blur stays in band, ${id} gave ${d.toFixed(0)}m`);
+  }
+
+  // --- Publish guard, tagged by field -------------------------------------
+  //
+  // `pgPublishIssues` must stay exactly the flattened `pgPublishIssueList`, or
+  // the server action and the admin form start enforcing different rules.
+  assert.deepStrictEqual(
+    pgPublishIssues({ ...baseValid, ownerPhone: null, images: [] }),
+    pgPublishIssueList({ ...baseValid, ownerPhone: null, images: [] }).map((i) => i.message),
+    "pgPublishIssues must be pgPublishIssueList flattened to messages",
+  );
+  // The form maps field -> section; a mistagged issue scrolls to the wrong place.
+  assert.deepStrictEqual(
+    pgPublishIssueList({ ...baseValid, ownerPhone: null }).map((i) => i.field),
+    ["ownerPhone"],
+    "a missing phone is tagged ownerPhone",
+  );
+  assert.deepStrictEqual(
+    pgPublishIssueList({ ...baseValid, hasBathroomPhoto: false }).map((i) => i.field),
+    ["bathroomPhoto"],
+    "a missing bathroom photo is tagged bathroomPhoto",
+  );
+  assert.deepStrictEqual(
+    pgPublishIssueList({ ...baseValid, wardenName: null, gateClosingTime: null }).map((i) => i.field),
+    ["wardenName", "gateClosingTime"],
+    "girls-hostel rules are tagged to their own fields",
+  );
+  assert(
+    pgPublishIssueList(baseValid).length === 0,
+    "a publishable listing has no tagged issues either",
+  );
+
+  // --- Admin listing views ------------------------------------------------
+  //
+  // `all` must still hide soft-deleted rows. The old page ran findMany with no
+  // where clause at all, so deleted listings sat in the list forever.
+  assert(buildListingWhere("all", "").deletedAt === null, "the all view hides deleted listings");
+  assert.deepStrictEqual(
+    buildListingWhere("deleted", "").deletedAt,
+    { not: null },
+    "only the deleted view shows deleted listings",
+  );
+  assert(buildListingWhere("draft", "").verifiedAt === null, "a draft is an unverified listing");
+  assert(buildListingWhere("full", "").vacantBeds === 0, "full means zero vacant beds");
+  assert.deepStrictEqual(
+    buildListingWhere("live", "").NOT,
+    { vacantBeds: 0 },
+    "a full listing is not live",
+  );
+  assert(parseListingSearch("  Muktai  ") === "Muktai", "search is trimmed at the parse step");
+  assert.deepStrictEqual(
+    buildListingWhere("all", parseListingSearch("  Muktai  ")).title,
+    { contains: "Muktai", mode: "insensitive" },
+    "search is case-insensitive",
+  );
+  assert(buildListingWhere("all", "").title === undefined, "an empty search adds no clause");
+  assert(parseListingView("nonsense") === "all", "an unknown listing view falls back to all");
+  assert(parseListingSearch("x".repeat(500)) === "", "an over-long search is dropped, not truncated blindly");
+
+  // Badge precedence: a deleted listing is also closed, and showing both says
+  // nothing. Most severe wins.
+  const dates = { closedAt: new Date(), verifiedAt: new Date(), deletedAt: new Date() };
+  assert(listingStatus({ ...dates, vacantBeds: 0 }) === "deleted", "deleted beats everything");
+  assert(listingStatus({ ...dates, deletedAt: null, vacantBeds: 0 }) === "closed", "closed beats full");
+  assert(
+    listingStatus({ deletedAt: null, closedAt: null, verifiedAt: new Date(), vacantBeds: 0 }) === "full",
+    "full beats draft",
+  );
+  assert(
+    listingStatus({ deletedAt: null, closedAt: null, verifiedAt: null, vacantBeds: 3 }) === "draft",
+    "unverified with beds free is a draft",
+  );
+  assert(
+    listingStatus({ deletedAt: null, closedAt: null, verifiedAt: new Date(), vacantBeds: 3 }) === "live",
+    "verified with beds free is live",
+  );
+  // vacantBeds null means "ask Aangan", not zero. Treating it as full would hide
+  // every listing whose bed count was never filled in.
+  assert(
+    listingStatus({ deletedAt: null, closedAt: null, verifiedAt: new Date(), vacantBeds: null }) === "live",
+    "an unknown bed count is not full",
+  );
+
+  // --- Admin lead inbox ---------------------------------------------------
+  //
+  // The follow-up boundary is UTC midnight because that is how the date input
+  // writes it. Asserted with a fixed IST-evening instant: with a *local*
+  // midnight, "2026-08-26T20:00:00+05:30" and a follow-up dated 2026-08-26 land
+  // on opposite sides of the boundary and a lead due today reads as overdue.
+  const istEvening = new Date("2026-08-26T14:30:00.000Z"); // 20:00 IST
+  assert(
+    startOfUtcDay(istEvening).toISOString() === "2026-08-26T00:00:00.000Z",
+    "startOfUtcDay must snap to UTC midnight of the same date",
+  );
+
+  const dueToday = new Date("2026-08-26");
+  const dueYesterday = new Date("2026-08-25");
+  const dueTomorrow = new Date("2026-08-27");
+  assert(followupState(dueToday, "NEW", istEvening) === "today", "same-date follow-up is due today");
+  assert(followupState(dueYesterday, "NEW", istEvening) === "overdue", "past follow-up is overdue");
+  assert(followupState(dueTomorrow, "NEW", istEvening) === "upcoming", "future follow-up is upcoming");
+  assert(followupState(null, "NEW", istEvening) === "none", "no follow-up date is not work");
+  // A won or lost lead is not chased, whatever date is on it.
+  assert(followupState(dueYesterday, "CONVERTED", istEvening) === "none", "converted leads are never overdue");
+  assert(followupState(dueYesterday, "LOST", istEvening) === "none", "lost leads are never overdue");
+
+  // A hand-edited ?view= must render the inbox, never throw.
+  assert(parseLeadView("overdue") === "overdue", "a known view survives parsing");
+  assert(parseLeadView("CONVERTED") === "CONVERTED", "stage views come from LEAD_STAGES");
+  assert(parseLeadView("'; DROP TABLE") === "all", "an unknown view falls back to all");
+  assert(parseLeadView(undefined) === "all", "a missing view falls back to all");
+
+  // Every view is scoped to one kind. Without this the Students tab shows the
+  // hostel owners you are pitching, and the Owners tab shows student enquiries.
+  assert(buildLeadWhere("all", istEvening).kind === "student", "the default kind is student");
+  assert(buildLeadWhere("all", istEvening, "owner").kind === "owner", "owner views are scoped to owners");
+  assert(buildLeadWhere("overdue", istEvening, "owner").kind === "owner", "so is the overdue queue");
+  assert(buildLeadWhere("NEW", istEvening, "owner").kind === "owner", "so are the stage views");
+  // `all` must add nothing beyond the kind, or it silently hides leads.
+  assert.deepStrictEqual(
+    Object.keys(buildLeadWhere("all", istEvening)),
+    ["kind"],
+    "the all view filters on nothing but kind",
+  );
+  assert(parseLeadKind("owner") === "owner", "a known kind survives parsing");
+  assert(parseLeadKind("../../etc") === "student", "an unknown kind falls back to student");
+  assert(parseLeadGrouping("hostel") === "hostel", "a known grouping survives parsing");
+  assert(parseLeadGrouping(undefined) === "date", "the default grouping is by date");
+
+  // Grouping by hostel has to override the date order, or the rows arrive
+  // interleaved and the consecutive-run grouping below produces one group per
+  // lead instead of one per hostel.
+  assert(
+    buildLeadOrderBy("overdue", "hostel")[0].property?.title === "asc",
+    "the hostel view sorts by hostel first, even in the overdue queue",
+  );
+
+  // groupByHostel gathers consecutive runs. A hostel split across a page
+  // boundary simply shows its heading again, which is the correct behaviour.
+  const p1 = { id: "p1", title: "Muktai" };
+  const p2 = { id: "p2", title: "Rudra" };
+  const groups = groupByHostel([
+    { property: p1 }, { property: p1 }, { property: p2 }, { property: null },
+  ]);
+  assert.deepStrictEqual(
+    groups.map((g) => [g.title, g.leads.length]),
+    [["Muktai", 2], ["Rudra", 1], ["No hostel", 1]],
+    "leads are gathered one group per hostel, with a home for the property-less",
+  );
+  assert.deepStrictEqual(groupByHostel([]), [], "an empty list groups to nothing");
+
+  // Hostel-name search. Matches the property a student enquired about, so a
+  // lead with no property correctly drops out of a search.
+  assert(parseHostelSearch("  Muktai  ") === "Muktai", "a hostel search is trimmed");
+  assert(parseHostelSearch("x".repeat(500)) === "", "an over-long hostel search is dropped");
+  assert(parseHostelSearch(undefined) === "", "a missing hostel search is empty");
+  assert.deepStrictEqual(
+    buildLeadWhere("all", istEvening, "student", "Muktai").property,
+    { title: { contains: "Muktai", mode: "insensitive" } },
+    "the search filters on the hostel's title, case-insensitively",
+  );
+  assert(
+    buildLeadWhere("all", istEvening, "student", "").property === undefined,
+    "an empty search adds no clause",
+  );
+  // The search has to survive the follow-up queues, not just the inbox.
+  assert(
+    buildLeadWhere("overdue", istEvening, "student", "Muktai").property !== undefined,
+    "searching still applies inside the overdue queue",
+  );
+  assert(
+    buildLeadWhere("NEW", istEvening, "student", "Muktai").stage === "NEW",
+    "searching does not clobber the stage filter",
+  );
+  assert(
+    buildLeadOrderBy("overdue")[0].followupDate === "asc",
+    "the follow-up queue is ordered by when the call is due",
+  );
+  assert(
+    buildLeadOrderBy("all")[0].createdAt === "desc",
+    "the inbox is ordered newest first",
+  );
+
+  // --- Admin palette ------------------------------------------------------
+  //
+  // Contrast is a build rule, and the admin palette had never been through it.
+  // Stage badges are small text, so 4.5:1 applies to every pair.
+  //
+  // These are Tailwind v4's own palette converted from oklch to sRGB — NOT the
+  // v3 hexes, which are close enough to look right and wrong enough to make this
+  // assertion a lie (v4 amber-900 is #7b3306; the v3 hex was #78350f). Source of
+  // truth is `node_modules/tailwindcss/theme.css`. If a Tailwind upgrade shifts
+  // the palette, re-derive these rather than nudging the threshold.
+  const adminPairs: [string, string, string][] = [
+    ["#1c398e", "#dbeafe", "NEW badge (blue-900 on blue-100)"],
+    ["#7b3306", "#fef3c6", "CONTACTED badge (amber-900 on amber-100)"],
+    ["#59168b", "#f3e8ff", "VISITED badge (purple-900 on purple-100)"],
+    ["#0d542b", "#dcfce7", "CONVERTED badge (green-900 on green-100)"],
+    ["#1d293d", "#e2e8f0", "LOST badge (slate-800 on slate-200)"],
+    ["#82181a", "#ffe2e2", "overdue count pill (red-900 on red-100)"],
+    ["#c10007", white, "OVERDUE label (red-700 on white)"],
+    ["#bb4d00", white, "DUE TODAY label (amber-700 on white)"],
+    ["#016630", white, "Saved confirmation (green-800 on white)"],
+    // Listing status badges and their siblings.
+    ["#7e2a0c", "#ffedd4", "Full badge / Low pill (orange-900 on orange-100)"],
+    ["#312c85", "#eef2ff", "Review code button (indigo-900 on indigo-50)"],
+  ];
+  for (const [fg, bg, what] of adminPairs) {
+    const r = contrastRatio(fg, bg);
+    assert(r >= 4.5, `${what} must be >= 4.5, got ${r.toFixed(2)}`);
+  }
 
   console.log("Self check passed");
 }

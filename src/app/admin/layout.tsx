@@ -3,31 +3,32 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { isOwner } from "@/lib/admin";
+import { AdminNav } from "./AdminNav";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await getServerSession(authOptions);
-  
+
   if (session?.user?.role !== "admin") {
     redirect("/");
   }
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <header className="bg-white border-b border-border shadow-sm">
-        <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <Link href="/admin" className="text-xl font-bold font-heading text-text-main">
-          Aangan Admin
-        </Link>
-        <nav className="flex items-center gap-5 sm:gap-6 text-sm font-medium text-text-muted overflow-x-auto pb-1 sm:pb-0">
-          <Link href="/admin/leads" className="hover:text-text-main whitespace-nowrap">Leads</Link>
-          <Link href="/admin/listings" className="hover:text-text-main whitespace-nowrap">Listings</Link>
-          {isOwner(session?.user?.email) && (
-            <Link href="/admin/analytics" className="hover:text-text-main whitespace-nowrap text-primary-strong">Analytics</Link>
-          )}
-        </nav>
+      <header className="sticky top-0 z-30 border-b border-border bg-white shadow-sm">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+          <Link href="/admin" className="font-heading text-xl font-bold text-text-main">
+            Aangan Admin
+          </Link>
+          <AdminNav isOwner={isOwner(session?.user?.email)} />
         </div>
       </header>
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+      {/*
+        * The bottom reserve is the tab bar's own height, from the `--admin-tabbar-h`
+        * token, plus a gap. Without it the bar covers the last row of every page —
+        * the same bug the listing page had.
+        */}
+      <main className="mx-auto max-w-7xl px-4 pt-6 pb-[calc(var(--admin-tabbar-h)+1.5rem)] sm:px-6 lg:px-8 lg:pb-10">
         {children}
       </main>
     </div>

@@ -23,7 +23,7 @@ import {
 const PICKS = [
   { href: '/search?genderPreference=Female', label: 'Girls Hostels & Rooms', file: 'images/pick-girls.jpg', Icon: UserRound, tint: 'from-[#cc4040] to-[#8f2b2b]' },
   { href: '/search?genderPreference=Male', label: 'Boys Hostels & Rooms', file: 'images/pick-boys.jpg', Icon: Users, tint: 'from-slate-700 to-slate-900' },
-  { href: '/search?food=yes', label: 'With mess', file: 'images/pick-mess.jpg', Icon: UtensilsCrossed, tint: 'from-amber-700 to-amber-900' },
+  { href: '/search?food=yes', label: 'Mess', file: 'images/pick-mess.jpg', Icon: UtensilsCrossed, tint: 'from-amber-700 to-amber-900' },
   { href: '/search?maxPrice=3000', label: 'Under ₹3,000', file: 'images/pick-budget.jpg', Icon: IndianRupee, tint: 'from-emerald-700 to-emerald-900' },
 ];
 
@@ -169,7 +169,7 @@ export default async function Home() {
 
           {locations.length > 0 && (
             <div className="mt-4 border-t border-slate-100 pt-5">
-              <h3 className="font-heading text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Or browse by locality</h3>
+              <h3 className="font-heading text-xs font-bold text-text-muted uppercase tracking-widest mb-3">Or browse by locality</h3>
               <div className="-mx-4 flex snap-x snap-mandatory gap-2.5 overflow-x-auto pb-4 sm:mx-0 sm:flex-wrap sm:gap-2.5 [&::-webkit-scrollbar]:hidden">
                 <div className="w-1.5 shrink-0 sm:hidden" />
                 {locations.map(loc => (
@@ -178,7 +178,7 @@ export default async function Home() {
                     href={`/search?location=${encodeURIComponent(loc)}`}
                     className="group inline-flex min-h-[40px] shrink-0 snap-center items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-1.5 text-sm font-medium text-slate-600 transition-all duration-300 hover:border-slate-300 hover:bg-white hover:text-slate-900 hover:shadow-sm sm:snap-start"
                   >
-                    <MapPin className="h-3.5 w-3.5 text-slate-400 group-hover:text-primary-strong transition-colors" />
+                    <MapPin className="h-3.5 w-3.5 text-slate-500 group-hover:text-primary-strong transition-colors" />
                     <span>{loc}</span>
                   </Link>
                 ))}

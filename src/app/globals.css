@@ -56,6 +56,14 @@
   
   --content-max: 1280px;
   --radius: 0.625rem;
+
+  /* Height of the admin's fixed mobile tab bar, including the iOS home-indicator
+   * inset. Three places need to agree on this number — the bar itself, the space
+   * the admin layout reserves below its content, and the offset any sticky
+   * action bar sits at so it lands above the tabs instead of under them. A
+   * literal in three files is a bar that covers a Publish button the first time
+   * one of them is edited. */
+  --admin-tabbar-h: calc(3.5rem + env(safe-area-inset-bottom));
 }
 
 @layer base {

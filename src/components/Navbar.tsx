@@ -10,6 +10,7 @@ import { Logo } from "./Logo";
 import { cn } from "@/lib/utils";
 import { NavAuth } from "./NavAuth";
 import { ListPgButton } from "./ListPgButton";
+import { NAV_LINKS } from "@/lib/nav-links";
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -27,15 +28,6 @@ export function Navbar() {
     return parts[0].toUpperCase();
   };
 
-  // Every one of these is a real route. They used to be /all, /girls, /boys and
-  // /mess, none of which exist — the whole nav was 404s.
-  const links = [
-    { href: "/search", label: "All rooms" },
-    { href: "/search?genderPreference=Female", label: "Girls Hostels" },
-    { href: "/search?genderPreference=Male", label: "Boys Hostels" },
-    { href: "/search?food=yes", label: "With mess" },
-  ];
-
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-light/95 backdrop-blur supports-[backdrop-filter]:bg-light/60">
       <div className="flex h-16 w-full items-center px-6 md:px-16 lg:px-24 xl:px-32 2xl:px-40">
@@ -47,7 +39,7 @@ export function Navbar() {
         </div>
         
         <nav className="hidden lg:flex flex-1 items-center justify-center gap-6 xl:gap-8 mx-4">
-          {links.map((link) => (
+          {NAV_LINKS.map((link) => (
             <Link
               key={link.href}
               href={link.href}
@@ -84,7 +76,7 @@ export function Navbar() {
             <SheetContent side="right" className="w-[85vw] sm:w-[350px] bg-white p-6 outline-none">
               <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
               <nav className="flex flex-col gap-1 mt-8">
-                {links.map((link) => (
+                {NAV_LINKS.map((link) => (
                   <Link
                     key={link.href}
                     href={link.href}

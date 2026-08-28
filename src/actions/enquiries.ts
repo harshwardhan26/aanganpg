@@ -1,6 +1,7 @@
 "use server";
 
 import { headers } from 'next/headers';
+import { revalidatePath } from 'next/cache';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { Prisma } from '@prisma/client';
@@ -73,9 +74,13 @@ async function processEnquiry(raw: unknown, ip: string) {
     return { error: 'Please enter a valid phone number.' };
   }
 
-  // Dedupe on (phone, propertyId): a second identical submit updates updatedAt
+  // Dedupe on (kind, phone, propertyId): a second identical submit updates
+  // updatedAt. `kind` matters because a hostel owner is also a Lead row now —
+  // without it, an owner enquiring about their own listing from their own phone
+  // would update their outreach card instead of creating a student enquiry, and
+  // silently overwrite its source.
   const existing = await prisma.lead.findFirst({
-    where: { phone, propertyId: data.propertyId }
+    where: { kind: 'student', phone, propertyId: data.propertyId }
   });
 
   if (existing) {
@@ -90,6 +95,7 @@ async function processEnquiry(raw: unknown, ip: string) {
     try {
       await prisma.lead.create({
         data: {
+          kind: 'student',
           name,
           phone,
           propertyId: data.propertyId,
@@ -116,6 +122,13 @@ async function processEnquiry(raw: unknown, ip: string) {
       }).catch((e) => console.error("Webhook failed:", e));
     }
   }
+
+  // The admin dashboard and lead inbox count these rows. Without this a new
+  // enquiry does not show up until the cached page happens to expire, so the
+  // "due today" and "overdue" numbers an admin plans their day around can be
+  // hours stale.
+  revalidatePath('/admin');
+  revalidatePath('/admin/leads');
 
   return { success: true };
 }

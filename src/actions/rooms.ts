@@ -96,3 +96,58 @@ export async function getLocations() {
     .map((r) => r.location as string)
     .sort((a, b) => a.localeCompare(b));
 }
+
+/**
+ * Every matching room that has a pin on it, for the map view.
+ *
+ * Not `getRooms`: that is paginated at 24 (a map showing page 1 of its own
+ * filter results is a lie) and it `include`s every image row of every listing,
+ * which is a lot of payload to render a dot. This selects only what a pin and
+ * its popup draw.
+ *
+ * `lat`/`lng` are exact here. Blurring for signed-out visitors happens in the
+ * page, via `approximateLocation` — this function has no session to read.
+ *
+ * The 200 cap is a payload guard, not a page: every pin ships to the browser at
+ * once, so this is the point at which a map would need clustering and a
+ * viewport query instead. Kolhapur is nowhere near it.
+ */
+export async function getRoomPins(filters: RoomFilters = {}) {
+  const parsed = roomFiltersSchema.safeParse(filters);
+  if (!parsed.success) throw new Error("Invalid filters");
+
+  return prisma.property.findMany({
+    where: {
+      ...buildRoomWhere(parsed.data),
+      lat: { not: null },
+      lng: { not: null },
+    },
+    take: 200,
+    select: {
+      id: true,
+      slug: true,
+      title: true,
+      price: true,
+      displayPrice: true,
+      imageUrl: true,
+      walkMinutes: true,
+      lat: true,
+      lng: true,
+      college: { select: { shortName: true, name: true } },
+    },
+    orderBy: buildRoomOrderBy(parsed.data),
+  });
+}
+
+/** How many matching rooms have no pin, so the map can own up to what it hides. */
+export async function countRoomsWithoutPins(filters: RoomFilters = {}) {
+  const parsed = roomFiltersSchema.safeParse(filters);
+  if (!parsed.success) throw new Error("Invalid filters");
+
+  return prisma.property.count({
+    where: {
+      ...buildRoomWhere(parsed.data),
+      OR: [{ lat: null }, { lng: null }],
+    },
+  });
+}

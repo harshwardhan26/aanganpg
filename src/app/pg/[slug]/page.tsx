@@ -355,7 +355,12 @@ export default async function RoomPage({ params }: Props) {
             </div>
 
             {/* Mobile: fixed bar. The contact controls have to be reachable at
-                every scroll position — this is the only thing the page is for. */}
+                every scroll position — this is the only thing the page is for.
+                Call and WhatsApp only: Directions already sits in the inline
+                block above, and a second copy here both duplicated the control
+                and pushed the bar to 136px — taller than the 112px `pb-28` on
+                <main> and the 96px `pb-24` on the footer that reserve room for
+                it, so the bar covered the last line of the footer. */}
             <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-white p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.06)] lg:hidden">
               <EnquiryActions
                 propertyId={room.id}
@@ -367,7 +372,6 @@ export default async function RoomPage({ params }: Props) {
                 prefillData={prefillData}
                 variant="primary-only"
               />
-              <DirectionsButton lat={room.lat} lng={room.lng} />
             </div>
           </aside>
         )}

@@ -63,7 +63,11 @@ const nextConfig: NextConfig = {
               // silently on the deploy where that variable goes missing.
               "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.googleapis.com https://*.posthog.com",
               "connect-src 'self' https://*.googleapis.com https://*.sentry.io https://*.posthog.com https://api.cloudinary.com https://res.cloudinary.com",
-              "img-src 'self' data: blob: https://res.cloudinary.com https://images.unsplash.com https://lh3.googleusercontent.com",
+              // tile.openstreetmap.org serves the map tiles on /search?view=map.
+              // Leaflet loads them as plain <img>, so without this host the map
+              // renders as a silent grey box — the CSP violation is the only
+              // clue, and it never reaches the page.
+              "img-src 'self' data: blob: https://res.cloudinary.com https://images.unsplash.com https://lh3.googleusercontent.com https://tile.openstreetmap.org https://*.tile.openstreetmap.org",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' data: https://fonts.gstatic.com",
               "frame-src 'self'",

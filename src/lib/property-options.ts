@@ -90,7 +90,30 @@ export const PG_SHOT_LIST = [
 
 export const PG_MIN_PHOTOS = 6;
 
-export function pgPublishIssues(v: {
+/**
+ * Which control an issue is about, so the admin form can jump to it.
+ *
+ * A field name rather than a section number: sections are a layout decision and
+ * get renumbered, fields do not.
+ */
+export type PublishIssueField =
+  | 'ownerPhone'
+  | 'images'
+  | 'bathroomPhoto'
+  | 'wardenName'
+  | 'gateClosingTime';
+
+export type PublishIssue = { field: PublishIssueField; message: string };
+
+/**
+ * The publish guard, with each failure tagged by the field that causes it.
+ *
+ * `pgPublishIssues` below is this list flattened to messages, so the rules live
+ * in exactly one place: the server action, the self-check and the admin form all
+ * read the same conditions, and a rule cannot be enforced in one and forgotten
+ * in another.
+ */
+export function pgPublishIssueList(v: {
   genderPreference?: string | null;
   images?: unknown[];
   hasBathroomPhoto?: boolean;
@@ -98,30 +121,47 @@ export function pgPublishIssues(v: {
   wardenName?: string | null;
   gateClosingTime?: string | null;
   ownerPhone?: string | null;
-}): string[] {
-  const issues: string[] = [];
+}): PublishIssue[] {
+  const issues: PublishIssue[] = [];
 
   if (!dialablePhone(v.ownerPhone)) {
-    issues.push("Add the owner's mobile number — students call, and the listing has nothing to do without it.");
+    issues.push({
+      field: 'ownerPhone',
+      message: "Add the owner's mobile number — students call, and the listing has nothing to do without it.",
+    });
   }
 
   if ((v.images?.length ?? 0) < PG_MIN_PHOTOS) {
-    issues.push(`A student room needs at least ${PG_MIN_PHOTOS} photos, including the bathroom.`);
+    issues.push({
+      field: 'images',
+      message: `A student room needs at least ${PG_MIN_PHOTOS} photos, including the bathroom.`,
+    });
   }
 
   // `!v.hasBathroomPhoto`, not `=== false`. With the strict comparison a caller
   // that simply omitted the flag sailed straight through, so the one rule this
   // whole product is built on failed open.
   if (!v.hasBathroomPhoto) {
-    issues.push("No listing goes live without a bathroom photo. It is the shot everyone hides; showing it is the whole point.");
+    issues.push({
+      field: 'bathroomPhoto',
+      message: "No listing goes live without a bathroom photo. It is the shot everyone hides; showing it is the whole point.",
+    });
   }
 
   if (v.genderPreference === 'Female') {
-    if (!v.wardenName?.trim()) issues.push("Girls' Hostel/Room listings need the warden's name.");
-    if (!v.gateClosingTime?.trim()) issues.push("Girls' Hostel/Room listings need the gate closing time.");
+    if (!v.wardenName?.trim()) {
+      issues.push({ field: 'wardenName', message: "Girls' Hostel/Room listings need the warden's name." });
+    }
+    if (!v.gateClosingTime?.trim()) {
+      issues.push({ field: 'gateClosingTime', message: "Girls' Hostel/Room listings need the gate closing time." });
+    }
   }
 
   return issues;
+}
+
+export function pgPublishIssues(v: Parameters<typeof pgPublishIssueList>[0]): string[] {
+  return pgPublishIssueList(v).map((i) => i.message);
 }
 
 export const basePgSchema = z.object({

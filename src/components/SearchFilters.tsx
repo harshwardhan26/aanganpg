@@ -67,28 +67,25 @@ export function SearchFilters({
       <div className="space-y-3">
         <h3 className="font-semibold text-text-main">Max Rent (Monthly)</h3>
         <div className="flex flex-wrap gap-2">
-          {['4000', '6000', '8000', '10000'].map((budget) => {
-            const isChecked = currentMaxPrice === budget;
-            return (
-              <label 
-                key={budget}
-                className={`cursor-pointer px-4 py-3 rounded-full border text-sm transition-colors flex items-center justify-center min-h-[48px] ${
-                  isChecked 
-                    ? 'border-primary-strong bg-primary-strong/10 text-primary-strong font-medium' 
-                    : 'border-border text-text-muted hover:border-text-muted'
-                }`}
-              >
-                <input 
-                  type="radio" 
-                  name="maxPrice" 
-                  value={budget} 
-                  defaultChecked={isChecked}
-                  className="sr-only" 
-                />
-                ₹{Number(budget).toLocaleString()}
-              </label>
-            );
-          })}
+          {/* The highlight comes from `has-[:checked]`, not from the URL. The
+              radio is sr-only, so styling it off `currentMaxPrice` meant a tap
+              changed nothing on screen until the form was submitted — the one
+              filter in this sheet with no visible control and no feedback. */}
+          {['2000', '3000', '5000', '6000'].map((budget) => (
+            <label
+              key={budget}
+              className="cursor-pointer px-4 py-3 rounded-full border text-sm transition-colors flex items-center justify-center min-h-[48px] border-border text-text-muted hover:border-text-muted has-[:checked]:border-primary-strong has-[:checked]:bg-primary-strong/10 has-[:checked]:text-primary-strong has-[:checked]:font-medium"
+            >
+              <input
+                type="radio"
+                name="maxPrice"
+                value={budget}
+                defaultChecked={currentMaxPrice === budget}
+                className="sr-only"
+              />
+              ₹{Number(budget).toLocaleString()}
+            </label>
+          ))}
         </div>
       </div>
 
