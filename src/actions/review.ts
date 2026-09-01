@@ -12,6 +12,9 @@ import { syncPropertyRating } from "@/lib/rating";
 // someone working through guessed codes rather than someone writing reviews.
 const ratelimit = slidingLimiter(5, "1 h");
 
+/** Thrown to roll the transaction back, and caught to say why in plain words. */
+class InvalidCodeError extends Error {}
+
 export type ReviewEligibility = 
   | { eligible: true; reason: "lead" | "code"; code?: string }
   | { eligible: false; reason: "none" | "already_reviewed" };
@@ -53,20 +56,42 @@ export async function checkReviewEligibility(propertyId: string): Promise<Review
 }
 
 /**
- * NOT exported. Every export of a `"use server"` module is a public RPC
- * endpoint, and this one takes a code and returns a clean boolean — an oracle
- * anyone could have hammered without signing in. `submitReview` is its only
- * caller and already sits behind a session.
+ * Spend a review code, or refuse. NOT exported.
+ *
+ * Every export of a `"use server"` module is a public RPC endpoint, and a
+ * function that takes a code and returns a clean boolean is an oracle anyone
+ * could have hammered without signing in. `submitReview` is its only caller and
+ * already sits behind a session.
+ *
+ * Spend, not check. The old version only asked whether the code was valid and
+ * left it valid afterwards, so one code was an unlimited supply of "verified"
+ * reviews for that hostel — and a code lives on a warden's notice board and in
+ * forwarded WhatsApp messages, which is to say it leaks by design. The whole
+ * product rests on a review having come from somebody who lived there.
+ *
+ * `updateMany` filtered on `usedAt: null` is the atomic part: Postgres decides
+ * the winner, so two students submitting with the same code at the same instant
+ * cannot both see it unused and both pass. Exactly one update reports a count of
+ * 1. It runs on the transaction client, alongside the review it authorises, so a
+ * review that fails to write does not leave a code spent on nothing.
  */
-async function verifyReviewCode(propertyId: string, code: string): Promise<boolean> {
-  const reviewCode = await prisma.reviewCode.findUnique({
-    where: { code }
+async function consumeReviewCode(
+  tx: Prisma.TransactionClient,
+  propertyId: string,
+  code: string,
+  userId: string,
+): Promise<boolean> {
+  const { count } = await tx.reviewCode.updateMany({
+    where: {
+      code,
+      propertyId,
+      usedAt: null,
+      OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+    },
+    data: { usedAt: new Date(), usedByUserId: userId },
   });
 
-  if (!reviewCode || reviewCode.propertyId !== propertyId) return false;
-  if (reviewCode.expiresAt && reviewCode.expiresAt < new Date()) return false;
-
-  return true;
+  return count === 1;
 }
 
 export async function submitReview(propertyId: string, rating: number, comment: string | null, code?: string) {
@@ -88,15 +113,8 @@ export async function submitReview(propertyId: string, rating: number, comment: 
     throw new Error("You have already reviewed this property.");
   }
 
-  let verifiedVia = "";
-
-  if (eligibility.eligible && eligibility.reason === "lead") {
-    verifiedVia = "lead";
-  } else if (code) {
-    const isValidCode = await verifyReviewCode(propertyId, code);
-    if (!isValidCode) throw new Error("Invalid or expired review code.");
-    verifiedVia = "code";
-  } else {
+  const viaLead = eligibility.eligible && eligibility.reason === "lead";
+  if (!viaLead && !code) {
     throw new Error("You must provide a valid review code or have lived here.");
   }
 
@@ -104,12 +122,27 @@ export async function submitReview(propertyId: string, rating: number, comment: 
   // can both pass it. `@@unique([propertyId, userId])` is what actually decides —
   // catch its violation and say the same thing the check would have, instead of
   // showing the student a raw Prisma error string.
+  //
+  // Spending the code lives inside this transaction for the same reason: if the
+  // review write loses the race, the code has to be unspent when the transaction
+  // rolls back, or a student is told to try again with a ticket already torn.
+  const userId = session.user.id;
   try {
     await prisma.$transaction(async (tx) => {
+      let verifiedVia: string;
+      if (viaLead) {
+        verifiedVia = "lead";
+      } else {
+        if (!(await consumeReviewCode(tx, propertyId, code!, userId))) {
+          throw new InvalidCodeError();
+        }
+        verifiedVia = "code";
+      }
+
       await tx.review.create({
         data: {
           propertyId,
-          userId: session.user!.id,
+          userId,
           rating,
           comment: comment?.trim() || null,
           verifiedVia
@@ -118,6 +151,9 @@ export async function submitReview(propertyId: string, rating: number, comment: 
       await syncPropertyRating(tx, propertyId);
     });
   } catch (e) {
+    if (e instanceof InvalidCodeError) {
+      throw new Error("That review code is not valid, or it has already been used.");
+    }
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
       throw new Error("You have already reviewed this property.");
     }

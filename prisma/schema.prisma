@@ -196,6 +196,11 @@ model PropertyImage {
   createdAt  DateTime @default(now())
 }
 
+// A ticket, not a password. One code, one review: `usedAt` is stamped in the
+// same transaction as the review it authorised, so a code that leaks — a photo
+// of a notice board, a forwarded message — buys exactly one review and then
+// nothing. `usedByUserId` keeps who spent it, so an odd review can be traced
+// rather than only counted.
 model ReviewCode {
   id         String   @id @default(cuid())
   code       String   @unique
@@ -204,7 +209,11 @@ model ReviewCode {
   createdAt  DateTime @default(now())
   expiresAt  DateTime?
 
+  usedAt       DateTime?
+  usedByUserId String?
+
   @@index([propertyId])
+  @@index([propertyId, usedAt])
 }
 
 model Review {

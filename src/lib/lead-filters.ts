@@ -55,17 +55,28 @@ export function parseHostelSearch(raw: string | string[] | undefined): string {
   return z.string().max(80).catch("").parse(raw).trim();
 }
 
+/** IST is UTC+5:30, and has no daylight saving to complicate it. */
+const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+
 /**
- * Midnight UTC on the day `now` falls in.
+ * The calendar day it is *in Kolhapur*, as the UTC-midnight instant that
+ * `followupDate` stores.
  *
  * `followupDate` is written by the lead card as `new Date("2026-08-26")`, which
- * JavaScript parses as UTC midnight. Comparing it against a *local* midnight —
- * which is what the old row component did with `setHours(0,0,0,0)` — puts the
- * boundary 5h30m off in IST, so a lead due today reads as overdue for half the
- * day. The query and the badge both call this, so they cannot disagree.
+ * JavaScript parses as UTC midnight — so the boundary this returns has to be
+ * UTC midnight too, or nothing compares. What it must NOT do is pick the day
+ * from the UTC clock: between 00:00 and 05:30 IST the UTC date is still
+ * yesterday, so a queue built on `getUTCDate()` shows yesterday's calls and
+ * hides today's for the first five and a half hours of every working day.
+ *
+ * Shifting the instant into IST before taking the date fixes that: it reads the
+ * date an admin in Kolhapur would read off a wall calendar, then expresses it as
+ * the UTC midnight the column uses. The query and the badge both call this, so
+ * they cannot disagree.
  */
-export function startOfUtcDay(now: Date): Date {
-  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+export function startOfIstDay(now: Date): Date {
+  const ist = new Date(now.getTime() + IST_OFFSET_MS);
+  return new Date(Date.UTC(ist.getUTCFullYear(), ist.getUTCMonth(), ist.getUTCDate()));
 }
 
 /** A follow-up on a won or lost lead is not work; both views exclude them. */
@@ -77,7 +88,7 @@ export function buildLeadWhere(
   kind: LeadKind = "student",
   search = "",
 ): Prisma.LeadWhereInput {
-  const todayStart = startOfUtcDay(now);
+  const todayStart = startOfIstDay(now);
   const tomorrowStart = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
 
   // Matches the hostel a student enquired about. A lead with no property cannot
@@ -148,7 +159,7 @@ export function followupState(
 ): "overdue" | "today" | "upcoming" | "none" {
   if (!followupDate) return "none";
   if (stage === "CONVERTED" || stage === "LOST") return "none";
-  const todayStart = startOfUtcDay(now);
+  const todayStart = startOfIstDay(now);
   const tomorrowStart = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
   if (followupDate < todayStart) return "overdue";
   if (followupDate < tomorrowStart) return "today";

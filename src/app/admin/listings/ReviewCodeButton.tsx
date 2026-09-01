@@ -79,8 +79,10 @@ export function ReviewCodeButton({ propertyId, title }: { propertyId: string; ti
 
           <div className="space-y-4 px-4 py-4">
             <p className="text-sm text-text-muted">
-              Give this code to someone living at <strong className="text-text-main">{title}</strong>.
-              It lets them leave a verified review without having enquired through Aangan.
+              Give this code to <strong className="text-text-main">one person</strong> living at{" "}
+              <strong className="text-text-main">{title}</strong>. It lets them leave a verified
+              review without having enquired through Aangan. It works once — generate a new one
+              for the next person.
             </p>
 
             {!loaded ? (
@@ -101,7 +103,7 @@ export function ReviewCodeButton({ propertyId, title }: { propertyId: string; ti
               </button>
             ) : (
               <p className="rounded-lg bg-slate-50 p-4 text-center text-sm text-text-muted">
-                No code generated yet.
+                No unused code. Generate one.
               </p>
             )}
 
@@ -115,7 +117,7 @@ export function ReviewCodeButton({ propertyId, title }: { propertyId: string; ti
             </button>
             {code && (
               <p className="text-xs text-text-muted">
-                Generating a new code retires the old one immediately.
+                Generating a new code retires the unused one immediately.
               </p>
             )}
           </div>

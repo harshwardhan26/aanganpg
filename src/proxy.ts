@@ -11,6 +11,11 @@ import { withAuth } from "next-auth/middleware";
  * This runs before either of them and needs nobody to remember anything. The
  * `role` claim it reads is the one `resolveRole` recomputes from ADMIN_EMAILS on
  * every request, so revocation reaches here too.
+ *
+ * Named `proxy.ts`, not `middleware.ts`: Next 16 renamed the file convention and
+ * builds under the old name warn on every run. The export is unchanged —
+ * `withAuth` still returns the same handler, this file just answers to the name
+ * the framework now looks for.
  */
 export default withAuth({
   callbacks: {

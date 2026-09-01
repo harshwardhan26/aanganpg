@@ -106,25 +106,29 @@ export default async function SearchPage(props: PageProps) {
   let h1Text = 'Student Hostels, Rooms & PGs';
   const activeFilters: { label: string, key: string, value?: string }[] = [];
 
-  if (searchParams.college) {
-    const matchedCollege = colleges.find(c => c.slug === searchParams.college);
+  // Every chip reads `filters`, never the raw `searchParams`.
+  //
+  // `parseRoomFilters` drops anything it cannot use, so the two disagree exactly
+  // when someone hand-edits the address bar: `?maxPrice=abc` was showing a chip
+  // reading "Under ₹abc" above a list that had not been filtered at all. The
+  // chips are a description of the query that ran, so they have to be built from
+  // the same object the query was.
+  if (filters.college) {
+    const matchedCollege = colleges.find(c => c.slug === filters.college);
     if (matchedCollege) {
       h1Text = `Rooms near ${matchedCollege.shortName || matchedCollege.name}`;
     }
     activeFilters.push({ label: matchedCollege?.shortName || matchedCollege?.name || 'College', key: 'college' });
   }
 
-  if (searchParams.maxPrice) activeFilters.push({ label: `Under ₹${searchParams.maxPrice}`, key: 'maxPrice' });
-  if (searchParams.maxWalk) activeFilters.push({ label: `Under ${searchParams.maxWalk} min walk`, key: 'maxWalk' });
-  if (searchParams.genderPreference) activeFilters.push({ label: searchParams.genderPreference as string === 'Any' ? 'Co-ed' : searchParams.genderPreference as string, key: 'genderPreference' });
-  if (searchParams.food) activeFilters.push({ label: searchParams.food === 'yes' ? 'With Mess' : 'Without Mess', key: 'food' });
-  if (searchParams.occupancy) activeFilters.push({ label: searchParams.occupancy as string, key: 'occupancy' });
+  if (filters.maxPrice) activeFilters.push({ label: `Under ₹${filters.maxPrice.toLocaleString('en-IN')}`, key: 'maxPrice' });
+  if (filters.maxWalk) activeFilters.push({ label: `Under ${filters.maxWalk} min walk`, key: 'maxWalk' });
+  if (filters.genderPreference) activeFilters.push({ label: filters.genderPreference === 'Any' ? 'Co-ed' : filters.genderPreference, key: 'genderPreference' });
+  if (filters.food) activeFilters.push({ label: filters.food === 'yes' ? 'With Mess' : 'Without Mess', key: 'food' });
+  if (filters.occupancy) activeFilters.push({ label: filters.occupancy, key: 'occupancy' });
 
-  const amenities = typeof searchParams.amenities === 'string' ? [searchParams.amenities] : searchParams.amenities || [];
-  amenities.forEach((a: string) => activeFilters.push({ label: a, key: 'amenities', value: a }));
-
-  const rules = typeof searchParams.rules === 'string' ? [searchParams.rules] : searchParams.rules || [];
-  rules.forEach((r: string) => activeFilters.push({ label: r, key: 'rules', value: r }));
+  (filters.amenities ?? []).forEach((a) => activeFilters.push({ label: a, key: 'amenities', value: a }));
+  (filters.rules ?? []).forEach((r) => activeFilters.push({ label: r, key: 'rules', value: r }));
 
   return (
     <main className="min-h-screen bg-light">

@@ -5,6 +5,7 @@ import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { revalidatePath, updateTag } from "next/cache";
+import { after } from "next/server";
 import { slugify, resolveSlug } from "@/lib/slug";
 import { canonicalPhone } from "@/lib/phone";
 import { ROOMS_TAG } from "@/lib/room-cache";
@@ -354,17 +355,27 @@ export async function updateLeadDetails(id: string, rawData: unknown) {
 
   const data = parsed.data;
   
-  // Webhook notification for CONVERTED
-  if (data.stage === 'CONVERTED') {
+  // Webhook notification for CONVERTED. Handed to `after` for the same reason as
+  // the new-lead alert: an unheld promise is one the serverless runtime may kill
+  // as soon as the response is sent, and the one alert worth never missing is
+  // the one that says somebody moved in.
+  const webhookUrl = process.env.LEAD_WEBHOOK_URL;
+  if (data.stage === 'CONVERTED' && webhookUrl) {
     const existing = await prisma.lead.findUnique({ where: { id: leadId.data }, include: { property: true } });
-    if (existing && existing.stage !== 'CONVERTED' && process.env.LEAD_WEBHOOK_URL) {
-      fetch(process.env.LEAD_WEBHOOK_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          content: `🎉 **LEAD CONVERTED!** 🎉\n${existing.name} (${existing.phone}) has moved in to ${existing.property?.title || 'a hostel/room'}! Great job.`
-        })
-      }).catch((e) => console.error("Webhook failed:", e));
+    if (existing && existing.stage !== 'CONVERTED') {
+      after(async () => {
+        try {
+          await fetch(webhookUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `🎉 **LEAD CONVERTED!** 🎉\n${existing.name} (${existing.phone}) has moved in to ${existing.property?.title || 'a hostel/room'}! Great job.`
+            })
+          });
+        } catch (e) {
+          console.error("Webhook failed:", e);
+        }
+      });
     }
   }
 
@@ -435,7 +446,7 @@ export async function createOwnerLead(rawData: unknown): Promise<CreateOwnerLead
       hostelName: data.hostelName || null,
       notes: data.notes || null,
       // A plain "YYYY-MM-DD" parses as UTC midnight, which is the boundary
-      // `startOfUtcDay` compares against. Anything else and a lead due today
+      // `startOfIstDay` compares against. Anything else and a lead due today
       // reads as overdue for half the day in IST.
       followupDate: data.followupDate ? new Date(data.followupDate) : null,
       source: "outreach",

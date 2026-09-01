@@ -1,8 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 "use client";
 
 import { useState, useEffect } from "react";
+import type { College, Prisma } from "@prisma/client";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { saveListing } from "@/actions/admin";
@@ -41,12 +40,24 @@ const ISSUE_TARGET: Record<PublishIssueField, { section: number; anchor: string 
   gateClosingTime: { section: 5, anchor: "field-gateClosingTime" },
 };
 
+/**
+ * The listing this form is editing, exactly as the edit page queries it.
+ *
+ * Derived from the schema rather than written out by hand: these were `any`, so
+ * a column renamed in `schema.prisma` went on compiling here and turned up as a
+ * silently blank field on the form instead of a type error.
+ */
+type ListingFormData = Prisma.PropertyGetPayload<{ include: { images: true } }>;
+
+/** A photo as the form holds it. Uploads start life as this, not as a saved row. */
+type FormImage = { url: string; tag: string | null };
+
 export default function ListingForm({
   initialData,
   colleges,
 }: {
-  initialData?: any;
-  colleges: any[];
+  initialData?: ListingFormData;
+  colleges: College[];
 }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -75,7 +86,7 @@ export default function ListingForm({
     ownerName: initialData?.ownerName || "",
     ownerPhone: initialData?.ownerPhone || "",
     description: initialData?.description || "",
-    images: initialData?.images || [],
+    images: (initialData?.images ?? []) as FormImage[],
     lat: initialData?.lat?.toString() || "",
     lng: initialData?.lng?.toString() || "",
   });
@@ -85,8 +96,15 @@ export default function ListingForm({
   const [uploadProgress, setUploadProgress] = useState("");
   const [serverIssues, setServerIssues] = useState<string[]>([]);
   const [isRestored, setIsRestored] = useState(false);
+  // `KOLHAPUR_LOCALITIES` is a const tuple, so `includes` only accepts one of
+  // its own members — and the question being asked here is the opposite one:
+  // is this saved locality something outside the list? Widening to
+  // `readonly string[]` is what lets an arbitrary string be tested at all.
   const [showCustomLocationInput, setShowCustomLocationInput] = useState(
-    Boolean(initialData?.location && !KOLHAPUR_LOCALITIES.includes(initialData.location)),
+    Boolean(
+      initialData?.location &&
+        !(KOLHAPUR_LOCALITIES as readonly string[]).includes(initialData.location),
+    ),
   );
 
   /**
@@ -261,7 +279,7 @@ export default function ListingForm({
     });
   };
 
-  const hasBathroomPhoto = formData.images.some((img: any) => img.tag === "bathroom");
+  const hasBathroomPhoto = formData.images.some((img) => img.tag === "bathroom");
 
   const issues = pgPublishIssueList({ ...formData, hasBathroomPhoto });
   const blockedSections = new Set(issues.map((i) => ISSUE_TARGET[i.field].section));
@@ -301,8 +319,8 @@ export default function ListingForm({
       localStorage.removeItem(storageKey);
       router.push("/admin/listings");
       router.refresh();
-    } catch (err: any) {
-      setError(err.message || "Failed to save listing.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save listing.");
       setLoading(false);
     }
   };
@@ -592,7 +610,7 @@ export default function ListingForm({
 
           {photoCount > 0 && (
             <ul className="space-y-3">
-              {formData.images.map((img: any, idx: number) => (
+              {formData.images.map((img, idx) => (
                 // One photo per row on a phone. As a 2-up grid each ~140px tile
                 // carried a select plus three 44px buttons under a 128px thumb.
                 <li key={idx} className="flex gap-3 rounded-lg border border-border bg-white p-3">

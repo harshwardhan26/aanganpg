@@ -1,6 +1,7 @@
 "use server";
 
 import { headers } from 'next/headers';
+import { after } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
@@ -50,21 +51,31 @@ async function processEnquiry(raw: unknown, ip: string) {
   // No session, or a session with no number on file yet: nothing we could follow
   // up. Fire a PostHog event and write nothing else.
   if (!rawPhone) {
+    // Analytics, so nothing waits on it — but for the same reason as the lead
+    // webhook it is handed to `after` rather than dropped on the floor. It used
+    // to be awaited, which put a round trip to PostHog in front of every
+    // anonymous contact click.
     const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
     if (posthogKey) {
-      await fetch('https://us.i.posthog.com/capture/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          api_key: posthogKey,
-          event: 'enquiry_click',
-          properties: {
-            distinct_id: ip,
-            channel: data.channel,
-            propertyId: data.propertyId,
-          }
-        })
-      }).catch(() => {});
+      after(async () => {
+        try {
+          await fetch('https://us.i.posthog.com/capture/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              api_key: posthogKey,
+              event: 'enquiry_click',
+              properties: {
+                distinct_id: ip,
+                channel: data.channel,
+                propertyId: data.propertyId,
+              }
+            })
+          });
+        } catch {
+          // An analytics event is not worth an error path.
+        }
+      });
     }
     return { success: true };
   }
@@ -112,14 +123,26 @@ async function processEnquiry(raw: unknown, ip: string) {
       throw e;
     }
 
-    if (process.env.LEAD_WEBHOOK_URL) {
-      fetch(process.env.LEAD_WEBHOOK_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          content: `🚨 **New Lead from ${name}**\nPhone: ${phone}\nProperty ID: \`${data.propertyId}\`\nSource: ${data.channel}`
-        })
-      }).catch((e) => console.error("Webhook failed:", e));
+    // `after`, not a bare floating promise. The alert must not delay the
+    // student's response, but a promise nobody holds is one the serverless
+    // runtime is free to kill the moment the response is sent — so the lead row
+    // lands in the database and the ping announcing it silently never arrives.
+    // `after` keeps the instance alive until this finishes.
+    const webhookUrl = process.env.LEAD_WEBHOOK_URL;
+    if (webhookUrl) {
+      after(async () => {
+        try {
+          await fetch(webhookUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `🚨 **New Lead from ${name}**\nPhone: ${phone}\nProperty ID: \`${data.propertyId}\`\nSource: ${data.channel}`
+            })
+          });
+        } catch (e) {
+          console.error("Webhook failed:", e);
+        }
+      });
     }
   }
 

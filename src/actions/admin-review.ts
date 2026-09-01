@@ -41,12 +41,24 @@ function generateRandomCode(prefix: string) {
   return `${prefix.substring(0, 4).toUpperCase()}-${year}-${randomChars}`;
 }
 
+/**
+ * The code that is still worth reading out, or null.
+ *
+ * Filtered on `usedAt: null`, not merely the newest row: a code is spent by the
+ * review it authorises, and handing a warden a spent one is a student turned
+ * away at the last step with nothing anybody can do about it. Null here is the
+ * admin's cue to generate a fresh one, which is exactly the truth.
+ */
 export async function getReviewCode(propertyId: string) {
   await requireAdmin();
   const parsedId = idSchema.safeParse(propertyId);
   if (!parsedId.success) throw new Error("Invalid listing id");
   const code = await prisma.reviewCode.findFirst({
-    where: { propertyId: parsedId.data },
+    where: {
+      propertyId: parsedId.data,
+      usedAt: null,
+      OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+    },
     orderBy: { createdAt: 'desc' }
   });
   return code?.code || null;
@@ -65,9 +77,10 @@ export async function generateReviewCode(propertyId: string) {
 
   if (!property) throw new Error("Property not found");
 
-  // Deactivate old codes by setting expiry to now
+  // Retire every unspent code for this listing. Spent ones are left alone —
+  // their `usedAt` is the record of which code authorised which review.
   await prisma.reviewCode.updateMany({
-    where: { propertyId, expiresAt: null },
+    where: { propertyId, expiresAt: null, usedAt: null },
     data: { expiresAt: new Date() }
   });
 

@@ -21,7 +21,12 @@ export const prisma =
   globalForPrisma.prisma ??
   new PrismaClient({
     adapter: new PrismaPg(
-      new Pool({ connectionString }),
+      // Every serverless instance opens its own pool, so the ceiling that
+      // matters is per-instance times instances, not this number. `pg` defaults
+      // to 10 — a busy evening across a handful of instances is enough to
+      // exhaust Postgres' connection limit, and the symptom is the whole site
+      // erroring at once rather than one slow request.
+      new Pool({ connectionString, max: 5 }),
     ),
   });
 

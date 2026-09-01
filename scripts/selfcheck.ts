@@ -13,7 +13,7 @@ import { enquiryGate } from "../src/lib/session";
 import { isAdminEmail, resolveRole, isOwner } from "../src/lib/admin";
 import { trustedIp } from "../src/lib/request";
 import { allowRequest } from "../src/lib/rate-limit";
-import { parseLeadView, parseLeadKind, parseLeadGrouping, parseHostelSearch, buildLeadWhere, buildLeadOrderBy, groupByHostel, startOfUtcDay, followupState } from "../src/lib/lead-filters";
+import { parseLeadView, parseLeadKind, parseLeadGrouping, parseHostelSearch, buildLeadWhere, buildLeadOrderBy, groupByHostel, startOfIstDay, followupState } from "../src/lib/lead-filters";
 import { parseListingView, parseListingSearch, buildListingWhere, listingStatus } from "../src/lib/listing-filters";
 
 try { process.loadEnvFile(); } catch {}
@@ -439,8 +439,26 @@ async function main() {
   // on opposite sides of the boundary and a lead due today reads as overdue.
   const istEvening = new Date("2026-08-26T14:30:00.000Z"); // 20:00 IST
   assert(
-    startOfUtcDay(istEvening).toISOString() === "2026-08-26T00:00:00.000Z",
-    "startOfUtcDay must snap to UTC midnight of the same date",
+    startOfIstDay(istEvening).toISOString() === "2026-08-26T00:00:00.000Z",
+    "startOfIstDay must snap to UTC midnight of the IST date",
+  );
+
+  // The instant that actually caught the bug. 02:00 IST on the 27th is still
+  // 20:30 UTC on the 26th, so picking the day off the UTC clock returns the
+  // 26th — and the follow-up queue spends every day from midnight to 05:30 IST
+  // showing yesterday's calls and hiding today's.
+  const istEarlyMorning = new Date("2026-08-26T20:30:00.000Z"); // 02:00 IST, 27 Aug
+  assert(
+    startOfIstDay(istEarlyMorning).toISOString() === "2026-08-27T00:00:00.000Z",
+    "before 05:30 IST the day is still taken from the Kolhapur calendar, not the UTC one",
+  );
+  assert(
+    followupState(new Date("2026-08-27"), "NEW", istEarlyMorning) === "today",
+    "a follow-up dated today is due today at 02:00 IST",
+  );
+  assert(
+    followupState(new Date("2026-08-26"), "NEW", istEarlyMorning) === "overdue",
+    "a follow-up dated yesterday is overdue at 02:00 IST",
   );
 
   const dueToday = new Date("2026-08-26");

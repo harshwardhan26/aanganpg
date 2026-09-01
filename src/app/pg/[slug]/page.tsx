@@ -99,12 +99,15 @@ export default async function RoomPage({ params }: Props) {
   const isClosed = room.closedAt != null;
   const isFull = room.vacantBeds === 0;
   const showContact = !isClosed && !isFull;
-  const nearby = room.college
-    ? (await getRoomsNearCollege(room.college.slug)).filter((r) => r.id !== room.id).slice(0, 3)
-    : [];
-
-  const reviews = await getPropertyReviews(room.id);
-  const reviewStats = await getReviewStats(room.id);
+  // One wait, not three. These three queries have nothing to say to each other,
+  // and awaiting them in a row spent two whole round trips to a Postgres on
+  // another continent doing nothing — on the page a student actually lands on.
+  const [nearbyRooms, reviews, reviewStats] = await Promise.all([
+    room.college ? getRoomsNearCollege(room.college.slug) : Promise.resolve([]),
+    getPropertyReviews(room.id),
+    getReviewStats(room.id),
+  ]);
+  const nearby = nearbyRooms.filter((r) => r.id !== room.id).slice(0, 3);
 
   const priceLabel = room.displayPrice || "Price on request";
   // Absolute, because it is pasted into a WhatsApp message to us.

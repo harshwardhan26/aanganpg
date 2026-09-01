@@ -25,10 +25,15 @@ export default async function AnalyticsPage() {
     redirect("/admin/listings");
   }
 
+  // Scoped to students, like every count on /admin. An owner being pitched is
+  // not demand the site produced, and mixing the two into one denominator makes
+  // the conversion rate on this page describe nothing anybody decides about.
+  const student = { kind: "student" } as const;
+
   const [totalLeads, converted, lost, byCollege, topListings] = await Promise.all([
-    prisma.lead.count(),
-    prisma.lead.count({ where: { stage: "CONVERTED" } }),
-    prisma.lead.count({ where: { stage: "LOST" } }),
+    prisma.lead.count({ where: student }),
+    prisma.lead.count({ where: { ...student, stage: "CONVERTED" } }),
+    prisma.lead.count({ where: { ...student, stage: "LOST" } }),
     prisma.college.findMany({
       select: {
         id: true,
