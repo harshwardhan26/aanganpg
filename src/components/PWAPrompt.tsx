@@ -14,6 +14,42 @@ interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
 }
 
+/**
+ * Asked once, ever.
+ *
+ * `beforeinstallprompt` fires on every page load, and only the ✕ used to record
+ * anything — so a student who installed, or who said No to Chrome's own dialog,
+ * or who simply scrolled past, got the same bar again on the next page, and the
+ * next. Declining Chrome's dialog was worse still: the outcome was `dismissed`,
+ * which the old code ignored, so the bar stayed on screen after the student had
+ * already said no.
+ *
+ * The flag is written when the bar is SHOWN, not when it is answered. Every way
+ * out of it — installed, declined, ✕, or navigated away without looking — is
+ * then a way that does not ask again, which is what "once" has to mean. Asking a
+ * second time is worth less than a person's patience with us.
+ */
+const ASKED_KEY = 'pwa-prompt-dismissed';
+
+/** localStorage throws outright in Safari private mode, so neither call may. */
+function alreadyAsked(): boolean {
+  try {
+    return localStorage.getItem(ASKED_KEY) === 'true';
+  } catch {
+    // No storage means no memory of asking. Better to stay quiet than to nag a
+    // student every page for the life of the session.
+    return true;
+  }
+}
+
+function markAsked() {
+  try {
+    localStorage.setItem(ASKED_KEY, 'true');
+  } catch {
+    // Nothing to recover from — the bar is already hidden for this session.
+  }
+}
+
 export function PWAPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showPrompt, setShowPrompt] = useState(false);
@@ -30,12 +66,14 @@ export function PWAPrompt() {
     const handleBeforeInstallPrompt = (e: Event) => {
       // Prevent the mini-infobar from appearing on mobile
       e.preventDefault();
-      
-      const dismissed = localStorage.getItem('pwa-prompt-dismissed');
-      if (dismissed !== 'true') {
-        setDeferredPrompt(e as BeforeInstallPromptEvent);
-        setShowPrompt(true);
-      }
+
+      if (alreadyAsked()) return;
+
+      // Recorded here, at the moment it goes on screen. Recording it in the
+      // handlers below instead is what let every path except the ✕ come back.
+      markAsked();
+      setDeferredPrompt(e as BeforeInstallPromptEvent);
+      setShowPrompt(true);
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -47,18 +85,17 @@ export function PWAPrompt() {
 
   const handleInstall = async () => {
     if (!deferredPrompt) return;
-    
+
     deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    
-    if (outcome === 'accepted') {
-      setShowPrompt(false);
-    }
+    // Whatever they chose, the bar has done its job. `accepted` only used to
+    // close it, so saying No to Chrome left our bar sitting there underneath.
+    await deferredPrompt.userChoice;
+
+    setShowPrompt(false);
     setDeferredPrompt(null);
   };
 
   const handleDismiss = () => {
-    localStorage.setItem('pwa-prompt-dismissed', 'true');
     setShowPrompt(false);
   };
 
