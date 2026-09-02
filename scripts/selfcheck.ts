@@ -9,12 +9,14 @@ import { cloudinaryUrl } from "../src/lib/image";
 import { publicImage } from "../src/lib/publicImage";
 import { directionsUrl, looksLikeKolhapur } from "../src/lib/maps";
 import { approximateLocation, distanceMetres } from "../src/lib/geo";
-import { enquiryGate } from "../src/lib/session";
+import { enquiryGate, safeCallbackUrl } from "../src/lib/session";
 import { isAdminEmail, resolveRole, isOwner } from "../src/lib/admin";
 import { trustedIp } from "../src/lib/request";
 import { allowRequest } from "../src/lib/rate-limit";
 import { parseLeadView, parseLeadKind, parseLeadGrouping, parseHostelSearch, buildLeadWhere, buildLeadOrderBy, groupByHostel, startOfIstDay, followupState } from "../src/lib/lead-filters";
 import { parseListingView, parseListingSearch, buildListingWhere, listingStatus } from "../src/lib/listing-filters";
+import { messRoleAllows, attendanceDay, recentDays, dayKey, studentFormIssues, attendanceSummary, msUntilNextIstDay, startOfIstMonth, monthKey, dueDate, shouldRemind, owesForMonth, mealAt, nearestMeal, MEAL_WINDOWS, menuFor, weekdayOf } from "../src/lib/mess";
+import { overdueMessage } from "../src/lib/sms";
 
 try { process.loadEnvFile(); } catch {}
 
@@ -574,6 +576,260 @@ async function main() {
     ["#312c85", "#eef2ff", "Review code button (indigo-900 on indigo-50)"],
   ];
   for (const [fg, bg, what] of adminPairs) {
+    const r = contrastRatio(fg, bg);
+    assert(r >= 4.5, `${what} must be >= 4.5, got ${r.toFixed(2)}`);
+  }
+
+  // --- Mess module ------------------------------------------------------
+
+  // An owner outranks staff; staff never reaches owner-only work; and no
+  // membership at all is a refusal rather than a default role.
+  assert(messRoleAllows("OWNER", "STAFF"), "owner must pass a staff check");
+  assert(messRoleAllows("OWNER", "OWNER"), "owner must pass an owner check");
+  assert(messRoleAllows("STAFF", "STAFF"), "staff must pass a staff check");
+  assert(!messRoleAllows("STAFF", "OWNER"), "staff must NOT pass an owner check");
+  assert(!messRoleAllows(null, "STAFF"), "a non-member must not pass any check");
+
+  // The IST boundary, which decides what "today" means at the mess door.
+  // 18:45 UTC is already the next day in IST (00:15 IST), and filing that scan
+  // under the UTC date would put the evening rush on the wrong day.
+  assert.equal(
+    attendanceDay(new Date("2026-09-02T18:45:00Z")).toISOString(),
+    "2026-09-03T00:00:00.000Z",
+    "after 18:30 UTC the mess day must have rolled over in IST",
+  );
+  assert.equal(
+    attendanceDay(new Date("2026-09-02T18:15:00Z")).toISOString(),
+    "2026-09-02T00:00:00.000Z",
+    "before 18:30 UTC the mess day must still be the same IST day",
+  );
+
+  // The kiosk's reload timer. A minute before the boundary must be a minute,
+  // not a negative number (which fires instantly, forever) and not 24 hours
+  // (which skips the rollover the tablet was left running for).
+  assert.equal(
+    msUntilNextIstDay(new Date("2026-09-02T18:29:00Z")),
+    60_000,
+    "one minute before IST midnight must be one minute",
+  );
+  assert.equal(
+    msUntilNextIstDay(new Date("2026-09-02T18:31:00Z")),
+    24 * 60 * 60 * 1000 - 60_000,
+    "just after IST midnight must be nearly a full day, never zero or less",
+  );
+
+  const strip = recentDays(new Date("2026-09-02T12:00:00Z"), 14);
+  assert.equal(strip.length, 14, "the strip must have as many days as asked for");
+  assert.equal(dayKey(strip[13]), "2026-09-02", "the strip must end today");
+  assert.equal(dayKey(strip[0]), "2026-08-20", "the strip must start 13 days back");
+
+  // A zero fee is a real answer (a student who eats free) and must survive the
+  // form. This is the `Number(x) || fallback` trap the house rules name.
+  assert.deepEqual(
+    studentFormIssues({ name: "Aditi", monthlyFee: 0, parentPhone: null, parentPhoneRaw: "" }),
+    [],
+    "a fee of 0 must be accepted, not read as missing",
+  );
+  assert.equal(
+    studentFormIssues({ name: "", monthlyFee: 3000, parentPhone: null, parentPhoneRaw: "" }).length,
+    1,
+    "a nameless student must be refused",
+  );
+  assert.equal(
+    studentFormIssues({ name: "Aditi", monthlyFee: null, parentPhone: null, parentPhoneRaw: "12" })
+      .length,
+    1,
+    "a typed number that is not a mobile number must be refused",
+  );
+  assert.deepEqual(
+    studentFormIssues({ name: "Aditi", monthlyFee: null, parentPhone: null, parentPhoneRaw: "" }),
+    [],
+    "an empty parent phone is allowed — not every student has one on file",
+  );
+
+  // An empty mess divides by zero unless the summary guards it.
+  assert.deepEqual(attendanceSummary(0, 0), { present: 0, absent: 0, percent: 0 });
+  assert.deepEqual(attendanceSummary(150, 200), { present: 150, absent: 50, percent: 75 });
+
+  // --- Sign-in redirect ----------------------------------------------------
+
+  const site = "https://www.aanganpg.com";
+
+  // The ordinary case: a student scanning the mess poster is bounced here by
+  // proxy.ts and must land back on the receipt, not the home page.
+  assert.equal(
+    safeCallbackUrl("/mess/abc123/scan", site),
+    "/mess/abc123/scan",
+    "a path on this site must survive",
+  );
+  assert.equal(
+    safeCallbackUrl(`${site}/mess/abc123/scan?x=1`, site),
+    "/mess/abc123/scan?x=1",
+    "an absolute URL on this origin is reduced to its path",
+  );
+
+  // Everything below is an open redirect if it gets through: the value comes
+  // from the URL bar, so a crafted link would walk a signed-in student straight
+  // onto someone else's page.
+  assert.equal(safeCallbackUrl("https://evil.example/x", site), null, "another origin is refused");
+  assert.equal(safeCallbackUrl("//evil.example", site), null, "protocol-relative is refused");
+  assert.equal(safeCallbackUrl("/\\evil.example", site), null, "backslash trick is refused");
+  assert.equal(safeCallbackUrl("javascript:alert(1)", site), null, "a script URL is refused");
+  assert.equal(safeCallbackUrl(null, site), null, "nothing means nothing");
+  assert.equal(safeCallbackUrl("", site), null, "an empty string means nothing");
+
+  // --- Meals ---------------------------------------------------------------
+
+  // IST, not UTC. 03:00 UTC is 08:30 IST — breakfast — and reading the UTC hour
+  // would file it under nothing at all.
+  assert.equal(mealAt(new Date("2026-09-02T03:00:00Z")), "BREAKFAST", "08:30 IST is breakfast");
+  assert.equal(mealAt(new Date("2026-09-02T07:30:00Z")), "LUNCH", "13:00 IST is lunch");
+  assert.equal(mealAt(new Date("2026-09-02T15:00:00Z")), "DINNER", "20:30 IST is dinner");
+
+  // Between meals is null, not the nearest guess. A scan at 5pm must be refused,
+  // or one scan covers a dinner the student never came to.
+  assert.equal(mealAt(new Date("2026-09-02T11:30:00Z")), null, "17:00 IST is between meals");
+  assert.equal(mealAt(new Date("2026-09-02T20:00:00Z")), null, "01:30 IST is between meals");
+
+  // Window edges: a meal starts at its `from` and has ended by its `to`.
+  assert.equal(mealAt(new Date("2026-09-02T05:30:00Z")), "LUNCH", "11:00 IST starts lunch");
+  assert.equal(mealAt(new Date("2026-09-02T10:29:00Z")), "LUNCH", "15:59 IST is still lunch");
+  assert.equal(mealAt(new Date("2026-09-02T10:30:00Z")), null, "16:00 IST is after lunch");
+
+  // Windows must not overlap, or one moment would belong to two meals and which
+  // one a scan lands in would depend on array order.
+  for (let i = 1; i < MEAL_WINDOWS.length; i++) {
+    assert(
+      MEAL_WINDOWS[i].from >= MEAL_WINDOWS[i - 1].to,
+      `${MEAL_WINDOWS[i].meal} must start after ${MEAL_WINDOWS[i - 1].meal} ends`,
+    );
+  }
+
+  // The staff screen always has a meal selected, even between meals.
+  assert.equal(nearestMeal(new Date("2026-09-02T11:30:00Z")), "DINNER", "5pm points at dinner next");
+  assert.equal(nearestMeal(new Date("2026-09-02T00:30:00Z")), "BREAKFAST", "6am points at breakfast");
+  assert.equal(nearestMeal(new Date("2026-09-02T20:00:00Z")), "BREAKFAST", "1:30am points at breakfast");
+
+  // --- Menu ----------------------------------------------------------------
+
+  // 2 Sept 2026 is a Wednesday.
+  const wednesday = new Date("2026-09-02T00:00:00Z");
+  assert.equal(weekdayOf(wednesday), 3, "weekday must be 0=Sunday..6=Saturday");
+
+  const menu = [
+    { weekday: 3, date: null, meal: "LUNCH" as const, items: "Rajma, rice" },
+    { weekday: 3, date: null, meal: "DINNER" as const, items: "Paneer, roti" },
+    { weekday: 4, date: null, meal: "LUNCH" as const, items: "Chole, rice" },
+  ];
+
+  assert.equal(menuFor(menu, wednesday, "LUNCH"), "Rajma, rice", "the weekly row for that day wins");
+  assert.equal(
+    menuFor(menu, wednesday, "BREAKFAST"),
+    null,
+    "an unset meal is null, not an empty string",
+  );
+
+  // A one-off row for the exact date beats the rotation — writing one is how a
+  // festival or a special gets said, and the rotation must not overrule it.
+  const withOverride = [
+    ...menu,
+    { weekday: null, date: wednesday, meal: "LUNCH" as const, items: "Puran poli" },
+  ];
+  assert.equal(
+    menuFor(withOverride, wednesday, "LUNCH"),
+    "Puran poli",
+    "a date override must beat the weekly rotation",
+  );
+  assert.equal(
+    menuFor(withOverride, new Date("2026-09-09T00:00:00Z"), "LUNCH"),
+    "Rajma, rice",
+    "the override applies to its own date only, not every Wednesday",
+  );
+
+  // --- Fees and reminders ------------------------------------------------
+
+  const sept = new Date("2026-09-15T12:00:00Z");
+  assert.equal(monthKey(startOfIstMonth(sept)), "2026-09", "the billing month is the IST month");
+
+  // A due day past the end of a short month lands on the last day of it, not in
+  // the next one. February at dueDay 31 must still be chased in February.
+  assert.equal(
+    dueDate(new Date("2026-02-01T00:00:00Z"), 31).toISOString().slice(0, 10),
+    "2026-02-28",
+    "a due day past month end must clamp to month end, not spill over",
+  );
+  assert.equal(
+    dueDate(new Date("2026-09-01T00:00:00Z"), 5).toISOString().slice(0, 10),
+    "2026-09-05",
+    "an ordinary due day is that day",
+  );
+
+  const due = new Date("2026-09-05T00:00:00Z");
+  const base = { due, paid: false, remindersSent: 0, lastReminderAt: null };
+
+  // Due today is late; the day before is not. The fee is due ON the date, so
+  // texting a parent that morning would be chasing them early.
+  assert(shouldRemind({ ...base, today: due }), "due date itself must send the first reminder");
+  assert(
+    !shouldRemind({ ...base, today: new Date("2026-09-04T00:00:00Z") }),
+    "the day before the due date must send nothing",
+  );
+  assert(
+    !shouldRemind({ ...base, today: new Date("2026-09-20T00:00:00Z"), paid: true }),
+    "a paid month must never be chased",
+  );
+
+  // The gap, and the hard stop. Without the stop a single unpaid month texts a
+  // parent every day until they pay.
+  const afterFirst = { ...base, remindersSent: 1, lastReminderAt: new Date("2026-09-05T10:00:00Z") };
+  assert(
+    !shouldRemind({ ...afterFirst, today: new Date("2026-09-09T00:00:00Z") }),
+    "a second reminder inside the gap must be refused",
+  );
+  assert(
+    shouldRemind({ ...afterFirst, today: new Date("2026-09-10T00:00:00Z") }),
+    "a second reminder is due five days after the first",
+  );
+  assert(
+    !shouldRemind({
+      ...afterFirst,
+      remindersSent: 2,
+      today: new Date("2026-10-30T00:00:00Z"),
+    }),
+    "reminders must stop after two, however overdue it gets",
+  );
+
+  // Who is chased at all. A zero fee is a real answer — a student who eats free
+  // is never overdue — and a student who joined after the due date is not
+  // chased for a month they were barely there for.
+  const owesBase = { joinedAt: new Date("2026-08-01T00:00:00Z"), leftAt: null, due };
+  assert(owesForMonth({ ...owesBase, monthlyFee: 3000 }), "an ordinary fee is owed");
+  assert(!owesForMonth({ ...owesBase, monthlyFee: 0 }), "a free student is never overdue");
+  assert(!owesForMonth({ ...owesBase, monthlyFee: null }), "no fee on file means nothing to chase");
+  assert(
+    !owesForMonth({ ...owesBase, monthlyFee: 3000, joinedAt: new Date("2026-09-20T00:00:00Z") }),
+    "a student who joined after the due date is not chased for that month",
+  );
+
+  // The message itself — the only text this business sends a parent unprompted.
+  const message = overdueMessage({
+    studentName: "Aditi Patil",
+    amount: 3000,
+    monthLabel: "September 2026",
+    messName: "Harsh Mess",
+  });
+  assert(message.includes("Aditi Patil"), "the message must name the student");
+  assert(message.includes("Rs 3000"), "the message must carry the amount");
+  assert(message.includes("Harsh Mess"), "the message must say who is asking");
+  assert(!/https?:\/\//.test(message), "the message must carry no link — a link reads as a scam");
+
+  // Mess UI pairs, same >= 4.5:1 rule as the admin ones above.
+  const messPairs: [string, string, string][] = [
+    ["#cc4040", white, "mess stat number (primary-strong on white)"],
+    ["#82181a", "#ffe2e2", "check-in save failure (red-900 on red-100)"],
+    ["#0d542b", "#dcfce7", "student added confirmation (green-900 on green-100)"],
+  ];
+  for (const [fg, bg, what] of messPairs) {
     const r = contrastRatio(fg, bg);
     assert(r >= 4.5, `${what} must be >= 4.5, got ${r.toFixed(2)}`);
   }

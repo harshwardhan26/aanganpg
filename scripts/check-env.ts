@@ -51,6 +51,12 @@ const ALL_VARS: { name: string; required: boolean; note: string }[] = [
   { name: "ADMIN_EMAILS",                           required: true,  note: "Comma-separated Google emails granted the admin panel" },
   { name: "OWNER_EMAIL",                            required: false, note: "The single account that sees Analytics (defaults to the first ADMIN_EMAILS entry)" },
   { name: "LEAD_WEBHOOK_URL",                       required: false, note: "Webhook posted to on each new lead" },
+
+  // ── Mess fee reminders (job refuses to run / sends nothing) ─────
+  { name: "CRON_SECRET",                            required: false, note: "Secret Vercel Cron presents to the mess reminder job" },
+  { name: "SMS_API_KEY",                            required: false, note: "MSG91 auth key — absent means reminders are logged, not sent" },
+  { name: "SMS_SENDER_ID",                          required: false, note: "DLT-registered sender ID" },
+  { name: "SMS_TEMPLATE_ID",                        required: false, note: "DLT-registered template id for the overdue message" },
 ];
 
 const missing: string[] = [];

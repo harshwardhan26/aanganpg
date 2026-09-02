@@ -101,6 +101,7 @@ model User {
   sessions        Session[]
   savedProperties SavedProperty[]
   reviews         Review[]
+  messMemberships MessMember[]
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
 }
@@ -230,4 +231,189 @@ model Review {
 
   @@unique([propertyId, userId])
   @@index([propertyId])
+}
+
+// ---------------------------------------------------------------------------
+// Mess management (Phase F)
+//
+// A separate island in the schema: the only thing it touches is `User`, through
+// `MessMember`. Nothing here relates to Property, Lead or Review, so the whole
+// module can be lifted out later without untangling the listing side.
+// ---------------------------------------------------------------------------
+
+model Mess {
+  id        String   @id @default(cuid())
+  name      String
+  /// Day of the month a fee becomes overdue. One number for the whole mess
+  /// rather than one per student: every mess we have asked runs a single
+  /// collection date, and a per-student date is a field nobody would ever fill
+  /// in differently.
+  dueDay    Int      @default(5)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members  MessMember[]
+  students Student[]
+  menu     MenuItem[]
+}
+
+/**
+ * What is being served.
+ *
+ * A mess runs a weekly rotation, not a fresh decision each morning, so the
+ * normal row has a `weekday` and repeats forever — twenty-one rows cover the
+ * whole year. A `date` row is the exception: a festival, a special, a day the
+ * vegetable did not arrive. Exactly one of the two is set.
+ *
+ * Storing one row per calendar day instead would mean someone typing a menu 365
+ * times a year, which is the version that gets abandoned in week two and leaves
+ * students looking at a stale screen.
+ */
+model MenuItem {
+  id     String @id @default(cuid())
+  messId String
+  mess   Mess   @relation(fields: [messId], references: [id], onDelete: Cascade)
+
+  /// 0 = Sunday … 6 = Saturday. Null on a one-off override.
+  weekday Int?
+  /// Set only on a one-off override for a single date. Null on a weekly row.
+  date    DateTime? @db.Date
+  meal    Meal
+  /// Free text, as the owner writes it on the board. Not a list of dishes —
+  /// "Rajma, rice, roti, salad" is one answer, and splitting it would invent
+  /// structure nobody maintains.
+  items   String
+
+  updatedAt DateTime @updatedAt
+
+  @@unique([messId, weekday, meal])
+  @@unique([messId, date, meal])
+  @@index([messId])
+}
+
+/**
+ * Who may open a mess, and as what.
+ *
+ * Per-mess membership rather than a column on `User`: the global `role` in the
+ * session is derived from ADMIN_EMAILS and answers "does this person run
+ * Aangan", which is a different question from "does this person run *this*
+ * mess". A mess owner is a customer, not an operator, and an env allowlist
+ * cannot express one person owning one mess.
+ */
+model MessMember {
+  id     String   @id @default(cuid())
+  messId String
+  mess   Mess     @relation(fields: [messId], references: [id], onDelete: Cascade)
+  userId String
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role   MessRole
+
+  createdAt DateTime @default(now())
+
+  @@unique([messId, userId])
+  @@index([userId])
+}
+
+enum MessRole {
+  OWNER
+  STAFF
+}
+
+model Student {
+  id     String @id @default(cuid())
+  messId String
+  mess   Mess   @relation(fields: [messId], references: [id], onDelete: Cascade)
+
+  name        String
+  /// Left over from an earlier version of the form. Nothing reads or writes it;
+  /// it stays only because dropping a column costs a migration on live data.
+  room        String?
+  /// The Google account the student signs in with, matched against the session
+  /// when they scan. Unique per mess, not globally: two messes may legitimately
+  /// have the same student.
+  email       String?
+  /// Taken at enrollment. The owner glances at this on the receipt before
+  /// handing over a plate — it is what makes a forwarded receipt fail.
+  photoUrl    String?
+  parentName  String?
+  /// E.164 through `canonicalPhone()`, like every other phone column.
+  parentPhone String?
+  /// Rupees per month. Nullable means "not set yet", never 0 — a 0 fee is a real
+  /// answer (a free student) and must survive.
+  monthlyFee  Int?
+  joinedAt    DateTime @default(now())
+  /// Soft-leave. A student who leaves keeps their attendance history, because the
+  /// history is the thing anyone would ever ask about after they are gone.
+  leftAt      DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  attendance Attendance[]
+  payments   Payment[]
+
+  @@unique([messId, email])
+  @@index([messId, leftAt])
+}
+
+/**
+ * One row per student per billing month — but only once something has happened.
+ *
+ * There is deliberately no monthly job that pre-creates a row for every student:
+ * an unpaid month with no reminder yet is the absence of a row, which is exactly
+ * what it means. A row appears when the fee is paid or when the first reminder
+ * goes out, and `amount` is copied in at that moment so raising the fee later
+ * does not rewrite what someone already paid.
+ */
+model Payment {
+  id        String   @id @default(cuid())
+  studentId String
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  /// The first of the billing month, midnight IST stored as a date.
+  month     DateTime @db.Date
+  /// Rupees, as they stood when this row was written.
+  amount    Int?
+  paidAt    DateTime?
+
+  remindersSent  Int       @default(0)
+  lastReminderAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([studentId, month])
+  @@index([month])
+}
+
+/**
+ * One row per student per day. `day` is midnight IST stored as UTC — the same
+ * boundary `startOfIstDay` gives the lead views, so "today" means one thing
+ * across the app. The unique index is what makes a double-tap idempotent
+ * instead of a duplicate.
+ */
+model Attendance {
+  id        String   @id @default(cuid())
+  studentId String
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  day       DateTime @db.Date
+  meal      Meal
+  method    AttendanceMethod @default(MANUAL)
+  markedAt  DateTime @default(now())
+
+  @@unique([studentId, day, meal])
+  @@index([day])
+}
+
+enum Meal {
+  BREAKFAST
+  LUNCH
+  DINNER
+}
+
+enum AttendanceMethod {
+  /// Staff tapped the name. The fallback, and what a dead phone falls back to.
+  MANUAL
+  /// The student scanned the poster themselves.
+  SCAN
+  FACE
 }

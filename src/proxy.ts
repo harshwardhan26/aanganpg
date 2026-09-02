@@ -19,7 +19,20 @@ import { withAuth } from "next-auth/middleware";
  */
 export default withAuth({
   callbacks: {
-    authorized: ({ token }) => token?.role === "admin",
+    /**
+     * `/mess` (staff) and `/my-mess` (a student's own record) need a signed-in
+     * person, not an admin. *Which* mess either may open is a database question
+     * — membership for staff, an email on the roll for a student — and this
+     * cannot read the database, so the layouts and actions check it again. All
+     * this does is keep signed-out traffic out entirely.
+     *
+     * `/admin` keeps the stricter test it always had.
+     */
+    authorized: ({ token, req }) => {
+      const path = req.nextUrl.pathname;
+      if (path.startsWith("/my-mess") || path.startsWith("/mess")) return !!token;
+      return token?.role === "admin";
+    },
   },
   pages: {
     signIn: "/",
@@ -27,5 +40,5 @@ export default withAuth({
 });
 
 export const config = {
-  matcher: ["/admin/:path*", "/api/admin/:path*"],
+  matcher: ["/admin/:path*", "/api/admin/:path*", "/mess/:path*", "/my-mess/:path*"],
 };

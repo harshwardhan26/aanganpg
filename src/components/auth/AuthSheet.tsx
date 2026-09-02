@@ -4,7 +4,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from "react
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 
 import { signIn, signOut, useSession } from "next-auth/react";
-import { enquiryGate } from "@/lib/session";
+import { enquiryGate, safeCallbackUrl } from "@/lib/session";
 import { saveUserProfile } from "@/actions/user";
 import Image from "next/image";
 import Link from "next/link";
@@ -50,6 +50,19 @@ export function AuthSheetProvider({ children }: { children: ReactNode }) {
       }
     }
   }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    // `proxy.ts` sends signed-out visitors to `/?callbackUrl=...`. Without this
+    // they land on the home page with nothing happening and no idea that the
+    // page they asked for wanted them signed in.
+    const requested = safeCallbackUrl(
+      new URLSearchParams(window.location.search).get("callbackUrl"),
+      window.location.origin,
+    );
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (requested && status === "unauthenticated") setOpen(true);
+  }, [status]);
 
   const openAuthSheet = (callback?: () => void) => {
     setOnSuccess(() => callback || null);
@@ -144,8 +157,14 @@ function AuthSheet({
   const handleGoogle = () => {
     setLoading(true);
     // Google redirects the whole page, so `onSuccess` cannot fire in this load.
-    // Coming back to the same URL is what the student expects anyway.
-    signIn("google", { callbackUrl: window.location.href });
+    // Where to land afterwards is either the page a guard sent them away from —
+    // a mess student scanning the entry poster arrives that way — or, failing
+    // that, the page they are already on, which is what they expect.
+    const requested = safeCallbackUrl(
+      new URLSearchParams(window.location.search).get("callbackUrl"),
+      window.location.origin,
+    );
+    signIn("google", { callbackUrl: requested ?? window.location.href });
   };
 
   const handleSaveProfile = async () => {
