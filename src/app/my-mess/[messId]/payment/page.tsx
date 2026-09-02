@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ChevronLeft } from "lucide-react";
 import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
 import { findStudent } from "@/actions/mess";
@@ -56,12 +57,13 @@ export default async function StudentPaymentPage({
   const dueLabel = `${mess.dueDay} ${monthLabel(month).split(" ")[0]}`;
 
   return (
-    <main className="mx-auto max-w-md px-4 py-8">
+    <main className="mx-auto max-w-md px-4 pt-6 pb-10">
       <Link
         href={`/my-mess/${messId}`}
-        className="inline-flex min-h-12 items-center text-base font-medium text-primary-strong underline underline-offset-4"
+        className="inline-flex min-h-11 items-center gap-1 text-base font-medium text-primary-strong"
       >
-        ← Back
+        <ChevronLeft className="h-4 w-4" aria-hidden />
+        Back
       </Link>
 
       <h1 className="mt-2 font-heading text-3xl font-bold text-text-main">My fees</h1>
@@ -69,8 +71,8 @@ export default async function StudentPaymentPage({
       <section
         className={
           late
-            ? "mt-4 rounded-2xl border-2 border-red-800 bg-red-100 p-6"
-            : "mt-4 rounded-2xl border-2 border-border bg-white p-6"
+            ? "rise mt-4 rounded-3xl border border-red-200 bg-red-50 p-6 shadow-[var(--shadow-soft)]"
+            : "rise mt-4 rounded-3xl border border-border bg-white p-6 shadow-[var(--shadow-soft)]"
         }
       >
         <p className={late ? "text-base text-red-900" : "text-base text-text-muted"}>
@@ -115,7 +117,7 @@ export default async function StudentPaymentPage({
               .map((p) => (
                 <li
                   key={p.month.toISOString()}
-                  className="flex min-h-20 items-center justify-between gap-3 rounded-2xl border-2 border-border bg-white p-4"
+                  className="flex min-h-16 items-center justify-between gap-3 rounded-2xl border border-border bg-white p-4 shadow-[var(--shadow-soft)]"
                 >
                   <span className="text-lg font-semibold text-text-main">
                     {monthLabel(p.month)}

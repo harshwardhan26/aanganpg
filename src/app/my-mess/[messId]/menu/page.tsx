@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ChevronLeft } from "lucide-react";
 import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
 import { findStudent } from "@/actions/mess";
@@ -49,12 +50,13 @@ export default async function StudentMenuPage({
   );
 
   return (
-    <main className="mx-auto max-w-md px-4 py-8">
+    <main className="mx-auto max-w-md px-4 pt-6 pb-10">
       <Link
         href={`/my-mess/${messId}`}
-        className="inline-flex min-h-12 items-center text-base font-medium text-primary-strong underline underline-offset-4"
+        className="inline-flex min-h-11 items-center gap-1 text-base font-medium text-primary-strong"
       >
-        ← Back
+        <ChevronLeft className="h-4 w-4" aria-hidden />
+        Back
       </Link>
 
       <h1 className="mt-2 font-heading text-3xl font-bold text-text-main">Food</h1>
@@ -63,10 +65,11 @@ export default async function StudentMenuPage({
         {week.map((date, offset) => (
           <section
             key={date.toISOString()}
+            style={{ "--rise-delay": `${Math.min(offset, 6) * 50}ms` } as React.CSSProperties}
             className={
               offset === 0
-                ? "rounded-2xl border-2 border-primary-strong bg-white p-5"
-                : "rounded-2xl border-2 border-border bg-white p-5"
+                ? "rise rounded-2xl border-2 border-primary-strong bg-white p-5 shadow-[var(--shadow-soft)]"
+                : "rise rounded-2xl border border-border bg-white p-5 shadow-[var(--shadow-soft)]"
             }
           >
             <h2 className="font-heading text-lg font-bold text-text-main">

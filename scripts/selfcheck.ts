@@ -867,6 +867,15 @@ async function main() {
     ["#9f0712", white, "unpaid fee marker (red-800 on white)"],
     ["#973c00", white, "missing parent phone warning (amber-800 on white)"],
     ["#016630", white, "menu slot saved (green-800 on white)"],
+    // The student screens. The two gradient cards carry white text, and the
+    // month grid must stay readable at every fill level — it is the grid a
+    // student counts their own month on.
+    [white, "#cc4040", "meal card, white on the light end of the coral gradient"],
+    [white, "#0d542b", "marked card, white on the light end of the green gradient"],
+    ["#7f1d1d", "#ffe2e2", "month grid, one meal (red-900 on red-100)"],
+    ["#7f1d1d", "#e8a0a0", "month grid, two meals (red-900 on the mid tone)"],
+    [white, "#cc4040", "month grid, three meals (white on coral)"],
+    ["#475569", "#f1f5f9", "month grid, a day with no meals"],
   ];
   for (const [fg, bg, what] of messPairs) {
     const r = contrastRatio(fg, bg);
