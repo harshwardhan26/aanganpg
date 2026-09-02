@@ -2,7 +2,14 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
 import { findStudent } from "@/actions/mess";
-import { startOfIstMonth, monthLabel, dayKey, dayLabel, MEAL_WINDOWS } from "@/lib/mess";
+import {
+  startOfIstMonth,
+  monthLabel,
+  dayKey,
+  dayLabel,
+  plural,
+  MEAL_WINDOWS,
+} from "@/lib/mess";
 
 export const metadata = { title: "My attendance" };
 
@@ -53,8 +60,8 @@ export default async function HistoryPage({
 
       <h1 className="mt-2 font-heading text-3xl font-bold text-text-main">{monthLabel(month)}</h1>
       <p className="text-base text-text-muted">
-        You ate <span className="font-bold tabular-nums text-text-main">{rows.length}</span> meals on{" "}
-        <span className="tabular-nums">{days.length}</span> days
+        You ate <span className="font-bold text-text-main">{plural(rows.length, "meal")}</span> on{" "}
+        {plural(days.length, "day")}
       </p>
 
       {days.length === 0 ? (

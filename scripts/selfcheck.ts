@@ -9,7 +9,7 @@ import { cloudinaryUrl } from "../src/lib/image";
 import { publicImage } from "../src/lib/publicImage";
 import { directionsUrl, looksLikeKolhapur } from "../src/lib/maps";
 import { routeForHost, isMessHost } from "../src/lib/hosts";
-import { onRollDuring } from "../src/lib/mess";
+import { onRollDuring, feeState, plural } from "../src/lib/mess";
 import { approximateLocation, distanceMetres } from "../src/lib/geo";
 import { enquiryGate, safeCallbackUrl } from "../src/lib/session";
 import { isAdminEmail, resolveRole, isOwner } from "../src/lib/admin";
@@ -966,6 +966,26 @@ async function main() {
   assert(!onRoll("2026-01-10", "2026-08-31T23:59:59.999Z"), "the instant before the month starts is out");
   assert(!onRoll("2026-10-01T00:00:00.000Z", null), "joining the instant the next month starts is out");
   assert(onRoll("2026-09-30T23:59:59.999Z", null), "joining in the last second of the month is in");
+
+  // ---- owed is not the same as late ---------------------------------------
+  // The student screen turned red on the 1st and said "you had to pay by the
+  // 5th". Billable and late are two different questions.
+  const dueOn5 = new Date(Date.UTC(2026, 8, 5));
+  const feeOn = (dayOfMonth: number, owes = true, paid = false) =>
+    feeState({ today: new Date(Date.UTC(2026, 8, dayOfMonth)), due: dueOn5, owes, paid });
+
+  assert.equal(feeOn(2), "due", "before the due date is a reminder, not a warning");
+  assert.equal(feeOn(4), "due", "the day before is still not late");
+  assert.equal(feeOn(5), "overdue", "due ON the 5th means late from the 5th");
+  assert.equal(feeOn(20), "overdue", "still late later in the month");
+  assert.equal(feeOn(20, true, true), "paid", "paying beats everything");
+  assert.equal(feeOn(20, false), "none", "a student who owes nothing is never late");
+  // A fee of 0 reaches here as owes=false, and must never read as unpaid.
+  assert.equal(feeOn(1, false), "none", "a free student owes nothing on day one either");
+
+  assert.equal(plural(1, "meal"), "1 meal", "one meal, not one meals");
+  assert.equal(plural(0, "meal"), "0 meals", "zero takes the plural");
+  assert.equal(plural(2, "day"), "2 days", "two days");
 
   console.log("Self check passed");
 }

@@ -344,6 +344,33 @@ export function onRollDuringWhere(month: Date) {
   };
 }
 
+/**
+ * What a student's fee looks like today: nothing owed, owed but not yet late,
+ * or late.
+ *
+ * `owesForMonth` answers "is this month billable to this student", which is not
+ * the same question as "is this student late". Treating them as one turned the
+ * student's own screen red on the 1st of the month and told them they "had to
+ * pay by the 5th" three days before the 5th. A person who reads that goes and
+ * argues with the mess about money that is not due — which is exactly the kind
+ * of wrong number this product exists to stop.
+ */
+export function feeState(input: {
+  today: Date;
+  due: Date;
+  owes: boolean;
+  paid: boolean;
+}): "paid" | "none" | "due" | "overdue" {
+  if (input.paid) return "paid";
+  if (!input.owes) return "none";
+  return input.today.getTime() >= input.due.getTime() ? "overdue" : "due";
+}
+
+/** `1 meal` / `2 meals`. */
+export function plural(count: number, one: string, many = `${one}s`): string {
+  return `${count} ${count === 1 ? one : many}`;
+}
+
 /** Present today, out of the students still on the rolls. */
 export function attendanceSummary(present: number, active: number) {
   return {

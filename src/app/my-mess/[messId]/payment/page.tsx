@@ -2,7 +2,14 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
 import { findStudent } from "@/actions/mess";
-import { startOfIstMonth, monthLabel, dueDate, owesForMonth } from "@/lib/mess";
+import {
+  attendanceDay,
+  startOfIstMonth,
+  monthLabel,
+  dueDate,
+  owesForMonth,
+  feeState,
+} from "@/lib/mess";
 
 export const metadata = { title: "My payment" };
 
@@ -32,13 +39,21 @@ export default async function StudentPaymentPage({
 
   const due = dueDate(month, mess.dueDay);
   const thisMonth = payments.find((p) => p.month.getTime() === month.getTime()) ?? null;
-  const owes =
-    owesForMonth({
+  const state = feeState({
+    today: attendanceDay(now),
+    due,
+    owes: owesForMonth({
       joinedAt: student.joinedAt,
       leftAt: student.leftAt,
       monthlyFee: student.monthlyFee,
       due,
-    }) && thisMonth?.paidAt == null;
+    }),
+    paid: thisMonth?.paidAt != null,
+  });
+  // Red is reserved for actually late. Before the due date this is a reminder,
+  // not a warning.
+  const late = state === "overdue";
+  const dueLabel = `${mess.dueDay} ${monthLabel(month).split(" ")[0]}`;
 
   return (
     <main className="mx-auto max-w-md px-4 py-8">
@@ -53,29 +68,31 @@ export default async function StudentPaymentPage({
 
       <section
         className={
-          owes
+          late
             ? "mt-4 rounded-2xl border-2 border-red-800 bg-red-100 p-6"
             : "mt-4 rounded-2xl border-2 border-border bg-white p-6"
         }
       >
-        <p className={owes ? "text-base text-red-900" : "text-base text-text-muted"}>
+        <p className={late ? "text-base text-red-900" : "text-base text-text-muted"}>
           {monthLabel(month)}
         </p>
         <p
           className={
-            owes
+            late
               ? "font-heading text-4xl font-bold tabular-nums text-red-900"
               : "font-heading text-4xl font-bold tabular-nums text-text-main"
           }
         >
           ₹{(thisMonth?.amount ?? student.monthlyFee ?? 0).toLocaleString("en-IN")}
         </p>
-        <p className={owes ? "mt-1 text-base text-red-900" : "mt-1 text-base text-text-muted"}>
-          {thisMonth?.paidAt
-            ? `Paid on ${thisMonth.paidAt.toLocaleDateString("en-IN", { day: "numeric", month: "short" })}`
-            : owes
-              ? `You had to pay by ${mess.dueDay}. Please pay at the mess.`
-              : `Pay by ${mess.dueDay} of this month.`}
+        <p className={late ? "mt-1 text-base text-red-900" : "mt-1 text-base text-text-muted"}>
+          {state === "paid"
+            ? `Paid on ${thisMonth!.paidAt!.toLocaleDateString("en-IN", { day: "numeric", month: "short" })}`
+            : state === "overdue"
+              ? `You had to pay by ${dueLabel}. Please pay at the mess.`
+              : state === "due"
+                ? `Pay by ${dueLabel} at the mess.`
+                : "Nothing to pay."}
         </p>
       </section>
 

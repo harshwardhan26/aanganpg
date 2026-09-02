@@ -12,6 +12,7 @@ import {
   menuFor,
   mealAt,
   MEAL_LABEL,
+  feeState,
 } from "@/lib/mess";
 
 export const metadata = { title: "My mess" };
@@ -48,13 +49,18 @@ export default async function StudentMessPage({
 
   const markedMeals = new Set(todayRows.map((row) => row.meal));
   const due = dueDate(month, mess.dueDay);
-  const owes =
-    owesForMonth({
+  const state = feeState({
+    today: day,
+    due,
+    owes: owesForMonth({
       joinedAt: found.joinedAt,
       leftAt: found.leftAt,
       monthlyFee: found.monthlyFee,
       due,
-    }) && payment?.paidAt == null;
+    }),
+    paid: payment?.paidAt != null,
+  });
+  const amount = payment?.amount ?? found.monthlyFee ?? 0;
 
   const nextMenu = servingNow ? menuFor(menuRows, day, servingNow) : null;
 
@@ -67,16 +73,32 @@ export default async function StudentMessPage({
 
       {/* Money first, and only when something is owed — it is the one thing here
           that needs the student to go and do something today. */}
-      {owes && (
+      {/* Red only once the money is actually late. Before the due date this is
+          a reminder, and colouring it as a warning sends a student to argue
+          with the mess about a payment that is not yet owed. */}
+      {state === "overdue" && (
         <Link
           href={`/my-mess/${messId}/payment`}
           className="rounded-2xl border-2 border-red-800 bg-red-100 p-5 text-red-900"
         >
           <p className="font-heading text-xl font-bold">
-            ₹{(payment?.amount ?? found.monthlyFee ?? 0).toLocaleString("en-IN")} not paid for{" "}
-            {monthLabel(month)}
+            ₹{amount.toLocaleString("en-IN")} not paid for {monthLabel(month)}
           </p>
           <p className="mt-1 text-base">Please pay at the mess.</p>
+        </Link>
+      )}
+
+      {state === "due" && (
+        <Link
+          href={`/my-mess/${messId}/payment`}
+          className="rounded-2xl border-2 border-border bg-white p-5"
+        >
+          <p className="font-heading text-xl font-bold text-text-main">
+            ₹{amount.toLocaleString("en-IN")} for {monthLabel(month)}
+          </p>
+          <p className="mt-1 text-base text-text-muted">
+            Pay by {mess.dueDay} {monthLabel(month).split(" ")[0]} at the mess.
+          </p>
         </Link>
       )}
 
@@ -113,7 +135,15 @@ export default async function StudentMessPage({
           href={`/my-mess/${messId}/payment`}
           icon={<Wallet className="h-7 w-7" aria-hidden />}
           title="My fees"
-          detail={owes ? "Not paid" : payment?.paidAt ? "Paid" : "Nothing to pay"}
+          detail={
+            state === "overdue"
+              ? "Not paid"
+              : state === "due"
+                ? `Pay by ${mess.dueDay}`
+                : state === "paid"
+                  ? "Paid"
+                  : "Nothing to pay"
+          }
         />
       </div>
     </main>
