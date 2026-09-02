@@ -310,6 +310,40 @@ export function owesForMonth(input: {
   return true;
 }
 
+/**
+ * Whether a student was on the roll at any point during a month.
+ *
+ * The fees screens used to ask only for students with `leftAt: null`, which
+ * quietly removed anyone who left from every month they had ever been billed
+ * for — including months they had already paid. "Money you got" fell by their
+ * fee the day they were marked as left, and an unpaid leaver dropped off the
+ * chase list entirely. Both are wrong numbers shown to an owner who is trusting
+ * them.
+ *
+ * Overlap, not membership today: joined before the month ended, and did not
+ * leave before it began.
+ */
+export function onRollDuring(input: {
+  month: Date;
+  joinedAt: Date;
+  leftAt: Date | null;
+}): boolean {
+  const { month, joinedAt, leftAt } = input;
+  const nextMonth = new Date(Date.UTC(month.getUTCFullYear(), month.getUTCMonth() + 1, 1));
+  if (joinedAt.getTime() >= nextMonth.getTime()) return false;
+  if (leftAt && leftAt.getTime() < month.getTime()) return false;
+  return true;
+}
+
+/** The Prisma filter for `onRollDuring`, so query and predicate cannot drift. */
+export function onRollDuringWhere(month: Date) {
+  const nextMonth = new Date(Date.UTC(month.getUTCFullYear(), month.getUTCMonth() + 1, 1));
+  return {
+    joinedAt: { lt: nextMonth },
+    OR: [{ leftAt: null }, { leftAt: { gte: month } }],
+  };
+}
+
 /** Present today, out of the students still on the rolls. */
 export function attendanceSummary(present: number, active: number) {
   return {

@@ -10,6 +10,7 @@ import {
   monthLabel,
   dueDate,
   owesForMonth,
+  onRollDuringWhere,
 } from "@/lib/mess";
 import { PaidToggle } from "./PaidToggle";
 
@@ -50,8 +51,12 @@ export default async function FeesPage({
   const due = dueDate(month, mess.dueDay);
   const isPast = today.getTime() >= due.getTime();
 
+  // Everyone who was on the roll during this month, not everyone on it today.
+  // Filtering by `leftAt: null` removed a student from every month they had
+  // ever been billed for the moment they left — so "Money you got" fell by
+  // their fee, and an unpaid leaver vanished off the chase list.
   const students = await prisma.student.findMany({
-    where: { messId, leftAt: null },
+    where: { messId, ...onRollDuringWhere(month) },
     select: {
       id: true,
       name: true,
@@ -78,6 +83,7 @@ export default async function FeesPage({
     return {
       id: student.id,
       name: student.name,
+      left: student.leftAt != null,
       parentPhone: student.parentPhone,
       amount: payment?.amount ?? student.monthlyFee,
       paid: payment?.paidAt != null,
@@ -142,7 +148,14 @@ export default async function FeesPage({
               className="flex min-h-20 items-center justify-between gap-3 rounded-2xl border-2 border-border bg-white p-4"
             >
               <div className="min-w-0">
-                <p className="truncate text-lg font-semibold text-text-main">{row.name}</p>
+                <p className="truncate text-lg font-semibold text-text-main">
+                  {row.name}
+                  {row.left && (
+                    <span className="ml-2 rounded-full bg-muted px-2.5 py-0.5 text-sm font-medium text-text-muted">
+                      left
+                    </span>
+                  )}
+                </p>
                 <p className="mt-1 text-base text-text-muted">
                   {row.amount === null ? "No fee set" : `₹${row.amount.toLocaleString("en-IN")}`}
                   {row.paid && " · paid"}

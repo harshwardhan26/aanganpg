@@ -8,6 +8,7 @@ import {
   owesForMonth,
   mealAt,
   MEAL_LABEL,
+  onRollDuringWhere,
 } from "@/lib/mess";
 
 export const metadata = { title: "All messes" };
@@ -37,8 +38,11 @@ export default async function MessAdminHome() {
         select: { user: { select: { name: true, email: true } } },
         take: 1,
       },
+      // Everyone this month's money involves, which includes anyone who left
+      // partway through it. How many students the mess has *today* is a
+      // different question, counted separately below.
       students: {
-        where: { leftAt: null },
+        where: onRollDuringWhere(month),
         select: { id: true, joinedAt: true, leftAt: true, monthlyFee: true },
       },
     },
@@ -46,7 +50,12 @@ export default async function MessAdminHome() {
 
   const studentIds = messes.flatMap((m) => m.students.map((s) => s.id));
 
-  const [ateNow, paidRows] = await Promise.all([
+  const [activeCounts, ateNow, paidRows] = await Promise.all([
+    prisma.student.groupBy({
+      by: ["messId"],
+      where: { leftAt: null },
+      _count: { _all: true },
+    }),
     meal
       ? prisma.attendance.findMany({
           where: { day, meal, studentId: { in: studentIds } },
@@ -61,6 +70,7 @@ export default async function MessAdminHome() {
 
   const ate = new Set(ateNow.map((r) => r.studentId));
   const paid = new Set(paidRows.map((r) => r.studentId));
+  const active = new Map(activeCounts.map((r) => [r.messId, r._count._all]));
 
   return (
     <div className="flex flex-col gap-6">
@@ -112,7 +122,7 @@ export default async function MessAdminHome() {
                     <Stat
                       icon={<Users className="h-4 w-4" aria-hidden />}
                       label="Students"
-                      value={String(mess.students.length)}
+                      value={String(active.get(mess.id) ?? 0)}
                     />
                     <Stat
                       icon={<UtensilsCrossed className="h-4 w-4" aria-hidden />}

@@ -18,6 +18,12 @@ export const authOptions: NextAuthOptions = {
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      // Always show the account chooser. Without this Google silently reuses
+      // whichever account the browser already holds, so a second person on the
+      // same phone — or the same tablet at a mess counter — is signed in as the
+      // first one and never sees a choice. It also makes testing honest: a
+      // "new account" that was never actually offered is the old account.
+      authorization: { params: { prompt: "select_account" } },
     }),
   ],
   callbacks: {

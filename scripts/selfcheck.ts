@@ -9,6 +9,7 @@ import { cloudinaryUrl } from "../src/lib/image";
 import { publicImage } from "../src/lib/publicImage";
 import { directionsUrl, looksLikeKolhapur } from "../src/lib/maps";
 import { routeForHost, isMessHost } from "../src/lib/hosts";
+import { onRollDuring } from "../src/lib/mess";
 import { approximateLocation, distanceMetres } from "../src/lib/geo";
 import { enquiryGate, safeCallbackUrl } from "../src/lib/session";
 import { isAdminEmail, resolveRole, isOwner } from "../src/lib/admin";
@@ -938,6 +939,33 @@ async function main() {
   assert.deepEqual(route("aangan-rooms.vercel.app", "/search"), { kind: "pass" }, "previews serve rooms");
   assert.deepEqual(route("aangan-rooms.vercel.app", "/mess/abc"), { kind: "pass" }, "previews keep the mess");
   assert.deepEqual(route("localhost:3000", "/mess/abc"), { kind: "pass" }, "dev keeps the mess");
+
+  // Amber on the "sign-in did not finish" notice, which is the one screen that
+  // tells somebody they are looking at another person's account.
+  assert(
+    contrastRatio("#973c00", "#fffbeb") >= 4.5,
+    "failed sign-in notice (amber-800 on amber-50) must be >= 4.5",
+  );
+
+  // ---- who a month's money involves ---------------------------------------
+  // The fees screen used to ask only for students with `leftAt: null`. A
+  // student who left was then removed from every month they had ever been
+  // billed for: "Money you got" fell by their fee on the day they left, and an
+  // unpaid leaver disappeared off the chase list. These are the boundaries.
+  const billingMonth = new Date(Date.UTC(2026, 8, 1));
+  const onRoll = (joined: string, left: string | null) =>
+    onRollDuring({ month: billingMonth, joinedAt: new Date(joined), leftAt: left ? new Date(left) : null });
+
+  assert(onRoll("2026-01-10", null), "a student still on the roll is billed");
+  assert(onRoll("2026-09-20", null), "joining mid-month still belongs to that month");
+  assert(onRoll("2026-01-10", "2026-09-14"), "leaving mid-month does not erase the month");
+  assert(onRoll("2026-01-10", "2026-09-01"), "leaving on the first day still counts for it");
+  assert(!onRoll("2026-01-10", "2026-08-31"), "someone gone before the month began is not billed");
+  assert(!onRoll("2026-10-02", null), "someone who joins next month is not billed for this one");
+  // The exact edge in both directions, one millisecond apart.
+  assert(!onRoll("2026-01-10", "2026-08-31T23:59:59.999Z"), "the instant before the month starts is out");
+  assert(!onRoll("2026-10-01T00:00:00.000Z", null), "joining the instant the next month starts is out");
+  assert(onRoll("2026-09-30T23:59:59.999Z", null), "joining in the last second of the month is in");
 
   console.log("Self check passed");
 }

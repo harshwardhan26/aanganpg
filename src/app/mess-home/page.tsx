@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth/next";
 import {
@@ -36,12 +37,46 @@ export const metadata = {
 export default async function MessHome({
   searchParams,
 }: {
-  searchParams: Promise<{ as?: string }>;
+  searchParams: Promise<{ as?: string; error?: string }>;
 }) {
   const session = await getServerSession(authOptions);
   const userId = session?.user?.id;
+  const { as, error } = await searchParams;
 
   if (userId) {
+    // A sign-in that did not complete, on a browser that is already signed in
+    // as somebody. Redirecting now would drop this person on the previous
+    // account's dashboard with no sign that anything failed — which is exactly
+    // what the back button does to a spent Google link. Say it instead.
+    if (error) {
+      return (
+        <div className="flex min-h-screen flex-col bg-white">
+          <MessNavbar />
+          <main className="mx-auto w-full max-w-md px-4 py-10">
+            <h1 className="font-heading text-2xl font-bold text-text-main">
+              That sign-in did not finish
+            </h1>
+            <div className="mt-4 rounded-2xl border-2 border-amber-800 bg-amber-50 p-5">
+              <p className="text-base text-amber-900">
+                You are still signed in as{" "}
+                <span className="font-semibold">{session?.user?.email}</span>.
+              </p>
+              <p className="mt-2 text-base text-amber-900">
+                To use a different account, sign out first. Going back in the browser opens a
+                link Google has already used once, and it will fail every time.
+              </p>
+            </div>
+            <Link
+              href="/mess-home"
+              className="mt-5 inline-flex min-h-14 items-center rounded-xl bg-primary-strong px-6 text-lg font-semibold text-white transition-colors hover:bg-primary-hover"
+            >
+              Carry on as {session?.user?.name ?? "me"}
+            </Link>
+          </main>
+        </div>
+      );
+    }
+
     if (session?.user?.role === "admin") redirect("/mess-admin");
 
     const member = await prisma.messMember.findFirst({
@@ -63,7 +98,6 @@ export default async function MessHome({
     // Signed in and on nobody's list. `/my-mess` already explains that, and
     // words it for whichever door they came through — so the answer has to
     // travel with them.
-    const { as } = await searchParams;
     redirect(as === "owner" || as === "student" ? `/my-mess?as=${as}` : "/my-mess");
   }
 

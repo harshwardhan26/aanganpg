@@ -345,7 +345,7 @@ export async function saveMenu(formData: FormData): Promise<void> {
 /**
  * Today's attendance, toggled.
  *
- * The unique index on `[studentId, day]` is what makes this safe: two taps in
+ * The unique index on `[studentId, day, meal]` is what makes this safe: two taps in
  * the same second cannot produce two rows, so the worst a double-tap does is
  * undo itself. Returns the resulting state so the button can render it without
  * a second round trip.

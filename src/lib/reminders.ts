@@ -11,7 +11,15 @@
  */
 
 import prisma from "./prisma";
-import { attendanceDay, startOfIstMonth, dueDate, monthLabel, owesForMonth, shouldRemind } from "./mess";
+import {
+  attendanceDay,
+  startOfIstMonth,
+  dueDate,
+  monthLabel,
+  owesForMonth,
+  shouldRemind,
+  onRollDuringWhere,
+} from "./mess";
 import { overdueMessage, sendSms } from "./sms";
 
 export type ReminderRun = {
@@ -32,8 +40,11 @@ export async function runFeeReminders(now: Date): Promise<ReminderRun> {
       id: true,
       name: true,
       dueDay: true,
+      // Anyone on the roll during this month, not only those still on it: a
+      // student who leaves owing September must still be chased for September.
+      // `owesForMonth` is what decides whether they actually owe it.
       students: {
-        where: { leftAt: null },
+        where: onRollDuringWhere(month),
         select: {
           id: true,
           name: true,
