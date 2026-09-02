@@ -888,8 +888,20 @@ async function main() {
 
   assert.deepEqual(
     route("mess.aanganpg.com", "/"),
-    { kind: "rewrite", to: "/my-mess" },
+    { kind: "rewrite", to: "/mess-home" },
     "the mess front door lands on the role router",
+  );
+  assert.deepEqual(
+    route("mess.aanganpg.com", "/admin"),
+    { kind: "rewrite", to: "/mess-admin" },
+    "the mess host's /admin is the mess console",
+  );
+  // The two products both call it "admin". They must never be the same screen.
+  assert.deepEqual(route("aanganpg.com", "/admin"), { kind: "pass" }, "the room admin stays put");
+  assert.deepEqual(
+    route("aanganpg.com", "/mess-admin"),
+    { kind: "redirect", to: "https://mess.aanganpg.com/mess-admin" },
+    "the mess console is not reachable from the room host",
   );
   assert.deepEqual(
     route("mess.aanganpg.com", "/mess/abc/checkin"),

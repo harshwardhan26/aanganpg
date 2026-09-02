@@ -33,6 +33,11 @@ const guard = withAuth({
       if (path.startsWith("/admin") || path.startsWith("/api/admin")) {
         return token?.role === "admin";
       }
+      // The landing page is the one mess screen a stranger may see.
+      if (path === "/mess-home") return true;
+      // The console checks for admin in its own layout and in every action.
+      // Here it only has to be somebody.
+      if (path.startsWith("/mess-admin")) return !!token;
       // The mess front door explains itself and offers a sign-in button.
       // Everything under it is somebody's own record.
       if (path === "/my-mess") return true;

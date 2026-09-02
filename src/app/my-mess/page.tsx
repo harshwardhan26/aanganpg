@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
-import { MessSignIn } from "@/components/MessSignIn";
+import { MessLogin } from "@/components/mess/MessLogin";
 
 export const metadata = { title: "My mess" };
 
@@ -15,9 +15,17 @@ export const metadata = { title: "My mess" };
  * everyone is in exactly one mess, and a chooser with one option is a page that
  * exists to be clicked through, so that case redirects.
  */
-export default async function MyMessIndex() {
+export default async function MyMessIndex({
+  searchParams,
+}: {
+  searchParams: Promise<{ as?: string }>;
+}) {
   const session = await getServerSession(authOptions);
   const email = session?.user?.email?.trim().toLowerCase();
+  // Set by whichever door they picked at sign-in. It grants nothing — it only
+  // decides who we tell them to go and ask when we cannot find them, and those
+  // two people are different.
+  const asOwner = (await searchParams).as === "owner";
 
   // The front door of mess.aanganpg.com: the host's `/` is rewritten here, so
   // this is the first thing a signed-out student sees. It has to explain itself
@@ -29,7 +37,7 @@ export default async function MyMessIndex() {
         <p className="mt-3 text-base text-text-muted">
           Sign in to see today&apos;s food, mark your meals, and see your fees.
         </p>
-        <MessSignIn />
+        <MessLogin />
       </main>
     );
   }
@@ -62,10 +70,11 @@ export default async function MyMessIndex() {
       {enrolments.length === 0 ? (
         <div className="mt-4 rounded-2xl border-2 border-border bg-white p-6">
           <p className="text-lg font-semibold text-text-main">
-            No mess has added you yet.
+            {asOwner ? "Your mess is not set up yet." : "No mess has added you yet."}
           </p>
           <p className="mt-2 text-base text-text-muted">
-            Tell your mess to add this email: <span className="font-semibold">{email}</span>
+            {asOwner ? "Send Aangan this email: " : "Tell your mess to add this email: "}
+            <span className="font-semibold">{email}</span>
           </p>
           <p className="mt-2 text-base text-text-muted">Then open this page again.</p>
         </div>

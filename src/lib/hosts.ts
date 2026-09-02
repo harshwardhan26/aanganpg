@@ -26,9 +26,17 @@ export function isMessHost(host: string | null | undefined): boolean {
   return name === "mess.localhost" || name.startsWith("mess.");
 }
 
-/** True for `/mess`, `/mess/x`, `/my-mess`, `/my-mess/x` — never `/messages`. */
+/**
+ * The paths that belong to the mess product.
+ *
+ * `/mess-home` and `/mess-admin` are internal: they are what the mess host's `/`
+ * and `/admin` are rewritten to. They are listed here so the room host hands
+ * them over rather than rendering them under a navbar full of hostel links.
+ *
+ * Matched by segment, so `/messages` is not `/mess`.
+ */
 function isMessPath(pathname: string): boolean {
-  for (const base of ["/mess", "/my-mess"]) {
+  for (const base of ["/mess", "/my-mess", "/mess-home", "/mess-admin"]) {
     if (pathname === base || pathname.startsWith(`${base}/`)) return true;
   }
   return false;
@@ -63,10 +71,13 @@ export function routeForHost(
   if (isShared(pathname)) return PASS;
 
   if (isMessHost(host)) {
-    // The mess site's front door. `/my-mess` already works out whether the
-    // person is an owner or a student and sends them on, so there is nothing to
-    // decide here.
-    if (pathname === "/") return { kind: "rewrite", to: "/my-mess" };
+    // The mess site's front door: a landing page for a stranger, and an instant
+    // hand-off to their own dashboard for anyone signed in. `/mess-home` makes
+    // that call.
+    if (pathname === "/") return { kind: "rewrite", to: "/mess-home" };
+    // The super admin console, at a clean address. The room site keeps its own
+    // separate `/admin` — same word, different product, different host.
+    if (pathname === "/admin") return { kind: "rewrite", to: "/mess-admin" };
     if (isMessPath(pathname)) return PASS;
     // A room page asked for on the mess host — an old bookmark, or a link in a
     // mail. Hand it to the site that owns it instead of 404ing.
