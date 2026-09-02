@@ -43,7 +43,14 @@ export default async function MessHome({
   const userId = session?.user?.id;
   const { as, error } = await searchParams;
 
-  if (userId) {
+  // Aangan is deliberately NOT redirected. Sending the admin straight to the
+  // console made the front door unreachable: typing the address and deleting
+  // back to it lands on the console again, every time, so the one person who
+  // needs to look at this page could never see it. The console is a link in the
+  // bar instead.
+  const isAdmin = session?.user?.role === "admin";
+
+  if (userId && !isAdmin) {
     // A sign-in that did not complete, on a browser that is already signed in
     // as somebody. Redirecting now would drop this person on the previous
     // account's dashboard with no sign that anything failed — which is exactly
@@ -76,8 +83,6 @@ export default async function MessHome({
         </div>
       );
     }
-
-    if (session?.user?.role === "admin") redirect("/mess-admin");
 
     const member = await prisma.messMember.findFirst({
       where: { userId },
@@ -147,7 +152,7 @@ export default async function MessHome({
                 Today&apos;s food, your meals, your fees. Open it before you walk over.
               </p>
 
-              <MessLogin />
+              {isAdmin ? <ConsoleLink /> : <MessLogin />}
             </div>
           </div>
         </section>
@@ -219,9 +224,7 @@ export default async function MessHome({
             <Step n={3} title="Open it every day" body="Food, meals, fees. Nothing to install." />
           </ol>
 
-          <div className="mt-10">
-            <MessLogin />
-          </div>
+          <div className="mt-10">{isAdmin ? <ConsoleLink /> : <MessLogin />}</div>
         </section>
 
         {/* OWNERS — one strip, not half the page. */}
@@ -255,6 +258,17 @@ export default async function MessHome({
         </div>
       </footer>
     </div>
+  );
+}
+
+function ConsoleLink() {
+  return (
+    <Link
+      href="/mess-admin"
+      className="inline-flex min-h-14 items-center rounded-xl bg-primary-strong px-7 text-lg font-semibold text-white transition-colors hover:bg-primary-hover"
+    >
+      Open console
+    </Link>
   );
 }
 

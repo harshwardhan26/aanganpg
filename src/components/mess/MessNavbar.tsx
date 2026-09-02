@@ -16,6 +16,7 @@ import { MessLogin } from "./MessLogin";
  */
 export function MessNavbar() {
   const { data: session, status } = useSession();
+  const isAdmin = (session?.user as { role?: string } | undefined)?.role === "admin";
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-light/95 backdrop-blur supports-[backdrop-filter]:bg-light/60">
@@ -30,10 +31,10 @@ export function MessNavbar() {
         {status === "authenticated" ? (
           <div className="flex items-center gap-2">
             <Link
-              href="/"
+              href={isAdmin ? "/mess-admin" : "/"}
               className="flex min-h-11 items-center rounded-xl px-4 text-sm font-semibold text-text-main transition-colors hover:bg-slate-100"
             >
-              My mess
+              {isAdmin ? "Console" : "My mess"}
             </Link>
             <button
               type="button"
