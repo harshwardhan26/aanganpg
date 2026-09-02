@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { signOut, useSession } from "next-auth/react";
-import { LogOut } from "lucide-react";
+import { useSession } from "next-auth/react";
 import { Logo } from "@/components/Logo";
 import { MessLogin } from "./MessLogin";
+import { SignOutButton } from "./SignOutButton";
 
 /**
  * The mess site's navbar.
@@ -36,15 +36,7 @@ export function MessNavbar() {
             >
               {isAdmin ? "Console" : "My mess"}
             </Link>
-            <button
-              type="button"
-              onClick={() => signOut({ callbackUrl: "/" })}
-              className="flex min-h-11 cursor-pointer items-center gap-2 rounded-xl px-3 text-sm font-medium text-text-muted transition-colors hover:bg-slate-100 hover:text-text-main"
-            >
-              <LogOut className="h-4 w-4" aria-hidden />
-              <span className="hidden sm:inline">Sign out</span>
-              <span className="sr-only sm:hidden">Sign out {session?.user?.name ?? ""}</span>
-            </button>
+            <SignOutButton />
           </div>
         ) : (
           <MessLogin label="Login" className="min-h-11 px-5 text-base" />

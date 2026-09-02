@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
 import { requireMess } from "@/actions/mess";
 import { MessNav } from "./MessNav";
+import { SignOutButton } from "@/components/mess/SignOutButton";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -53,8 +54,13 @@ export default async function MessLayout({
                 {mess.name}
               </span>
             </Link>
-            <span className="rounded-full bg-muted px-3 py-1.5 text-sm font-medium text-text-muted">
-              {role === "ADMIN" ? "Aangan" : role === "OWNER" ? "Owner" : "Helper"}
+            <span className="flex shrink-0 items-center gap-1">
+              <span className="rounded-full bg-muted px-3 py-1.5 text-sm font-medium text-text-muted">
+                {role === "ADMIN" ? "Aangan" : role === "OWNER" ? "Owner" : "Helper"}
+              </span>
+              {/* A mess counter's tablet is shared. Without a way off it, the
+                  only exit is clearing the browser. */}
+              <SignOutButton />
             </span>
           </div>
           <MessNav messId={messId} canSeeFees={role !== "STAFF"} />
