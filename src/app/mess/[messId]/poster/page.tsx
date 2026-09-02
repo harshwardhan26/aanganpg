@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { requireMess } from "@/actions/mess";
 import { getBaseUrl } from "@/lib/url";
+import { scanKey } from "@/lib/scan-key";
 import { MEAL_WINDOWS } from "@/lib/mess";
 
 export const metadata = { title: "Entry poster" };
@@ -39,7 +40,10 @@ export default async function PosterPage({
   });
   if (!mess) redirect("/mess");
 
-  const url = `${getBaseUrl()}/my-mess/${messId}/scan`;
+  // The key is what makes this printed sheet the only way to mark a meal — see
+  // `lib/scan-key.ts`. It is why the poster matters rather than being a
+  // convenience shortcut to a page anyone could open.
+  const url = `${getBaseUrl()}/my-mess/${messId}/scan?k=${scanKey(messId)}`;
 
   // Rendered on the server as an SVG string: it prints crisply at any size, and
   // no QR code is shipped to the browser as a script.

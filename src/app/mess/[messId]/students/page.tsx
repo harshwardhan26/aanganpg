@@ -17,16 +17,40 @@ export default async function StudentsPage({
   const { role } = await requireMess(messId, "STAFF");
   const canRemove = role !== "STAFF";
 
-  const showLeft = (await searchParams).show === "left";
+  const query = await searchParams;
+  const showLeft = query.show === "left";
+  const editId = typeof query.edit === "string" ? query.edit : null;
 
   const students = await prisma.student.findMany({
     where: { messId, leftAt: showLeft ? { not: null } : null },
     orderBy: { name: "asc" },
   });
 
+  // A typo in an email or a fee is the normal case at 200 students, and until
+  // this existed the only way to fix one was a database script.
+  const editing = editId ? (students.find((s) => s.id === editId) ?? null) : null;
+
   return (
     <div className="flex flex-col gap-6">
-      <StudentForm messId={messId} />
+      <StudentForm
+        // Remounts on a different student, so the form's own state — the photo,
+        // the typed values — never carries over from whoever was open before.
+        key={editing?.id ?? "new"}
+        messId={messId}
+        student={
+          editing
+            ? {
+                id: editing.id,
+                name: editing.name,
+                email: editing.email,
+                photoUrl: editing.photoUrl,
+                parentName: editing.parentName,
+                parentPhone: editing.parentPhone,
+                monthlyFee: editing.monthlyFee,
+              }
+            : undefined
+        }
+      />
 
       <section className="flex flex-col gap-3">
         <div className="flex items-baseline justify-between gap-3">
@@ -51,9 +75,9 @@ export default async function StudentsPage({
             {students.map((student) => (
               <li
                 key={student.id}
-                className="flex items-start justify-between gap-3 rounded-xl border border-border bg-white p-4"
+                className="flex items-start justify-between gap-2 rounded-xl border border-border bg-white p-4"
               >
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <p className="truncate font-medium text-text-main">{student.name}</p>
                   <p className="mt-0.5 text-xs text-text-muted">
                     {[
@@ -63,7 +87,21 @@ export default async function StudentsPage({
                       .filter(Boolean)
                       .join(" · ") || "No other details"}
                   </p>
+                  {/* Shown back deliberately. A wrong-but-valid address like
+                      `gmai.com` cannot be caught by validation, and this is
+                      where someone would notice it. */}
+                  <p className="mt-0.5 truncate text-xs text-text-muted">
+                    {student.email ?? (
+                      <span className="text-amber-700">No email — cannot use the app</span>
+                    )}
+                  </p>
                 </div>
+                <a
+                  href={`/mess/${messId}/students?edit=${student.id}`}
+                  className="shrink-0 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-text-main hover:bg-muted"
+                >
+                  Edit
+                </a>
                 {canRemove && (
                   <LeaveButton
                     messId={messId}

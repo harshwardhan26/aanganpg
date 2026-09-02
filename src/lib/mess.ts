@@ -89,8 +89,18 @@ export function studentFormIssues(input: {
   monthlyFee: number | null;
   parentPhone: string | null;
   parentPhoneRaw: string;
+  email?: string;
 }): string[] {
   const issues: string[] = [];
+
+  // Shape only. It cannot catch `gmai.com` for `gmail.com` — that typo is a
+  // valid address for a domain that exists — which is why the students list
+  // shows the email back, and why it can be edited afterwards. This only stops
+  // the entries that could never work at all.
+  const email = input.email?.trim() ?? "";
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
+    issues.push("Email does not look like an email address.");
+  }
 
   if (!input.name.trim()) issues.push('Name is needed.');
   if (input.name.trim().length > 80) issues.push('Name is too long.');

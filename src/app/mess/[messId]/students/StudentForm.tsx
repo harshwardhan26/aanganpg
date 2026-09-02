@@ -2,12 +2,29 @@
 
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import Image from "next/image";
 import { UserPlus, Camera } from "lucide-react";
 import { saveStudent } from "@/actions/mess";
 import { uploadImage, UPLOAD_CONFIGURED, UPLOAD_UNAVAILABLE } from "@/lib/upload";
 
-export function StudentForm({ messId }: { messId: string }) {
+export type EditableStudent = {
+  id: string;
+  name: string;
+  email: string | null;
+  photoUrl: string | null;
+  parentName: string | null;
+  parentPhone: string | null;
+  monthlyFee: number | null;
+};
+
+export function StudentForm({
+  messId,
+  student,
+}: {
+  messId: string;
+  student?: EditableStudent;
+}) {
   const formRef = useRef<HTMLFormElement>(null);
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -16,7 +33,7 @@ export function StudentForm({ messId }: { messId: string }) {
 
   // Uploaded before the form is submitted, so the row is written with a URL
   // rather than a file. Cleared on reset with everything else.
-  const [photoUrl, setPhotoUrl] = useState("");
+  const [photoUrl, setPhotoUrl] = useState(student?.photoUrl ?? "");
   const [uploading, setUploading] = useState(false);
 
   async function onPhoto(event: React.ChangeEvent<HTMLInputElement>) {
@@ -39,9 +56,16 @@ export function StudentForm({ messId }: { messId: string }) {
     setSaved(false);
 
     startTransition(async () => {
-      const result = await saveStudent(null, formData);
+      const result = await saveStudent(student?.id ?? null, formData);
       if (!result.ok) {
         setIssues(result.issues);
+        return;
+      }
+      if (student) {
+        // Leave the edit screen rather than sitting on a form that now matches
+        // what is already saved.
+        router.push(`/mess/${messId}/students`);
+        router.refresh();
         return;
       }
       formRef.current?.reset();
@@ -60,7 +84,19 @@ export function StudentForm({ messId }: { messId: string }) {
       <input type="hidden" name="messId" value={messId} />
       <input type="hidden" name="photoUrl" value={photoUrl} />
 
-      <h2 className="font-heading text-base font-semibold text-text-main">Add a student</h2>
+      <div className="flex items-baseline justify-between gap-3">
+        <h2 className="font-heading text-base font-semibold text-text-main">
+          {student ? `Edit ${student.name}` : "Add a student"}
+        </h2>
+        {student && (
+          <Link
+            href={`/mess/${messId}/students`}
+            className="text-sm text-text-muted underline underline-offset-2"
+          >
+            Cancel
+          </Link>
+        )}
+      </div>
 
       <div className="flex items-center gap-4">
         {photoUrl ? (
@@ -99,21 +135,23 @@ export function StudentForm({ messId }: { messId: string }) {
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
-        <Field name="name" label="Name" required autoComplete="off" />
+        <Field name="name" label="Name" required autoComplete="off" defaultValue={student?.name ?? ""} />
         <Field
           name="email"
           label="Google email"
           type="email"
           autoComplete="off"
           placeholder="name@gmail.com"
+          defaultValue={student?.email ?? ""}
         />
-        <Field name="parentName" label="Parent name" autoComplete="off" />
+        <Field name="parentName" label="Parent name" autoComplete="off" defaultValue={student?.parentName ?? ""} />
         <Field
           name="parentPhone"
           label="Parent phone"
           type="tel"
           inputMode="numeric"
           autoComplete="off"
+          defaultValue={student?.parentPhone ?? ""}
         />
         <Field
           name="monthlyFee"
@@ -121,6 +159,7 @@ export function StudentForm({ messId }: { messId: string }) {
           type="text"
           inputMode="numeric"
           autoComplete="off"
+          defaultValue={student?.monthlyFee ?? ""}
         />
       </div>
 
@@ -134,7 +173,7 @@ export function StudentForm({ messId }: { messId: string }) {
 
       {saved && (
         <p role="status" className="rounded-lg bg-green-100 px-3 py-2 text-sm text-green-900">
-          Student added.
+          {student ? "Saved." : "Student added."}
         </p>
       )}
 
@@ -144,7 +183,7 @@ export function StudentForm({ messId }: { messId: string }) {
         className="inline-flex items-center justify-center gap-2 self-start rounded-lg bg-primary-strong px-4 py-2.5 font-medium text-white hover:bg-primary-hover disabled:opacity-60"
       >
         <UserPlus className="h-4 w-4" aria-hidden />
-        {pending ? "Saving…" : "Add student"}
+        {pending ? "Saving…" : student ? "Save changes" : "Add student"}
       </button>
     </form>
   );

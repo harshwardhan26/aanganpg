@@ -17,6 +17,7 @@ import { parseLeadView, parseLeadKind, parseLeadGrouping, parseHostelSearch, bui
 import { parseListingView, parseListingSearch, buildListingWhere, listingStatus } from "../src/lib/listing-filters";
 import { messRoleAllows, attendanceDay, recentDays, dayKey, studentFormIssues, attendanceSummary, msUntilNextIstDay, startOfIstMonth, monthKey, dueDate, shouldRemind, owesForMonth, mealAt, nearestMeal, MEAL_WINDOWS, menuFor, weekdayOf } from "../src/lib/mess";
 import { overdueMessage } from "../src/lib/sms";
+import { scanKey, scanKeyMatches } from "../src/lib/scan-key";
 
 try { process.loadEnvFile(); } catch {}
 
@@ -647,6 +648,16 @@ async function main() {
     "an empty parent phone is allowed — not every student has one on file",
   );
 
+  // Email shape. `gmai.com` is deliberately NOT caught: it is a valid address at
+  // a domain that exists, and pretending otherwise would reject real ones.
+  const withEmail = (email: string) =>
+    studentFormIssues({ name: "Aditi", monthlyFee: null, parentPhone: null, parentPhoneRaw: "", email });
+  assert.deepEqual(withEmail("aditi@gmail.com"), [], "a real address passes");
+  assert.deepEqual(withEmail(""), [], "no email is allowed — the app is optional for a student");
+  assert.equal(withEmail("aditi").length, 1, "a bare word is not an address");
+  assert.equal(withEmail("aditi@gmail").length, 1, "an address with no dotted domain is refused");
+  assert.deepEqual(withEmail("aditi@gmai.com"), [], "a plausible typo cannot be caught here");
+
   // An empty mess divides by zero unless the summary guards it.
   assert.deepEqual(attendanceSummary(0, 0), { present: 0, absent: 0, percent: 0 });
   assert.deepEqual(attendanceSummary(150, 200), { present: 150, absent: 50, percent: 75 });
@@ -709,6 +720,26 @@ async function main() {
   assert.equal(nearestMeal(new Date("2026-09-02T11:30:00Z")), "DINNER", "5pm points at dinner next");
   assert.equal(nearestMeal(new Date("2026-09-02T00:30:00Z")), "BREAKFAST", "6am points at breakfast");
   assert.equal(nearestMeal(new Date("2026-09-02T20:00:00Z")), "BREAKFAST", "1:30am points at breakfast");
+
+  // --- Scan key ------------------------------------------------------------
+
+  // Needs a secret to exist; in CI without one, this block has nothing to prove.
+  if (process.env.NEXTAUTH_SECRET) {
+    const messA = "cmtjowvq10000in2zh9alxwo6";
+    const messB = "cmtjowvq10000in2zh9alxwo7";
+
+    // Stable, or every poster already printed stops working on the next deploy.
+    assert.equal(scanKey(messA), scanKey(messA), "the key for one mess must not change");
+    assert.notEqual(scanKey(messA), scanKey(messB), "two messes must not share a key");
+    assert(scanKeyMatches(messA, scanKey(messA)), "a mess's own key must be accepted");
+
+    // The whole point: opening the scan page without the poster's key marks
+    // nothing, so a student cannot mark a meal from their bed.
+    assert(!scanKeyMatches(messA, undefined), "no key must be refused");
+    assert(!scanKeyMatches(messA, ""), "an empty key must be refused");
+    assert(!scanKeyMatches(messA, scanKey(messB)), "another mess's key must be refused");
+    assert(!scanKeyMatches(messA, "abc"), "a short wrong key must be refused, not crash");
+  }
 
   // --- Menu ----------------------------------------------------------------
 

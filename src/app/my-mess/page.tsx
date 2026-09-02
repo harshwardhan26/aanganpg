@@ -17,7 +17,28 @@ export const metadata = { title: "My mess" };
 export default async function MyMessIndex() {
   const session = await getServerSession(authOptions);
   const email = session?.user?.email?.trim().toLowerCase();
-  if (!email) redirect("/");
+
+  // Not a redirect. This page is in the main navigation, so a signed-out visitor
+  // clicking "Mess" out of curiosity must land on something that explains
+  // itself — being thrown back to the home page reads as the link being broken.
+  // The `callbackUrl` opens the sign-in sheet and returns them here afterwards.
+  if (!email) {
+    return (
+      <main className="mx-auto max-w-md px-4 py-10">
+        <h1 className="font-heading text-2xl font-bold text-text-main">My mess</h1>
+        <p className="mt-2 text-sm text-text-muted">
+          If your mess uses Aangan, sign in to see today&apos;s menu, mark your meals and check
+          what you owe.
+        </p>
+        <Link
+          href="/?callbackUrl=%2Fmy-mess"
+          className="mt-4 inline-block rounded-lg bg-primary-strong px-4 py-2.5 font-medium text-white hover:bg-primary-hover"
+        >
+          Sign in
+        </Link>
+      </main>
+    );
+  }
 
   const enrolments = await prisma.student.findMany({
     where: { email, leftAt: null },

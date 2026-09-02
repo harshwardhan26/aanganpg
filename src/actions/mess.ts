@@ -6,6 +6,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { canonicalPhone } from "@/lib/phone";
+import { scanKeyMatches } from "@/lib/scan-key";
 import {
   attendanceDay,
   mealAt,
@@ -92,6 +93,7 @@ export async function saveStudent(
     monthlyFee,
     parentPhone,
     parentPhoneRaw: input.parentPhone,
+    email: input.email,
   });
   if (issues.length) return { ok: false, issues };
 
@@ -184,7 +186,7 @@ export async function findStudent(messId: string): Promise<FoundStudent | null> 
 
 export type ScanOutcome =
   | { ok: true; name: string; photoUrl: string | null; meal: MealName; alreadyMarked: boolean }
-  | { ok: false; reason: "no-meal" | "not-a-student" | "left" };
+  | { ok: false; reason: "no-key" | "no-meal" | "not-a-student" | "left" };
 
 /**
  * A student marking themselves present by opening the poster link.
@@ -198,8 +200,16 @@ export type ScanOutcome =
  * mess in the staff sense, and never sees a staff screen. Being signed in and
  * being on the roll is the whole check.
  */
-export async function recordScan(messId: string, now = new Date()): Promise<ScanOutcome> {
+export async function recordScan(
+  messId: string,
+  key: string | undefined,
+  now = new Date(),
+): Promise<ScanOutcome> {
   const id = idSchema.parse(messId);
+
+  // Checked before anything else, including the meal window: the answer to
+  // "open this page from your bed" must not depend on the time of day.
+  if (!scanKeyMatches(id, key)) return { ok: false, reason: "no-key" };
 
   const meal = mealAt(now);
   if (!meal) return { ok: false, reason: "no-meal" };

@@ -14,8 +14,9 @@ export const NAV_LINKS = [
   { href: "/search", label: "All hostels" },
   { href: "/search?genderPreference=Female", label: "For Girls" },
   { href: "/search?genderPreference=Male", label: "For Boys" },
-  // ponytail: "Mess" points at the hostels-that-include-a-mess filter, not at a
-  // directory of messes. The label and the destination disagree slightly until
-  // the nearby-messes-by-locality section exists; repoint this href when it does.
-  { href: "/search?food=yes", label: "Mess" },
+  // Repointed from `/search?food=yes` now that a student actually has a mess of
+  // their own to open. The hostels-with-food filter it used to reach is still on
+  // the search page as a filter, which is where a person looking for a room
+  // rather than for their own mess is already standing.
+  { href: "/my-mess", label: "Mess" },
 ] as const;

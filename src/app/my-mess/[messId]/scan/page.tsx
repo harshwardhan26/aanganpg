@@ -15,30 +15,37 @@ export const metadata = { title: "Mess entry" };
  */
 export default async function ScanPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ messId: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const { messId } = await params;
+  const key = (await searchParams).k;
 
   const mess = await prisma.mess.findUnique({
     where: { id: messId },
     select: { name: true },
   });
 
-  const result = await recordScan(messId);
+  const result = await recordScan(messId, typeof key === "string" ? key : undefined);
 
   if (!result.ok) {
     return (
       <Shell messName={mess?.name}>
         <div className="rounded-2xl border border-border bg-white p-8 text-center">
           <p className="font-heading text-xl font-bold text-text-main">
+            {result.reason === "no-key" && "Scan the poster at the mess"}
             {result.reason === "no-meal" && "No meal is being served right now"}
             {result.reason === "not-a-student" && "You are not on this mess's list"}
             {result.reason === "left" && "You are no longer on this mess's list"}
           </p>
           <p className="mt-2 text-sm text-text-muted">
+            {result.reason === "no-key" &&
+              "Point your phone camera at the poster by the counter. A meal can only be marked there."}
             {result.reason === "no-meal" && "Scan again at the next meal time."}
-            {result.reason !== "no-meal" && "Ask the mess staff to add you, then scan again."}
+            {(result.reason === "not-a-student" || result.reason === "left") &&
+              "Ask the mess staff to add you, then scan again."}
           </p>
         </div>
       </Shell>
