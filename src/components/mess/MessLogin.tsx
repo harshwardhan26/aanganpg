@@ -2,6 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { safeCallbackUrl } from "@/lib/session";
 import { signIn } from "next-auth/react";
 import { UtensilsCrossed, Store, ChevronRight } from "lucide-react";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -28,8 +29,31 @@ import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/s
  * add their Gmail, an owner needs to ask Aangan to set their mess up. Guessing
  * wrong there sends someone to the wrong person for help.
  */
-export function MessLogin({ label = "Sign in", className }: { label?: string; className?: string }) {
+export function MessLogin({
+  label = "Sign in",
+  className,
+  callbackUrl,
+}: {
+  label?: string;
+  className?: string;
+  /** Where to return after Google. Sanitised; anything off-site is ignored. */
+  callbackUrl?: string;
+}) {
   const [open, setOpen] = useState(false);
+
+  // A caller's destination wins, then one already on the URL — `proxy.ts` puts
+  // it there when it turns somebody away — then the front door.
+  const back = (as: "student" | "owner") => {
+    const fromUrl =
+      typeof window === "undefined"
+        ? null
+        : safeCallbackUrl(new URLSearchParams(window.location.search).get("callbackUrl"), window.location.origin);
+    const target =
+      (typeof window === "undefined"
+        ? callbackUrl
+        : safeCallbackUrl(callbackUrl ?? null, window.location.origin)) ?? fromUrl;
+    return target ?? `/mess-home?as=${as}`;
+  };
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -57,13 +81,13 @@ export function MessLogin({ label = "Sign in", className }: { label?: string; cl
             icon={<UtensilsCrossed className="h-6 w-6" aria-hidden />}
             title="I eat at a mess"
             detail="See today's food, mark your meal, check your fees"
-            onClick={() => signIn("google", { callbackUrl: "/mess-home?as=student" })}
+            onClick={() => signIn("google", { callbackUrl: back("student") })}
           />
           <Door
             icon={<Store className="h-6 w-6" aria-hidden />}
             title="I run a mess"
             detail="Who came today, fees, food menu"
-            onClick={() => signIn("google", { callbackUrl: "/mess-home?as=owner" })}
+            onClick={() => signIn("google", { callbackUrl: back("owner") })}
           />
         </div>
       </SheetContent>

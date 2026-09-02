@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import { recordScan } from "@/actions/mess";
 import { MEAL_LABEL } from "@/lib/mess";
 import { LiveClock } from "./LiveClock";
+import { MessLogin } from "@/components/mess/MessLogin";
 
 export const metadata = { title: "Mess entry" };
 
@@ -29,6 +30,26 @@ export default async function ScanPage({
   });
 
   const result = await recordScan(messId, typeof key === "string" ? key : undefined);
+
+  if (!result.ok && result.reason === "signed-out") {
+    // Back to this exact link, key and all. Sending them to a generic sign-in
+    // lost the key, dropped them on their dashboard with no receipt, and left
+    // them scanning the poster over and over.
+    const here = `/my-mess/${messId}/scan${typeof key === "string" ? `?k=${encodeURIComponent(key)}` : ""}`;
+    return (
+      <Shell messName={mess?.name}>
+        <div className="rounded-2xl border-2 border-border bg-white p-8 text-center">
+          <p className="font-heading text-2xl font-bold text-text-main">Sign in to mark your food</p>
+          <p className="mt-3 text-base text-text-muted">
+            Use the Gmail your mess put on their list. You come straight back here.
+          </p>
+          <div className="mt-5 flex justify-center">
+            <MessLogin callbackUrl={here} />
+          </div>
+        </div>
+      </Shell>
+    );
+  }
 
   if (!result.ok) {
     return (

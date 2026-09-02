@@ -1009,6 +1009,28 @@ async function main() {
   assert.equal(initials(null), "", "no name at all draws no avatar");
   assert.equal(initials("   "), "", "spaces are not a name");
 
+  // ---- coming back from Google to the right place --------------------------
+  // A scanned QR carries a key in its URL. Losing it during sign-in put the
+  // student on their dashboard with no receipt, so they scanned again, and
+  // again. These are the shapes that link takes.
+  const origin = "https://mess.aanganpg.com";
+  assert.equal(
+    safeCallbackUrl("/my-mess/abc/scan?k=6edbe6b1edd3353b", origin),
+    "/my-mess/abc/scan?k=6edbe6b1edd3353b",
+    "the key survives the round trip",
+  );
+  assert.equal(
+    safeCallbackUrl(`${origin}/my-mess/abc/scan?k=deadbeef`, origin),
+    "/my-mess/abc/scan?k=deadbeef",
+    "an absolute link on our own host is reduced to a path",
+  );
+  assert.equal(safeCallbackUrl("//evil.example/scan", origin), null, "protocol-relative is refused");
+  assert.equal(
+    safeCallbackUrl("https://evil.example/my-mess/abc/scan", origin),
+    null,
+    "another origin is refused",
+  );
+
   console.log("Self check passed");
 }
 

@@ -186,7 +186,7 @@ export async function findStudent(messId: string): Promise<FoundStudent | null> 
 
 export type ScanOutcome =
   | { ok: true; name: string; photoUrl: string | null; meal: MealName; alreadyMarked: boolean }
-  | { ok: false; reason: "no-key" | "no-meal" | "not-a-student" | "left" };
+  | { ok: false; reason: "no-key" | "signed-out" | "no-meal" | "not-a-student" | "left" };
 
 /**
  * A student marking themselves present by opening the poster link.
@@ -210,6 +210,12 @@ export async function recordScan(
   // Checked before anything else, including the meal window: the answer to
   // "open this page from your bed" must not depend on the time of day.
   if (!scanKeyMatches(id, key)) return { ok: false, reason: "no-key" };
+
+  // Before the meal window and before the roll: "you are not in this mess" is a
+  // frightening thing to tell a student who is simply not signed in yet, and it
+  // is the wrong instruction — they need a sign-in button, not the mess office.
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.email) return { ok: false, reason: "signed-out" };
 
   const meal = mealAt(now);
   if (!meal) return { ok: false, reason: "no-meal" };
