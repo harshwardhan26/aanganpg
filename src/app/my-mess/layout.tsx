@@ -1,5 +1,5 @@
-import Link from "next/link";
 import type { Metadata } from "next";
+import { MessNavbar } from "@/components/mess/MessNavbar";
 
 export const metadata: Metadata = {
   title: { default: "Aangan Mess", template: "%s | Aangan Mess" },
@@ -12,10 +12,11 @@ export const metadata: Metadata = {
 /**
  * The student side of mess.aanganpg.com.
  *
- * A plain brand bar and nothing else: every screen under here is one job — mark
- * a meal, see the food, see what is owed — and a menu of other places to go is
- * the thing that makes those screens hard for someone who opened the phone to
- * do one thing.
+ * The same bar as the landing page, so signing in does not feel like landing on
+ * a different website. It carries the brand, a way back to their own mess, and
+ * sign out — nothing else. Every screen under here is one job, and a menu of
+ * other places to go is what makes those screens hard for someone who opened
+ * their phone to do one thing.
  */
 export default function MyMessLayout({
   children,
@@ -24,13 +25,7 @@ export default function MyMessLayout({
 }>) {
   return (
     <div className="min-h-screen bg-light">
-      <header className="border-b border-border bg-white">
-        <div className="mx-auto flex h-16 max-w-md items-center px-4">
-          <Link href="/" className="font-heading text-xl font-bold text-primary-strong">
-            Aangan <span className="text-text-main">Mess</span>
-          </Link>
-        </div>
-      </header>
+      <MessNavbar />
       {children}
     </div>
   );
