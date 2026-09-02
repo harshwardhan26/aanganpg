@@ -1,6 +1,7 @@
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { PWAPrompt } from "@/components/PWAPrompt";
+import { RoomProviders } from "@/components/auth/RoomProviders";
 
 /**
  * The room site's chrome — aanganpg.com and nothing else.
@@ -16,7 +17,7 @@ export default function MainLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <>
+    <RoomProviders>
       {/*
         * Visually hidden until focused. A keyboard or screen-reader user
         * otherwise tabs through the whole navbar on every page before
@@ -32,6 +33,6 @@ export default function MainLayout({
       <div id="main-content">{children}</div>
       <Footer />
       <PWAPrompt />
-    </>
+    </RoomProviders>
   );
 }
