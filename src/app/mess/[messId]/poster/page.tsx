@@ -4,18 +4,10 @@ import { redirect } from "next/navigation";
 import { requireMess } from "@/actions/mess";
 import { getMessUrl } from "@/lib/url";
 import { scanKey } from "@/lib/scan-key";
-import { MEAL_WINDOWS } from "@/lib/mess";
+import { mealWindows, clockLabel, MESS_TIMES_SELECT } from "@/lib/mess";
 
 export const metadata = { title: "Entry poster" };
 
-/** `18:30` from minutes past midnight. */
-function clockLabel(minutes: number): string {
-  const hour = Math.floor(minutes / 60);
-  const minute = minutes % 60;
-  const suffix = hour >= 12 ? "PM" : "AM";
-  const twelve = hour % 12 === 0 ? 12 : hour % 12;
-  return `${twelve}:${String(minute).padStart(2, "0")} ${suffix}`;
-}
 
 /**
  * The sheet the owner prints and sticks by the door.
@@ -36,7 +28,7 @@ export default async function PosterPage({
 
   const mess = await prisma.mess.findUnique({
     where: { id: messId },
-    select: { name: true },
+    select: { name: true, ...MESS_TIMES_SELECT },
   });
   if (!mess) redirect("/mess");
 
@@ -85,7 +77,7 @@ export default async function PosterPage({
         />
 
         <ul className="mt-6 flex flex-col gap-1 text-sm text-text-main">
-          {MEAL_WINDOWS.map((window) => (
+          {mealWindows(mess).map((window) => (
             <li key={window.meal} className="flex justify-between border-b border-border py-2 text-base">
               <span className="font-semibold">{window.label}</span>
               <span className="tabular-nums text-text-muted">

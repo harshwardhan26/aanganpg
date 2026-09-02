@@ -1,7 +1,15 @@
 import Link from "next/link";
 import { ClipboardCheck, Users, QrCode } from "lucide-react";
 import prisma from "@/lib/prisma";
-import { attendanceDay, recentDays, dayKey, dayLabel, MEAL_WINDOWS } from "@/lib/mess";
+import {
+  attendanceDay,
+  recentDays,
+  dayKey,
+  dayLabel,
+  mealWindows,
+  DEFAULT_MEAL_TIMES,
+  MESS_TIMES_SELECT,
+} from "@/lib/mess";
 
 export const metadata = { title: "Today" };
 
@@ -17,6 +25,12 @@ export default async function MessDashboard({
   const now = new Date();
   const today = attendanceDay(now);
   const days = recentDays(now, STRIP_DAYS);
+
+  const mess = await prisma.mess.findUnique({
+    where: { id: messId },
+    select: MESS_TIMES_SELECT,
+  });
+  const windows = mealWindows(mess ?? DEFAULT_MEAL_TIMES);
 
   const [activeCount, rows, todayByMeal] = await Promise.all([
     prisma.student.count({ where: { messId, leftAt: null } }),
@@ -43,7 +57,7 @@ export default async function MessDashboard({
       <section>
         <h2 className="mb-3 font-heading text-xl font-bold text-text-main">Today</h2>
         <div className="grid grid-cols-3 gap-3">
-          {MEAL_WINDOWS.map((window) => (
+          {windows.map((window) => (
             <div key={window.meal} className="rounded-2xl border-2 border-border bg-white p-4">
               <p className="font-heading text-4xl font-bold tabular-nums text-primary-strong">
                 {byMeal.get(window.meal) ?? 0}

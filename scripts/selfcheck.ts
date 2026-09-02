@@ -18,7 +18,7 @@ import { trustedIp } from "../src/lib/request";
 import { allowRequest } from "../src/lib/rate-limit";
 import { parseLeadView, parseLeadKind, parseLeadGrouping, parseHostelSearch, buildLeadWhere, buildLeadOrderBy, groupByHostel, startOfIstDay, followupState } from "../src/lib/lead-filters";
 import { parseListingView, parseListingSearch, buildListingWhere, listingStatus } from "../src/lib/listing-filters";
-import { messRoleAllows, attendanceDay, recentDays, dayKey, studentFormIssues, attendanceSummary, msUntilNextIstDay, startOfIstMonth, monthKey, dueDate, shouldRemind, owesForMonth, mealAt, nearestMeal, MEAL_WINDOWS, menuFor, weekdayOf } from "../src/lib/mess";
+import { messRoleAllows, attendanceDay, recentDays, dayKey, studentFormIssues, attendanceSummary, msUntilNextIstDay, startOfIstMonth, monthKey, dueDate, shouldRemind, owesForMonth, mealAt, nearestMeal, DEFAULT_MEAL_WINDOWS, DEFAULT_MEAL_TIMES, mealWindows, mealTimesIssues, toClockValue, fromClockValue, clockLabel, menuFor, weekdayOf } from "../src/lib/mess";
 import { overdueMessage } from "../src/lib/sms";
 import { scanKey, scanKeyMatches } from "../src/lib/scan-key";
 
@@ -696,33 +696,33 @@ async function main() {
 
   // IST, not UTC. 03:00 UTC is 08:30 IST — breakfast — and reading the UTC hour
   // would file it under nothing at all.
-  assert.equal(mealAt(new Date("2026-09-02T03:00:00Z")), "BREAKFAST", "08:30 IST is breakfast");
-  assert.equal(mealAt(new Date("2026-09-02T07:30:00Z")), "LUNCH", "13:00 IST is lunch");
-  assert.equal(mealAt(new Date("2026-09-02T15:00:00Z")), "DINNER", "20:30 IST is dinner");
+  assert.equal(mealAt(new Date("2026-09-02T03:00:00Z"), DEFAULT_MEAL_WINDOWS), "BREAKFAST", "08:30 IST is breakfast");
+  assert.equal(mealAt(new Date("2026-09-02T07:30:00Z"), DEFAULT_MEAL_WINDOWS), "LUNCH", "13:00 IST is lunch");
+  assert.equal(mealAt(new Date("2026-09-02T15:00:00Z"), DEFAULT_MEAL_WINDOWS), "DINNER", "20:30 IST is dinner");
 
   // Between meals is null, not the nearest guess. A scan at 5pm must be refused,
   // or one scan covers a dinner the student never came to.
-  assert.equal(mealAt(new Date("2026-09-02T11:30:00Z")), null, "17:00 IST is between meals");
-  assert.equal(mealAt(new Date("2026-09-02T20:00:00Z")), null, "01:30 IST is between meals");
+  assert.equal(mealAt(new Date("2026-09-02T11:30:00Z"), DEFAULT_MEAL_WINDOWS), null, "17:00 IST is between meals");
+  assert.equal(mealAt(new Date("2026-09-02T20:00:00Z"), DEFAULT_MEAL_WINDOWS), null, "01:30 IST is between meals");
 
   // Window edges: a meal starts at its `from` and has ended by its `to`.
-  assert.equal(mealAt(new Date("2026-09-02T05:30:00Z")), "LUNCH", "11:00 IST starts lunch");
-  assert.equal(mealAt(new Date("2026-09-02T10:29:00Z")), "LUNCH", "15:59 IST is still lunch");
-  assert.equal(mealAt(new Date("2026-09-02T10:30:00Z")), null, "16:00 IST is after lunch");
+  assert.equal(mealAt(new Date("2026-09-02T05:30:00Z"), DEFAULT_MEAL_WINDOWS), "LUNCH", "11:00 IST starts lunch");
+  assert.equal(mealAt(new Date("2026-09-02T10:29:00Z"), DEFAULT_MEAL_WINDOWS), "LUNCH", "15:59 IST is still lunch");
+  assert.equal(mealAt(new Date("2026-09-02T10:30:00Z"), DEFAULT_MEAL_WINDOWS), null, "16:00 IST is after lunch");
 
   // Windows must not overlap, or one moment would belong to two meals and which
   // one a scan lands in would depend on array order.
-  for (let i = 1; i < MEAL_WINDOWS.length; i++) {
+  for (let i = 1; i < DEFAULT_MEAL_WINDOWS.length; i++) {
     assert(
-      MEAL_WINDOWS[i].from >= MEAL_WINDOWS[i - 1].to,
-      `${MEAL_WINDOWS[i].meal} must start after ${MEAL_WINDOWS[i - 1].meal} ends`,
+      DEFAULT_MEAL_WINDOWS[i].from >= DEFAULT_MEAL_WINDOWS[i - 1].to,
+      `${DEFAULT_MEAL_WINDOWS[i].meal} must start after ${DEFAULT_MEAL_WINDOWS[i - 1].meal} ends`,
     );
   }
 
   // The staff screen always has a meal selected, even between meals.
-  assert.equal(nearestMeal(new Date("2026-09-02T11:30:00Z")), "DINNER", "5pm points at dinner next");
-  assert.equal(nearestMeal(new Date("2026-09-02T00:30:00Z")), "BREAKFAST", "6am points at breakfast");
-  assert.equal(nearestMeal(new Date("2026-09-02T20:00:00Z")), "BREAKFAST", "1:30am points at breakfast");
+  assert.equal(nearestMeal(new Date("2026-09-02T11:30:00Z"), DEFAULT_MEAL_WINDOWS), "DINNER", "5pm points at dinner next");
+  assert.equal(nearestMeal(new Date("2026-09-02T00:30:00Z"), DEFAULT_MEAL_WINDOWS), "BREAKFAST", "6am points at breakfast");
+  assert.equal(nearestMeal(new Date("2026-09-02T20:00:00Z"), DEFAULT_MEAL_WINDOWS), "BREAKFAST", "1:30am points at breakfast");
 
   // --- Scan key ------------------------------------------------------------
 
@@ -1030,6 +1030,56 @@ async function main() {
     null,
     "another origin is refused",
   );
+
+  // ---- a mess sets its own hours -------------------------------------------
+  // The windows used to be one constant for everybody. A mess that serves
+  // dinner at 7 was telling its own students no food was being served at 6:55,
+  // and a scan at 7pm could land on lunch.
+  const lateMess = mealWindows({
+    breakfastFrom: 8 * 60,
+    breakfastTo: 10 * 60,
+    lunchFrom: 13 * 60,
+    lunchTo: 15 * 60,
+    dinnerFrom: 20 * 60,
+    dinnerTo: 23 * 60,
+  });
+  // 19:00 IST = 13:30 UTC. Dinner at the default mess, nothing at this one.
+  const sevenPm = new Date("2026-09-02T13:30:00Z");
+  assert.equal(mealAt(sevenPm, DEFAULT_MEAL_WINDOWS), "DINNER", "7pm is dinner by default");
+  assert.equal(mealAt(sevenPm, lateMess), null, "the same instant is nothing at a late mess");
+  assert.equal(nearestMeal(sevenPm, lateMess), "DINNER", "and it points at dinner next");
+  // 08:30 IST = 03:00 UTC: breakfast at both, but only one of them is open at 6:45.
+  assert.equal(mealAt(new Date("2026-09-02T01:15:00Z"), DEFAULT_MEAL_WINDOWS), "BREAKFAST", "6:45am default");
+  assert.equal(mealAt(new Date("2026-09-02T01:15:00Z"), lateMess), null, "6:45am is too early here");
+
+  assert.deepEqual(mealTimesIssues(DEFAULT_MEAL_TIMES), [], "the defaults are a valid set");
+  assert.deepEqual(
+    mealTimesIssues({ ...DEFAULT_MEAL_TIMES, lunchTo: DEFAULT_MEAL_TIMES.lunchFrom - 60 }),
+    ["Lunch must end after it starts."],
+    "a window cannot end before it starts",
+  );
+  assert.deepEqual(
+    mealTimesIssues({ ...DEFAULT_MEAL_TIMES, dinnerFrom: 15 * 60 }),
+    ["Dinner starts before Lunch ends."],
+    "meals cannot overlap — a scan would land on whichever came first",
+  );
+  // Touching is fine: lunch ends at 16:00 and dinner may start at 16:00.
+  assert.deepEqual(
+    mealTimesIssues({ ...DEFAULT_MEAL_TIMES, dinnerFrom: DEFAULT_MEAL_TIMES.lunchTo }),
+    [],
+    "back-to-back meals are allowed",
+  );
+
+  assert.equal(toClockValue(390), "06:30", "minutes to the value a time input wants");
+  assert.equal(toClockValue(0), "00:00", "midnight");
+  assert.equal(fromClockValue("06:30"), 390, "and back again");
+  assert.equal(fromClockValue("23:59"), 1439, "the last minute of the day");
+  assert.equal(fromClockValue("24:00"), null, "there is no 24:00");
+  assert.equal(fromClockValue("7:5"), null, "a half-typed time is not a time");
+  assert.equal(fromClockValue(""), null, "an empty box is not a time");
+  assert.equal(clockLabel(390), "6:30 AM", "how a time is written to a person");
+  assert.equal(clockLabel(720), "12:00 PM", "noon is 12 PM, not 0 PM");
+  assert.equal(clockLabel(0), "12:00 AM", "midnight is 12 AM");
 
   console.log("Self check passed");
 }

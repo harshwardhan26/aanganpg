@@ -1,12 +1,25 @@
 import prisma from "@/lib/prisma";
-import { attendanceDay, dayKey, nearestMeal, MEAL_WINDOWS, type MealName } from "@/lib/mess";
+import {
+  attendanceDay,
+  dayKey,
+  nearestMeal,
+  mealWindows,
+  DEFAULT_MEAL_TIMES,
+  type MealName,
+  type MealWindow,
+  MESS_TIMES_SELECT,
+} from "@/lib/mess";
 import { CheckinList } from "./CheckinList";
 
 export const metadata = { title: "Check-in" };
 
-function parseMeal(raw: string | string[] | undefined, now: Date): MealName {
-  const found = MEAL_WINDOWS.find((w) => w.meal === raw);
-  return found?.meal ?? nearestMeal(now);
+function parseMeal(
+  raw: string | string[] | undefined,
+  now: Date,
+  windows: MealWindow[],
+): MealName {
+  const found = windows.find((w) => w.meal === raw);
+  return found?.meal ?? nearestMeal(now, windows);
 }
 
 export default async function CheckinPage({
@@ -21,7 +34,12 @@ export default async function CheckinPage({
   const day = attendanceDay(now);
   // Defaults to the meal being served, so staff at the door taps nothing extra.
   // Overridable, because catching up on this morning at noon is a real thing.
-  const meal = parseMeal((await searchParams).meal, now);
+  const mess = await prisma.mess.findUnique({
+    where: { id: messId },
+    select: MESS_TIMES_SELECT,
+  });
+  const windows = mealWindows(mess ?? DEFAULT_MEAL_TIMES);
+  const meal = parseMeal((await searchParams).meal, now, windows);
 
   const students = await prisma.student.findMany({
     where: { messId, leftAt: null },
@@ -41,6 +59,7 @@ export default async function CheckinPage({
       key={`${dayKey(day)}:${meal}`}
       messId={messId}
       meal={meal}
+      windows={windows}
       students={students.map((s) => ({
         id: s.id,
         name: s.name,

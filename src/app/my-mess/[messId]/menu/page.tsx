@@ -8,8 +8,10 @@ import {
   menuFor,
   mealAt,
   weekdayOf,
-  MEAL_WINDOWS,
+  mealWindows,
+  DEFAULT_MEAL_TIMES,
   WEEKDAY_LABEL,
+  MESS_TIMES_SELECT,
 } from "@/lib/mess";
 
 export const metadata = { title: "Menu" };
@@ -35,7 +37,12 @@ export default async function StudentMenuPage({
 
   const now = new Date();
   const day = attendanceDay(now);
-  const servingNow = mealAt(now);
+  const mess = await prisma.mess.findUnique({
+    where: { id: messId },
+    select: MESS_TIMES_SELECT,
+  });
+  const windows = mealWindows(mess ?? DEFAULT_MEAL_TIMES);
+  const servingNow = mealAt(now, windows);
 
   const rows = await prisma.menuItem.findMany({
     where: { messId },
@@ -77,7 +84,7 @@ export default async function StudentMenuPage({
             </h2>
 
             <ul className="mt-2 flex flex-col gap-2">
-              {MEAL_WINDOWS.map((window) => {
+              {windows.map((window) => {
                 const items = menuFor(rows, date, window.meal);
                 const isNow = offset === 0 && window.meal === servingNow;
                 return (

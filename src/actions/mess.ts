@@ -10,6 +10,10 @@ import { scanKeyMatches } from "@/lib/scan-key";
 import {
   attendanceDay,
   mealAt,
+  mealWindows,
+  mealTimesIssues,
+  fromClockValue,
+  MESS_TIMES_SELECT,
   messRoleAllows,
   studentFormIssues,
   type MealName,
@@ -17,6 +21,7 @@ import {
 } from "@/lib/mess";
 
 const idSchema = z.string().trim().min(1).max(64);
+
 
 /**
  * The one gate into a mess.
@@ -217,7 +222,13 @@ export async function recordScan(
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) return { ok: false, reason: "signed-out" };
 
-  const meal = mealAt(now);
+  const mess = await prisma.mess.findUnique({
+    where: { id },
+    select: MESS_TIMES_SELECT,
+  });
+  if (!mess) return { ok: false, reason: "not-a-student" };
+
+  const meal = mealAt(now, mealWindows(mess));
   if (!meal) return { ok: false, reason: "no-meal" };
 
   const student = await findStudent(id);
@@ -393,4 +404,45 @@ export async function toggleAttendance(
   revalidatePath(`/mess/${messId}/checkin`);
   revalidatePath(`/mess/${messId}`);
   return { present: !existing };
+}
+
+const MEAL_FIELDS = [
+  "breakfastFrom",
+  "breakfastTo",
+  "lunchFrom",
+  "lunchTo",
+  "dinnerFrom",
+  "dinnerTo",
+] as const;
+
+export type TimesResult = { ok: true } | { ok: false; issues: string[] };
+
+/**
+ * A mess's own serving hours.
+ *
+ * Owner only. These decide which meal a scan is filed under and when a student
+ * is told food is ready, so a helper who can mark attendance still cannot move
+ * the goalposts it is marked against.
+ */
+export async function saveMealTimes(formData: FormData): Promise<TimesResult> {
+  const messId = idSchema.parse(formData.get("messId"));
+  await requireMess(messId, "OWNER");
+
+  const times = {} as Record<(typeof MEAL_FIELDS)[number], number>;
+  for (const field of MEAL_FIELDS) {
+    const minutes = fromClockValue(String(formData.get(field) ?? ""));
+    if (minutes === null) return { ok: false, issues: ["Fill in all six times."] };
+    times[field] = minutes;
+  }
+
+  const issues = mealTimesIssues(times);
+  if (issues.length) return { ok: false, issues };
+
+  await prisma.mess.update({ where: { id: messId }, data: times });
+
+  revalidatePath(`/mess/${messId}/menu`);
+  revalidatePath(`/mess/${messId}`);
+  revalidatePath(`/mess/${messId}/checkin`);
+  revalidatePath(`/mess/${messId}/poster`);
+  return { ok: true };
 }

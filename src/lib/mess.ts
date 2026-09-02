@@ -124,23 +124,66 @@ export function studentFormIssues(input: {
 
 export type MealName = "BREAKFAST" | "LUNCH" | "DINNER";
 
+/** The shape the six columns on `Mess` take once they are read. */
+export type MealTimes = {
+  breakfastFrom: number;
+  breakfastTo: number;
+  lunchFrom: number;
+  lunchTo: number;
+  dinnerFrom: number;
+  dinnerTo: number;
+};
+
+export type MealWindow = { meal: MealName; from: number; to: number; label: string };
+
 /**
- * When each meal is served, in IST minutes from midnight.
+ * The six columns every "which meal is it" question needs, as a Prisma select.
  *
- * A constant, not a per-mess setting: one mess is running this, and three
- * columns nobody has yet asked to change differently is a settings screen built
- * for an imaginary second customer. When a second mess disagrees, this moves to
- * the `Mess` row and the callers do not change.
- *
- * The windows are deliberately generous at the edges — a student arriving ten
- * minutes after the counter closes is still eating lunch, and a scan that lands
- * on no meal at all is a support call.
+ * Here rather than beside the actions: `src/actions/mess.ts` is a `"use server"`
+ * module, and every export of one of those must be an async function — a plain
+ * constant silently strips the module of all its exports at build time.
  */
-export const MEAL_WINDOWS: { meal: MealName; from: number; to: number; label: string }[] = [
-  { meal: "BREAKFAST", from: 6 * 60 + 30, to: 11 * 60, label: "Breakfast" },
-  { meal: "LUNCH", from: 11 * 60, to: 16 * 60, label: "Lunch" },
-  { meal: "DINNER", from: 18 * 60, to: 23 * 60 + 30, label: "Dinner" },
-];
+export const MESS_TIMES_SELECT = {
+  breakfastFrom: true,
+  breakfastTo: true,
+  lunchFrom: true,
+  lunchTo: true,
+  dinnerFrom: true,
+  dinnerTo: true,
+} as const;
+
+/**
+ * What the first mess ran, and what a new mess starts with.
+ *
+ * Every mess sets its own times now — a mess that serves dinner at 7 was
+ * marking its students absent at 6:55 and telling them no food was being
+ * served. These are only the starting point.
+ */
+export const DEFAULT_MEAL_TIMES: MealTimes = {
+  breakfastFrom: 6 * 60 + 30,
+  breakfastTo: 11 * 60,
+  lunchFrom: 11 * 60,
+  lunchTo: 16 * 60,
+  dinnerFrom: 18 * 60,
+  dinnerTo: 23 * 60 + 30,
+};
+
+/**
+ * One mess's serving times, in the order they happen.
+ *
+ * Every screen that asks "which meal is this" goes through here, so a mess's
+ * times are read from its own row in exactly one place.
+ */
+export function mealWindows(times: MealTimes): MealWindow[] {
+  return [
+    { meal: "BREAKFAST", from: times.breakfastFrom, to: times.breakfastTo, label: "Breakfast" },
+    { meal: "LUNCH", from: times.lunchFrom, to: times.lunchTo, label: "Lunch" },
+    { meal: "DINNER", from: times.dinnerFrom, to: times.dinnerTo, label: "Dinner" },
+  ];
+}
+
+/** The default windows, for the one caller that has no mess in hand. */
+export const DEFAULT_MEAL_WINDOWS = mealWindows(DEFAULT_MEAL_TIMES);
 
 export const MEAL_LABEL: Record<MealName, string> = {
   BREAKFAST: "Breakfast",
@@ -161,22 +204,76 @@ function istMinutes(now: Date): number {
  * is told no meal is being served rather than being quietly filed under dinner,
  * which would let one scan cover a meal they never came to.
  */
-export function mealAt(now: Date): MealName | null {
+export function mealAt(now: Date, windows: MealWindow[]): MealName | null {
   const minutes = istMinutes(now);
-  const window = MEAL_WINDOWS.find((w) => minutes >= w.from && minutes < w.to);
+  const window = windows.find((w) => minutes >= w.from && minutes < w.to);
   return window?.meal ?? null;
 }
 
 /** The meal a staff member is most likely marking, for the check-in screen. */
-export function nearestMeal(now: Date): MealName {
-  const current = mealAt(now);
+export function nearestMeal(now: Date, windows: MealWindow[]): MealName {
+  const current = mealAt(now, windows);
   if (current) return current;
 
   const minutes = istMinutes(now);
-  // Before breakfast or after dinner both mean "the next one to be served".
-  if (minutes < MEAL_WINDOWS[0].from) return "BREAKFAST";
-  const upcoming = MEAL_WINDOWS.find((w) => minutes < w.from);
-  return upcoming?.meal ?? "DINNER";
+  // Before the first meal or after the last both mean "the next one served".
+  if (minutes < windows[0].from) return windows[0].meal;
+  const upcoming = windows.find((w) => minutes < w.from);
+  return upcoming?.meal ?? windows[windows.length - 1].meal;
+}
+
+/** `7:00 AM` from minutes past midnight. */
+export function clockLabel(minutes: number): string {
+  const hour = Math.floor(minutes / 60);
+  const minute = minutes % 60;
+  const suffix = hour >= 12 ? "PM" : "AM";
+  const twelve = hour % 12 === 0 ? 12 : hour % 12;
+  return `${twelve}:${String(minute).padStart(2, "0")} ${suffix}`;
+}
+
+/** `07:30`, the value an `<input type="time">` reads and writes. */
+export function toClockValue(minutes: number): string {
+  return `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
+}
+
+/** Minutes past midnight from `07:30`, or null if it is not a time at all. */
+export function fromClockValue(value: string): number | null {
+  const match = /^(\d{1,2}):(\d{2})$/.exec(value.trim());
+  if (!match) return null;
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  if (hours > 23 || minutes > 59) return null;
+  return hours * 60 + minutes;
+}
+
+/**
+ * What is wrong with a set of serving times, in plain words.
+ *
+ * A mess typing its own hours can produce a window that ends before it starts,
+ * or a lunch that runs into dinner. Either one makes `mealAt` answer a question
+ * nobody asked: a scan at 7pm filed under lunch is a meal the student never
+ * ate, in the owner's own numbers.
+ */
+export function mealTimesIssues(times: MealTimes): string[] {
+  const issues: string[] = [];
+  const windows = mealWindows(times);
+
+  for (const w of windows) {
+    if (!Number.isInteger(w.from) || !Number.isInteger(w.to) || w.from < 0 || w.to > 24 * 60) {
+      issues.push(`${w.label} time is not a real time.`);
+    } else if (w.from >= w.to) {
+      issues.push(`${w.label} must end after it starts.`);
+    }
+  }
+  if (issues.length) return issues;
+
+  for (let i = 1; i < windows.length; i++) {
+    if (windows[i].from < windows[i - 1].to) {
+      issues.push(`${windows[i].label} starts before ${windows[i - 1].label} ends.`);
+    }
+  }
+
+  return issues;
 }
 
 // --- Menu ------------------------------------------------------------------

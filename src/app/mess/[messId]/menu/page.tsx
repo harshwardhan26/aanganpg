@@ -1,8 +1,16 @@
 import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
 import { requireMess } from "@/actions/mess";
-import { WEEKDAY_LABEL, MEAL_WINDOWS, attendanceDay, weekdayOf } from "@/lib/mess";
+import {
+  WEEKDAY_LABEL,
+  mealWindows,
+  DEFAULT_MEAL_TIMES,
+  MESS_TIMES_SELECT,
+  attendanceDay,
+  weekdayOf,
+} from "@/lib/mess";
 import { MenuSlot } from "./MenuSlot";
+import { MealTimes } from "./MealTimes";
 
 export const metadata = { title: "Menu" };
 
@@ -15,6 +23,12 @@ export default async function MenuPage({
   const { role } = await requireMess(messId, "STAFF");
   if (role === "STAFF") redirect(`/mess/${messId}`);
 
+  const mess = await prisma.mess.findUnique({
+    where: { id: messId },
+    select: MESS_TIMES_SELECT,
+  });
+  const windows = mealWindows(mess ?? DEFAULT_MEAL_TIMES);
+
   const rows = await prisma.menuItem.findMany({
     where: { messId, date: null },
     select: { weekday: true, meal: true, items: true },
@@ -25,6 +39,8 @@ export default async function MenuPage({
 
   return (
     <div className="flex flex-col gap-5">
+      <MealTimes messId={messId} times={mess ?? DEFAULT_MEAL_TIMES} />
+
       <div>
         <h1 className="font-heading text-2xl font-bold text-text-main">Food menu</h1>
         <p className="mt-2 text-base text-text-muted">
@@ -52,7 +68,7 @@ export default async function MenuPage({
           </h2>
 
           <div className="mt-4 flex flex-col gap-4">
-            {MEAL_WINDOWS.map((window) => (
+            {windows.map((window) => (
               <MenuSlot
                 key={window.meal}
                 messId={messId}

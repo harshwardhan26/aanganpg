@@ -8,6 +8,7 @@ import {
   owesForMonth,
   mealAt,
   MEAL_LABEL,
+  mealWindows,
   onRollDuringWhere,
 } from "@/lib/mess";
 
@@ -25,7 +26,6 @@ export default async function MessAdminHome() {
   const now = new Date();
   const day = attendanceDay(now);
   const month = startOfIstMonth(now);
-  const meal = mealAt(now);
 
   const messes = await prisma.mess.findMany({
     orderBy: { name: "asc" },
@@ -33,6 +33,12 @@ export default async function MessAdminHome() {
       id: true,
       name: true,
       dueDay: true,
+      breakfastFrom: true,
+      breakfastTo: true,
+      lunchFrom: true,
+      lunchTo: true,
+      dinnerFrom: true,
+      dinnerTo: true,
       members: {
         where: { role: "OWNER" },
         select: { user: { select: { name: true, email: true } } },
@@ -56,19 +62,20 @@ export default async function MessAdminHome() {
       where: { leftAt: null },
       _count: { _all: true },
     }),
-    meal
-      ? prisma.attendance.findMany({
-          where: { day, meal, studentId: { in: studentIds } },
-          select: { studentId: true },
-        })
-      : Promise.resolve([]),
+    // Every mess sets its own hours, so there is no single "meal being served"
+    // across all of them. Today's rows come back once and each mess picks out
+    // the meal that is its own right now.
+    prisma.attendance.findMany({
+      where: { day, studentId: { in: studentIds } },
+      select: { studentId: true, meal: true },
+    }),
     prisma.payment.findMany({
       where: { month, studentId: { in: studentIds }, paidAt: { not: null } },
       select: { studentId: true },
     }),
   ]);
 
-  const ate = new Set(ateNow.map((r) => r.studentId));
+  const ateByMeal = ateNow;
   const paid = new Set(paidRows.map((r) => r.studentId));
   const active = new Map(activeCounts.map((r) => [r.messId, r._count._all]));
 
@@ -103,7 +110,12 @@ export default async function MessAdminHome() {
               });
               return owes ? sum + (s.monthlyFee ?? 0) : sum;
             }, 0);
-            const here = mess.students.filter((s) => ate.has(s.id)).length;
+            const windows = mealWindows(mess);
+            const meal = mealAt(now, windows);
+            const ids = new Set(mess.students.map((s) => s.id));
+            const here = meal
+              ? ateByMeal.filter((r) => r.meal === meal && ids.has(r.studentId)).length
+              : 0;
             const owner = mess.members[0]?.user;
 
             return (

@@ -6,7 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Check, Search } from "lucide-react";
 import { toggleAttendance } from "@/actions/mess";
-import { msUntilNextIstDay, MEAL_WINDOWS, type MealName } from "@/lib/mess";
+import { msUntilNextIstDay, type MealName, type MealWindow } from "@/lib/mess";
 import { cn } from "@/lib/utils";
 
 type Row = { id: string; name: string; photoUrl: string | null; present: boolean };
@@ -78,10 +78,12 @@ function useDayRollover(onRollover: () => void) {
 export function CheckinList({
   messId,
   meal,
+  windows,
   students,
 }: {
   messId: string;
   meal: MealName;
+  windows: MealWindow[];
   students: Row[];
 }) {
   const [rows, setRows] = useState(students);
@@ -131,7 +133,7 @@ export function CheckinList({
     <div className="flex flex-col gap-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <nav className="flex gap-2">
-          {MEAL_WINDOWS.map((window) => (
+          {windows.map((window) => (
             <Link
               key={window.meal}
               href={`/mess/${messId}/checkin?meal=${window.meal}`}

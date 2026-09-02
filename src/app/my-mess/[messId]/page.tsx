@@ -15,19 +15,13 @@ import {
   nearestMeal,
   plural,
   MEAL_LABEL,
-  MEAL_WINDOWS,
+  mealWindows,
+  clockLabel,
+  MESS_TIMES_SELECT,
 } from "@/lib/mess";
 
 export const metadata = { title: "My mess" };
 
-/** `7:00 AM` from minutes past midnight. */
-function clockLabel(minutes: number): string {
-  const hour = Math.floor(minutes / 60);
-  const minute = minutes % 60;
-  const suffix = hour >= 12 ? "PM" : "AM";
-  const twelve = hour % 12 === 0 ? 12 : hour % 12;
-  return `${twelve}:${String(minute).padStart(2, "0")} ${suffix}`;
-}
 
 /**
  * The screen a student opens at the counter.
@@ -49,10 +43,13 @@ export default async function StudentMessPage({
   const now = new Date();
   const day = attendanceDay(now);
   const month = startOfIstMonth(now);
-  const servingNow = mealAt(now);
+  const servingNow = null as ReturnType<typeof mealAt>;
 
   const [mess, todayRows, monthCount, payment, menuRows] = await Promise.all([
-    prisma.mess.findUnique({ where: { id: messId }, select: { name: true, dueDay: true } }),
+    prisma.mess.findUnique({
+      where: { id: messId },
+      select: { name: true, dueDay: true, ...MESS_TIMES_SELECT },
+    }),
     prisma.attendance.findMany({ where: { studentId: found.id, day }, select: { meal: true } }),
     prisma.attendance.count({ where: { studentId: found.id, day: { gte: month } } }),
     prisma.payment.findUnique({
@@ -66,6 +63,8 @@ export default async function StudentMessPage({
   ]);
   if (!mess) redirect("/my-mess");
 
+  const windows = mealWindows(mess);
+  const serving = mealAt(now, windows);
   const markedMeals = new Set(todayRows.map((row) => row.meal));
   const due = dueDate(month, mess.dueDay);
   const state = feeState({
@@ -82,8 +81,8 @@ export default async function StudentMessPage({
   const amount = payment?.amount ?? found.monthlyFee ?? 0;
 
   // The meal the card is about: the one being served, or the next one up.
-  const focusMeal = servingNow ?? nearestMeal(now);
-  const focusWindow = MEAL_WINDOWS.find((w) => w.meal === focusMeal)!;
+  const focusMeal = serving ?? nearestMeal(now, windows);
+  const focusWindow = windows.find((w) => w.meal === focusMeal)!;
   const done = markedMeals.has(focusMeal);
   const food = menuFor(menuRows, day, focusMeal);
   const firstName = found.name.trim().split(/\s+/)[0];

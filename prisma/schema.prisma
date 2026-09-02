@@ -59,16 +59,16 @@ model Property {
   // The search page renders many cards at once, and computing these live meant
   // `include: { reviews: true }` on every row — every review of every listing
   // pulled across the wire to produce one number per card.
-  ratingAvg   Float? 
-  ratingCount Int     @default(0)
+  ratingAvg   Float?
+  ratingCount Int    @default(0)
 
   deletedAt DateTime?
   closedAt  DateTime?
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
-  leads   Lead[]
-  savedBy SavedProperty[]
+  leads       Lead[]
+  savedBy     SavedProperty[]
   reviews     Review[]
   reviewCodes ReviewCode[]
 
@@ -142,29 +142,29 @@ model VerificationToken {
 }
 
 model Lead {
-  id         String    @id @default(cuid())
-  name       String
-  phone      String
-  propertyId String?
-  property   Property? @relation(fields: [propertyId], references: [id])
+  id            String    @id @default(cuid())
+  name          String
+  phone         String
+  propertyId    String?
+  property      Property? @relation(fields: [propertyId], references: [id])
   /// "student" — someone enquiring about a room, created by `recordEnquiry`.
   /// "owner"   — a hostel owner being pitched, created by hand in the admin.
   /// Both run the same follow-up pipeline (`stage`, `followupDate`, `notes`),
   /// because the shape is genuinely the same: found them, spoke to them, met
   /// them, they said yes, they said no.
-  kind       String    @default("student")
+  kind          String    @default("student")
   /// Owner leads only. The hostel is not a Property yet — signing them up is
   /// the whole point of the call — so this is free text, not a relation.
-  hostelName String?
-  status     String    @default("New")
-  stage      String    @default("NEW")
-  source     String    @default("contact")
-  notes      String?
+  hostelName    String?
+  status        String    @default("New")
+  stage         String    @default("NEW")
+  source        String    @default("contact")
+  notes         String?
   followupDate  DateTime?
   lastMessageAt DateTime?
   rawMessage    String?
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   @@index([phone, propertyId])
   @@index([propertyId, createdAt])
@@ -203,11 +203,11 @@ model PropertyImage {
 // nothing. `usedByUserId` keeps who spent it, so an odd review can be traced
 // rather than only counted.
 model ReviewCode {
-  id         String   @id @default(cuid())
-  code       String   @unique
+  id         String    @id @default(cuid())
+  code       String    @unique
   propertyId String
-  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-  createdAt  DateTime @default(now())
+  property   Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  createdAt  DateTime  @default(now())
   expiresAt  DateTime?
 
   usedAt       DateTime?
@@ -218,16 +218,16 @@ model ReviewCode {
 }
 
 model Review {
-  id         String   @id @default(cuid())
-  propertyId String
-  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-  userId     String
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  rating     Int
-  comment    String?  @db.Text
+  id          String   @id @default(cuid())
+  propertyId  String
+  property    Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rating      Int
+  comment     String?  @db.Text
   verifiedVia String
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@unique([propertyId, userId])
   @@index([propertyId])
@@ -242,15 +242,26 @@ model Review {
 // ---------------------------------------------------------------------------
 
 model Mess {
-  id        String   @id @default(cuid())
-  name      String
+  id            String   @id @default(cuid())
+  name          String
   /// Day of the month a fee becomes overdue. One number for the whole mess
   /// rather than one per student: every mess we have asked runs a single
   /// collection date, and a per-student date is a field nobody would ever fill
   /// in differently.
-  dueDay    Int      @default(5)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  dueDay        Int      @default(5)
+  /// When each meal is served, in minutes past midnight IST. Six numbers rather
+  /// than six strings: every comparison in the app is "is now inside this
+  /// window", and a "07:30" that has to be parsed before it can be compared is
+  /// a parse that will one day be skipped. The defaults are the times the first
+  /// mess ran, so an existing row keeps behaving exactly as it did.
+  breakfastFrom Int      @default(390)
+  breakfastTo   Int      @default(660)
+  lunchFrom     Int      @default(660)
+  lunchTo       Int      @default(960)
+  dinnerFrom    Int      @default(1080)
+  dinnerTo      Int      @default(1410)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   members  MessMember[]
   students Student[]
@@ -259,12 +270,10 @@ model Mess {
 
 /**
  * What is being served.
- *
  * A mess runs a weekly rotation, not a fresh decision each morning, so the
  * normal row has a `weekday` and repeats forever — twenty-one rows cover the
  * whole year. A `date` row is the exception: a festival, a special, a day the
  * vegetable did not arrive. Exactly one of the two is set.
- *
  * Storing one row per calendar day instead would mean someone typing a menu 365
  * times a year, which is the version that gets abandoned in week two and leaves
  * students looking at a stale screen.
@@ -293,7 +302,6 @@ model MenuItem {
 
 /**
  * Who may open a mess, and as what.
- *
  * Per-mess membership rather than a column on `User`: the global `role` in the
  * session is derived from ADMIN_EMAILS and answers "does this person run
  * Aangan", which is a different question from "does this person run *this*
@@ -341,7 +349,7 @@ model Student {
   /// Rupees per month. Nullable means "not set yet", never 0 — a 0 fee is a real
   /// answer (a free student) and must survive.
   monthlyFee  Int?
-  joinedAt    DateTime @default(now())
+  joinedAt    DateTime  @default(now())
   /// Soft-leave. A student who leaves keeps their attendance history, because the
   /// history is the thing anyone would ever ask about after they are gone.
   leftAt      DateTime?
@@ -358,7 +366,6 @@ model Student {
 
 /**
  * One row per student per billing month — but only once something has happened.
- *
  * There is deliberately no monthly job that pre-creates a row for every student:
  * an unpaid month with no reminder yet is the absence of a row, which is exactly
  * what it means. A row appears when the fee is paid or when the first reminder
@@ -366,11 +373,11 @@ model Student {
  * does not rewrite what someone already paid.
  */
 model Payment {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   studentId String
-  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  student   Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
   /// The first of the billing month, midnight IST stored as a date.
-  month     DateTime @db.Date
+  month     DateTime  @db.Date
   /// Rupees, as they stood when this row was written.
   amount    Int?
   paidAt    DateTime?
@@ -392,13 +399,13 @@ model Payment {
  * instead of a duplicate.
  */
 model Attendance {
-  id        String   @id @default(cuid())
+  id        String           @id @default(cuid())
   studentId String
-  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  day       DateTime @db.Date
+  student   Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  day       DateTime         @db.Date
   meal      Meal
   method    AttendanceMethod @default(MANUAL)
-  markedAt  DateTime @default(now())
+  markedAt  DateTime         @default(now())
 
   @@unique([studentId, day, meal])
   @@index([day])

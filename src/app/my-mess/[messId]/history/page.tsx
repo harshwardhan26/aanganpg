@@ -9,7 +9,7 @@ import {
   monthLabel,
   dayKey,
   plural,
-  MEAL_WINDOWS,
+  DEFAULT_MEAL_WINDOWS,
 } from "@/lib/mess";
 
 export const metadata = { title: "My meals" };
@@ -146,7 +146,7 @@ export default async function HistoryPage({
                 })}
               </span>
               <span className="flex gap-1.5">
-                {MEAL_WINDOWS.map((window) => (
+                {DEFAULT_MEAL_WINDOWS.map((window) => (
                   <span
                     key={window.meal}
                     title={window.label}
