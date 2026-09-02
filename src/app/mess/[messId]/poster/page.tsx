@@ -68,6 +68,15 @@ export default async function PosterPage({
       <div className="mx-auto w-full max-w-md rounded-2xl border-2 border-primary-strong bg-white p-8 text-center print:border-black">
         <p className="font-heading text-2xl font-bold text-text-main">{mess.name}</p>
         <p className="mt-2 text-lg text-text-muted">Point your phone camera here</p>
+        {/*
+          * The camera app opens the real browser, which keeps a student signed
+          * in for a month. A QR opened from inside Instagram or WhatsApp opens
+          * that app's own throwaway browser instead, where the sign-in does not
+          * last — so they are asked to sign in again every single time.
+          */}
+        <p className="mt-1 text-base font-semibold text-primary-strong">
+          Use the camera app. Not Instagram or WhatsApp.
+        </p>
 
         <div
           className="mx-auto mt-6 w-full max-w-64 [&>svg]:h-auto [&>svg]:w-full"
@@ -86,7 +95,9 @@ export default async function PosterPage({
           ))}
         </ul>
 
-        <p className="mt-6 text-base text-text-muted">Then show your phone at the counter.</p>
+        <p className="mt-6 text-base text-text-muted">
+          Sign in once with your Gmail. Then show your phone at the counter.
+        </p>
       </div>
     </div>
   );
