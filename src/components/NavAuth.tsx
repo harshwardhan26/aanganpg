@@ -6,6 +6,7 @@ import { Heart, LogOut, LayoutDashboard, User, PlusCircle } from "lucide-react";
 import { useAuthSheet } from "@/components/auth/AuthSheet";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { initials } from "@/lib/name";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,18 +27,6 @@ export function NavAuth({ className, mode = "all" }: { className?: string, mode?
   const { data: session, status } = useSession();
   const { openAuthSheet } = useAuthSheet();
   const isAdmin = (session?.user as { role?: string })?.role === "admin";
-
-  const getInitials = (name?: string | null) => {
-    if (!name) return "";
-    const parts = name.trim().split(/\s+/);
-    if (parts.length >= 2) {
-      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-    }
-    if (parts[0].length >= 2) {
-      return parts[0][0].toUpperCase() + parts[0][1].toLowerCase();
-    }
-    return parts[0].toUpperCase();
-  };
 
   if (status === "authenticated") {
     if (mode === "login-only") return null;
@@ -77,7 +66,7 @@ export function NavAuth({ className, mode = "all" }: { className?: string, mode?
       <DropdownMenu>
         <DropdownMenuTrigger className={cn("flex items-center justify-center w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-primary-strong", className)}>
           {session?.user?.name ? (
-            <span className="text-[15px] tracking-wide">{getInitials(session.user.name)}</span>
+            <span className="text-[15px] tracking-wide">{initials(session.user.name)}</span>
           ) : (
             <User className="h-5 w-5" />
           )}

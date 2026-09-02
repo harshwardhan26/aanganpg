@@ -1,4 +1,7 @@
 import type { Metadata } from "next";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
+import prisma from "@/lib/prisma";
 import { MessNavbar } from "@/components/mess/MessNavbar";
 
 export const metadata: Metadata = {
@@ -18,14 +21,26 @@ export const metadata: Metadata = {
  * other places to go is what makes those screens hard for someone who opened
  * their phone to do one thing.
  */
-export default function MyMessLayout({
+export default async function MyMessLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // The name on the roll, which is what the avatar shows. Matched on email the
+  // same way every other student lookup is; `null` simply means no avatar.
+  const session = await getServerSession(authOptions);
+  const email = session?.user?.email?.trim().toLowerCase();
+  const student = email
+    ? await prisma.student.findFirst({
+        where: { email, leftAt: null },
+        select: { name: true },
+        orderBy: { mess: { name: "asc" } },
+      })
+    : null;
+
   return (
     <div className="min-h-screen bg-light">
-      <MessNavbar />
+      <MessNavbar name={student?.name} />
       {children}
     </div>
   );

@@ -11,22 +11,11 @@ import { cn } from "@/lib/utils";
 import { NavAuth } from "./NavAuth";
 import { ListPgButton } from "./ListPgButton";
 import { NAV_LINKS } from "@/lib/nav-links";
+import { initials } from "@/lib/name";
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const { data: session } = useSession();
-
-  const getInitials = (name?: string | null) => {
-    if (!name) return "";
-    const parts = name.trim().split(/\s+/);
-    if (parts.length >= 2) {
-      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-    }
-    if (parts[0].length >= 2) {
-      return parts[0][0].toUpperCase() + parts[0][1].toLowerCase();
-    }
-    return parts[0].toUpperCase();
-  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-light/95 backdrop-blur supports-[backdrop-filter]:bg-light/60">
@@ -67,7 +56,7 @@ export function Navbar() {
               !session?.user?.name && "lg:hidden"
             )}>
               {session?.user?.name ? (
-                <span className="text-[15px] tracking-wide">{getInitials(session.user.name)}</span>
+                <span className="text-[15px] tracking-wide">{initials(session.user.name)}</span>
               ) : (
                 <Menu className="h-6 w-6" />
               )}

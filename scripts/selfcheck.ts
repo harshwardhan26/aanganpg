@@ -10,6 +10,7 @@ import { publicImage } from "../src/lib/publicImage";
 import { directionsUrl, looksLikeKolhapur } from "../src/lib/maps";
 import { routeForHost, isMessHost } from "../src/lib/hosts";
 import { onRollDuring, feeState, plural } from "../src/lib/mess";
+import { initials } from "../src/lib/name";
 import { approximateLocation, distanceMetres } from "../src/lib/geo";
 import { enquiryGate, safeCallbackUrl } from "../src/lib/session";
 import { isAdminEmail, resolveRole, isOwner } from "../src/lib/admin";
@@ -995,6 +996,18 @@ async function main() {
   assert.equal(plural(1, "meal"), "1 meal", "one meal, not one meals");
   assert.equal(plural(0, "meal"), "0 meals", "zero takes the plural");
   assert.equal(plural(2, "day"), "2 days", "two days");
+
+  // ---- the avatar ----------------------------------------------------------
+  // Fed by whatever a mess owner typed into the admission form, which is not a
+  // tidy input.
+  assert.equal(initials("Harshwardhan Patil"), "HP", "first and last");
+  assert.equal(initials("Harshwardhan Anil Patil"), "HP", "middle names are skipped");
+  assert.equal(initials("  hari   more  "), "HM", "extra spaces do not become initials");
+  assert.equal(initials("harsh"), "Ha", "one name gives two letters, not one");
+  assert.equal(initials("A"), "A", "a single letter is all there is");
+  assert.equal(initials(""), "", "an empty name draws no avatar");
+  assert.equal(initials(null), "", "no name at all draws no avatar");
+  assert.equal(initials("   "), "", "spaces are not a name");
 
   console.log("Self check passed");
 }
