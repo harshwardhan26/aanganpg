@@ -23,7 +23,7 @@ export function PaidToggle({
   function onClick() {
     // Undoing a payment is the destructive direction, and money is the one place
     // in this app where a mis-tap costs an argument with a parent.
-    if (paid && !confirm("Mark this fee as unpaid again?")) return;
+    if (paid && !confirm("Change this back to not paid?")) return;
 
     setFailed(false);
     startTransition(async () => {
@@ -43,15 +43,15 @@ export function PaidToggle({
       disabled={pending}
       aria-pressed={paid}
       className={cn(
-        "shrink-0 rounded-lg border px-3 py-2 text-xs font-medium disabled:opacity-60",
+        "flex min-h-14 shrink-0 cursor-pointer items-center rounded-xl border-2 px-5 text-base font-semibold transition-colors disabled:opacity-60",
         failed
-          ? "border-red-700 text-red-700"
+          ? "border-red-800 text-red-800"
           : paid
             ? "border-primary-strong bg-primary-strong text-white"
             : "border-border text-text-muted hover:bg-muted",
       )}
     >
-      {pending ? "…" : failed ? "Retry" : paid ? "Paid" : "Mark paid"}
+      {pending ? "…" : failed ? "Try again" : paid ? "Paid" : "Got money"}
     </button>
   );
 }

@@ -26,10 +26,10 @@ export default async function MenuPage({
   return (
     <div className="flex flex-col gap-5">
       <div>
-        <h1 className="font-heading text-lg font-semibold text-text-main">Weekly menu</h1>
-        <p className="mt-1 text-sm text-text-muted">
-          Fill this in once. It repeats every week, and students see it on their phone. Leave a box
-          empty and that meal shows as not put up yet.
+        <h1 className="font-heading text-2xl font-bold text-text-main">Food menu</h1>
+        <p className="mt-2 text-base text-text-muted">
+          Write the food one time. It shows every week. Students see it on their phone. Leave a box
+          empty if you did not decide yet.
         </p>
       </div>
 
@@ -38,20 +38,20 @@ export default async function MenuPage({
           key={label}
           className={
             weekday === today
-              ? "rounded-xl border-2 border-primary-strong bg-white p-4"
-              : "rounded-xl border border-border bg-white p-4"
+              ? "rounded-2xl border-2 border-primary-strong bg-white p-5"
+              : "rounded-2xl border-2 border-border bg-white p-5"
           }
         >
-          <h2 className="font-heading text-base font-semibold text-text-main">
+          <h2 className="font-heading text-lg font-bold text-text-main">
             {label}
             {weekday === today && (
-              <span className="ml-2 rounded-full bg-primary-strong px-2 py-0.5 text-xs font-medium text-white">
+              <span className="ml-2 rounded-full bg-primary-strong px-3 py-1 text-sm font-semibold text-white">
                 Today
               </span>
             )}
           </h2>
 
-          <div className="mt-3 flex flex-col gap-3">
+          <div className="mt-4 flex flex-col gap-4">
             {MEAL_WINDOWS.map((window) => (
               <MenuSlot
                 key={window.meal}

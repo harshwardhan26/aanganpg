@@ -33,19 +33,19 @@ export default async function ScanPage({
   if (!result.ok) {
     return (
       <Shell messName={mess?.name}>
-        <div className="rounded-2xl border border-border bg-white p-8 text-center">
-          <p className="font-heading text-xl font-bold text-text-main">
-            {result.reason === "no-key" && "Scan the poster at the mess"}
-            {result.reason === "no-meal" && "No meal is being served right now"}
-            {result.reason === "not-a-student" && "You are not on this mess's list"}
-            {result.reason === "left" && "You are no longer on this mess's list"}
+        <div className="rounded-2xl border-2 border-border bg-white p-8 text-center">
+          <p className="font-heading text-2xl font-bold text-text-main">
+            {result.reason === "no-key" && "Scan the QR paper at the mess"}
+            {result.reason === "no-meal" && "No food right now"}
+            {result.reason === "not-a-student" && "You are not in this mess"}
+            {result.reason === "left" && "You are not in this mess now"}
           </p>
-          <p className="mt-2 text-sm text-text-muted">
+          <p className="mt-3 text-base text-text-muted">
             {result.reason === "no-key" &&
-              "Point your phone camera at the poster by the counter. A meal can only be marked there."}
-            {result.reason === "no-meal" && "Scan again at the next meal time."}
+              "Open your phone camera and point it at the QR paper near the counter. You can mark your food only there."}
+            {result.reason === "no-meal" && "Come at food time and scan again."}
             {(result.reason === "not-a-student" || result.reason === "left") &&
-              "Ask the mess staff to add you, then scan again."}
+              "Ask the mess to add you. Then scan again."}
           </p>
         </div>
       </Shell>
@@ -61,7 +61,7 @@ export default async function ScanPage({
         */}
       <div className="overflow-hidden rounded-2xl border-2 border-primary-strong bg-white">
         <div className="bg-primary-strong px-5 py-3 text-center">
-          <p className="font-heading text-lg font-bold text-white">
+          <p className="font-heading text-2xl font-bold text-white">
             {MEAL_LABEL[result.meal]}
           </p>
         </div>
@@ -78,12 +78,12 @@ export default async function ScanPage({
               />
             </div>
           ) : (
-            <div className="flex h-36 w-36 items-center justify-center rounded-full border-4 border-dashed border-border text-center text-xs text-text-muted">
-              No photo on file
+            <div className="flex h-36 w-36 items-center justify-center rounded-full border-4 border-dashed border-border text-center text-base text-text-muted">
+              No photo
             </div>
           )}
 
-          <p className="font-heading text-2xl font-bold text-text-main">{result.name}</p>
+          <p className="font-heading text-3xl font-bold text-text-main">{result.name}</p>
 
           {/*
             * A ticking clock, not the time this page rendered. A screenshot of a
@@ -94,14 +94,14 @@ export default async function ScanPage({
           <LiveClock />
 
           {result.alreadyMarked && (
-            <p className="rounded-lg bg-muted px-3 py-1.5 text-xs text-text-muted">
-              Already marked for this meal
+            <p className="rounded-xl bg-muted px-4 py-2 text-base text-text-muted">
+              Already marked
             </p>
           )}
         </div>
       </div>
 
-      <p className="mt-4 text-center text-sm text-text-muted">Show this to the mess counter.</p>
+      <p className="mt-5 text-center text-lg font-medium text-text-main">Show this at the mess.</p>
     </Shell>
   );
 }
@@ -110,7 +110,7 @@ function Shell({ messName, children }: { messName?: string; children: React.Reac
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-4 py-10">
       {messName && (
-        <p className="mb-4 text-center font-heading text-sm font-semibold tracking-wide text-text-muted uppercase">
+        <p className="mb-4 text-center font-heading text-base font-semibold text-text-muted">
           {messName}
         </p>
       )}

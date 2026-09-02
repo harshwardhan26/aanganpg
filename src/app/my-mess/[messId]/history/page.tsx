@@ -46,29 +46,29 @@ export default async function HistoryPage({
     <main className="mx-auto max-w-md px-4 py-8">
       <Link
         href={`/my-mess/${messId}`}
-        className="text-sm text-primary-strong underline underline-offset-2"
+        className="inline-flex min-h-12 items-center text-base font-medium text-primary-strong underline underline-offset-4"
       >
         ← Back
       </Link>
 
-      <h1 className="mt-3 font-heading text-2xl font-bold text-text-main">{monthLabel(month)}</h1>
-      <p className="text-sm text-text-muted">
-        <span className="font-semibold tabular-nums text-text-main">{rows.length}</span> meals over{" "}
+      <h1 className="mt-2 font-heading text-3xl font-bold text-text-main">{monthLabel(month)}</h1>
+      <p className="text-base text-text-muted">
+        You ate <span className="font-bold tabular-nums text-text-main">{rows.length}</span> meals on{" "}
         <span className="tabular-nums">{days.length}</span> days
       </p>
 
       {days.length === 0 ? (
-        <p className="mt-4 rounded-xl border border-border bg-white p-6 text-center text-sm text-text-muted">
-          Nothing marked this month yet.
+        <p className="mt-4 rounded-2xl border-2 border-border bg-white p-8 text-center text-base text-text-muted">
+          You have not eaten this month yet.
         </p>
       ) : (
-        <ul className="mt-4 flex flex-col gap-2">
+        <ul className="mt-4 flex flex-col gap-3">
           {days.map(({ day, meals }) => (
             <li
               key={dayKey(day)}
-              className="flex items-center justify-between gap-3 rounded-xl border border-border bg-white p-4"
+              className="flex min-h-20 items-center justify-between gap-3 rounded-2xl border-2 border-border bg-white p-4"
             >
-              <span className="font-medium text-text-main">{dayLabel(day)}</span>
+              <span className="text-lg font-semibold text-text-main">{dayLabel(day)}</span>
               <span className="flex gap-1.5">
                 {MEAL_WINDOWS.map((window) => (
                   <span
@@ -76,8 +76,8 @@ export default async function HistoryPage({
                     title={window.label}
                     className={
                       meals.has(window.meal)
-                        ? "rounded-full bg-primary-strong px-2.5 py-1 text-xs font-medium text-white"
-                        : "rounded-full bg-muted px-2.5 py-1 text-xs text-text-muted"
+                        ? "flex h-10 w-10 items-center justify-center rounded-full bg-primary-strong text-base font-bold text-white"
+                        : "flex h-10 w-10 items-center justify-center rounded-full bg-muted text-base text-text-muted"
                     }
                   >
                     {window.label[0]}

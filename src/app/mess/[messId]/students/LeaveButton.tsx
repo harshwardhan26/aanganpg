@@ -21,7 +21,7 @@ export function LeaveButton({
   function onClick() {
     // Only the removal asks. Putting someone back on the rolls is not a loss,
     // so a confirm there is a click the person has to spend for nothing.
-    if (!left && !confirm(`Mark ${name} as left? Their attendance history is kept.`)) return;
+    if (!left && !confirm(`${name} has left the mess?\n\nTheir old meals are kept.`)) return;
 
     startTransition(async () => {
       await setStudentLeft(messId, studentId, !left);
@@ -34,9 +34,9 @@ export function LeaveButton({
       type="button"
       onClick={onClick}
       disabled={pending}
-      className="shrink-0 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-text-muted hover:bg-muted disabled:opacity-60"
+      className="flex min-h-12 shrink-0 items-center rounded-xl border-2 border-border px-4 text-base font-semibold text-text-muted transition-colors hover:bg-muted disabled:opacity-60"
     >
-      {pending ? "…" : left ? "Bring back" : "Mark left"}
+      {pending ? "…" : left ? "Add back" : "Left"}
     </button>
   );
 }

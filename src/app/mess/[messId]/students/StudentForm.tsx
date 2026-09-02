@@ -79,19 +79,19 @@ export function StudentForm({
     <form
       ref={formRef}
       action={onSubmit}
-      className="flex flex-col gap-3 rounded-xl border border-border bg-white p-4"
+      className="flex flex-col gap-4 rounded-2xl border-2 border-border bg-white p-5"
     >
       <input type="hidden" name="messId" value={messId} />
       <input type="hidden" name="photoUrl" value={photoUrl} />
 
       <div className="flex items-baseline justify-between gap-3">
-        <h2 className="font-heading text-base font-semibold text-text-main">
+        <h2 className="font-heading text-xl font-bold text-text-main">
           {student ? `Edit ${student.name}` : "Add a student"}
         </h2>
         {student && (
           <Link
             href={`/mess/${messId}/students`}
-            className="text-sm text-text-muted underline underline-offset-2"
+            className="flex min-h-11 items-center text-base text-text-muted underline underline-offset-4"
           >
             Cancel
           </Link>
@@ -110,7 +110,7 @@ export function StudentForm({
         )}
 
         <div className="min-w-0">
-          <label className="inline-flex cursor-pointer items-center rounded-lg border border-border px-3 py-2 text-sm font-medium text-text-main hover:bg-muted">
+          <label className="inline-flex min-h-12 cursor-pointer items-center rounded-xl border-2 border-border px-4 text-base font-semibold text-text-main transition-colors hover:bg-muted">
             {/*
               * `capture` opens the camera straight away on a phone, which is how
               * this is actually used — staff is standing in front of the student,
@@ -124,21 +124,21 @@ export function StudentForm({
               disabled={uploading || !UPLOAD_CONFIGURED}
               className="sr-only"
             />
-            {uploading ? "Uploading…" : photoUrl ? "Retake photo" : "Take photo"}
+            {uploading ? "Saving photo…" : photoUrl ? "Take again" : "Take photo"}
           </label>
-          <p className="mt-1 text-xs text-text-muted">
+          <p className="mt-2 text-base text-text-muted">
             {UPLOAD_CONFIGURED
-              ? "Shown on their meal receipt, so the counter can check it is them."
+              ? "The photo shows on their phone when they come to eat. Look at it to check it is the same person."
               : UPLOAD_UNAVAILABLE}
           </p>
         </div>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
-        <Field name="name" label="Name" required autoComplete="off" defaultValue={student?.name ?? ""} />
+        <Field name="name" label="Student name" required autoComplete="off" defaultValue={student?.name ?? ""} />
         <Field
           name="email"
-          label="Google email"
+          label="Gmail address"
           type="email"
           autoComplete="off"
           placeholder="name@gmail.com"
@@ -147,7 +147,7 @@ export function StudentForm({
         <Field name="parentName" label="Parent name" autoComplete="off" defaultValue={student?.parentName ?? ""} />
         <Field
           name="parentPhone"
-          label="Parent phone"
+          label="Parent phone number"
           type="tel"
           inputMode="numeric"
           autoComplete="off"
@@ -155,7 +155,7 @@ export function StudentForm({
         />
         <Field
           name="monthlyFee"
-          label="Monthly fee (₹)"
+          label="Fee every month (₹)"
           type="text"
           inputMode="numeric"
           autoComplete="off"
@@ -164,7 +164,7 @@ export function StudentForm({
       </div>
 
       {issues.length > 0 && (
-        <ul role="alert" className="rounded-lg bg-red-100 px-3 py-2 text-sm text-red-900">
+        <ul role="alert" className="flex list-disc flex-col gap-1 rounded-xl bg-red-100 px-6 py-3 text-base text-red-900">
           {issues.map((issue) => (
             <li key={issue}>{issue}</li>
           ))}
@@ -172,7 +172,7 @@ export function StudentForm({
       )}
 
       {saved && (
-        <p role="status" className="rounded-lg bg-green-100 px-3 py-2 text-sm text-green-900">
+        <p role="status" className="rounded-xl bg-green-100 px-4 py-3 text-base text-green-900">
           {student ? "Saved." : "Student added."}
         </p>
       )}
@@ -180,7 +180,7 @@ export function StudentForm({
       <button
         type="submit"
         disabled={pending || uploading}
-        className="inline-flex items-center justify-center gap-2 self-start rounded-lg bg-primary-strong px-4 py-2.5 font-medium text-white hover:bg-primary-hover disabled:opacity-60"
+        className="inline-flex min-h-14 cursor-pointer items-center justify-center gap-2 rounded-xl bg-primary-strong px-6 text-lg font-semibold text-white transition-colors hover:bg-primary-hover disabled:opacity-60"
       >
         <UserPlus className="h-4 w-4" aria-hidden />
         {pending ? "Saving…" : student ? "Save changes" : "Add student"}
@@ -195,11 +195,11 @@ function Field({
   ...props
 }: { name: string; label: string } & React.InputHTMLAttributes<HTMLInputElement>) {
   return (
-    <label className="flex flex-col gap-1 text-sm">
-      <span className="font-medium text-text-main">{label}</span>
+    <label className="flex flex-col gap-1.5 text-base">
+      <span className="font-semibold text-text-main">{label}</span>
       <input
         name={name}
-        className="rounded-lg border border-border bg-white px-3 py-2.5 text-base outline-none focus:border-primary-strong"
+        className="min-h-14 rounded-xl border-2 border-border bg-white px-4 text-base outline-none focus:border-primary-strong"
         {...props}
       />
     </label>

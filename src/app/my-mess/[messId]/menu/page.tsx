@@ -52,12 +52,12 @@ export default async function StudentMenuPage({
     <main className="mx-auto max-w-md px-4 py-8">
       <Link
         href={`/my-mess/${messId}`}
-        className="text-sm text-primary-strong underline underline-offset-2"
+        className="inline-flex min-h-12 items-center text-base font-medium text-primary-strong underline underline-offset-4"
       >
         ← Back
       </Link>
 
-      <h1 className="mt-3 font-heading text-2xl font-bold text-text-main">Menu</h1>
+      <h1 className="mt-2 font-heading text-3xl font-bold text-text-main">Food</h1>
 
       <div className="mt-4 flex flex-col gap-3">
         {week.map((date, offset) => (
@@ -65,11 +65,11 @@ export default async function StudentMenuPage({
             key={date.toISOString()}
             className={
               offset === 0
-                ? "rounded-xl border-2 border-primary-strong bg-white p-4"
-                : "rounded-xl border border-border bg-white p-4"
+                ? "rounded-2xl border-2 border-primary-strong bg-white p-5"
+                : "rounded-2xl border-2 border-border bg-white p-5"
             }
           >
-            <h2 className="font-heading text-base font-semibold text-text-main">
+            <h2 className="font-heading text-lg font-bold text-text-main">
               {offset === 0 ? "Today" : offset === 1 ? "Tomorrow" : WEEKDAY_LABEL[weekdayOf(date)]}
             </h2>
 
@@ -80,19 +80,19 @@ export default async function StudentMenuPage({
                 return (
                   <li key={window.meal} className="border-b border-border pb-2 last:border-0 last:pb-0">
                     <div className="flex items-baseline justify-between gap-2">
-                      <span className="text-sm font-medium text-text-main">
+                      <span className="text-base font-semibold text-text-main">
                         {window.label}
                         {isNow && (
-                          <span className="ml-2 rounded-full bg-primary-strong px-2 py-0.5 text-xs font-medium text-white">
+                          <span className="ml-2 rounded-full bg-primary-strong px-3 py-1 text-sm font-semibold text-white">
                             Now
                           </span>
                         )}
                       </span>
-                      <span className="text-xs tabular-nums text-text-muted">
+                      <span className="text-base tabular-nums text-text-muted">
                         {clockLabel(window.from)}
                       </span>
                     </div>
-                    <p className="mt-0.5 text-sm text-text-muted">{items ?? "Not put up yet"}</p>
+                    <p className="mt-1 text-base text-text-muted">{items ?? "Not added yet"}</p>
                   </li>
                 );
               })}

@@ -1,5 +1,5 @@
 /**
- * The four ways into the room list, defined once.
+ * The three ways into the room list, defined once.
  *
  * These used to be hand-written in the navbar and again in the footer, and they
  * had already drifted: the navbar said "Girls Hostels" where the footer said
@@ -14,9 +14,4 @@ export const NAV_LINKS = [
   { href: "/search", label: "All hostels" },
   { href: "/search?genderPreference=Female", label: "For Girls" },
   { href: "/search?genderPreference=Male", label: "For Boys" },
-  // Repointed from `/search?food=yes` now that a student actually has a mess of
-  // their own to open. The hostels-with-food filter it used to reach is still on
-  // the search page as a filter, which is where a person looking for a room
-  // rather than for their own mess is already standing.
-  { href: "/my-mess", label: "Mess" },
 ] as const;

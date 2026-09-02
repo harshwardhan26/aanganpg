@@ -103,15 +103,15 @@ export default async function FeesPage({
       <div className="flex items-center justify-between gap-3">
         <Link
           href={`/mess/${messId}/fees?month=${monthKey(prev)}`}
-          className="rounded-lg border border-border px-3 py-1.5 text-sm text-text-muted hover:bg-muted"
+          className="flex min-h-12 items-center rounded-xl border-2 border-border px-4 text-base font-medium text-text-muted transition-colors hover:bg-muted"
         >
           ← {monthLabel(prev).split(" ")[0]}
         </Link>
-        <h1 className="font-heading text-lg font-semibold text-text-main">{monthLabel(month)}</h1>
+        <h1 className="font-heading text-xl font-bold text-text-main">{monthLabel(month)}</h1>
         {showNext ? (
           <Link
             href={`/mess/${messId}/fees?month=${monthKey(next)}`}
-            className="rounded-lg border border-border px-3 py-1.5 text-sm text-text-muted hover:bg-muted"
+            className="flex min-h-12 items-center rounded-xl border-2 border-border px-4 text-base font-medium text-text-muted transition-colors hover:bg-muted"
           >
             {monthLabel(next).split(" ")[0]} →
           </Link>
@@ -121,44 +121,43 @@ export default async function FeesPage({
       </div>
 
       <section className="grid grid-cols-3 gap-3">
-        <Stat label="Collected" value={`₹${collected.toLocaleString("en-IN")}`} />
-        <Stat label="Pending" value={`₹${pending.toLocaleString("en-IN")}`} />
+        <Stat label="Money you got" value={`₹${collected.toLocaleString("en-IN")}`} />
+        <Stat label="Money left" value={`₹${pending.toLocaleString("en-IN")}`} />
         <Stat
-          label={isPast ? "Overdue" : `Due on the ${mess.dueDay}th`}
+          label={isPast ? "Did not pay" : `Pay by ${mess.dueDay}`}
           value={isPast ? String(overdueCount) : "—"}
           tone={overdueCount > 0 ? "alert" : undefined}
         />
       </section>
 
       {rows.length === 0 ? (
-        <p className="rounded-xl border border-border bg-white p-6 text-center text-sm text-text-muted">
-          No students on the rolls yet.
+        <p className="rounded-2xl border-2 border-border bg-white p-8 text-center text-base text-text-muted">
+          No students yet.
         </p>
       ) : (
-        <ul className="flex flex-col gap-2">
+        <ul className="flex flex-col gap-3">
           {rows.map((row) => (
             <li
               key={row.id}
-              className="flex items-center justify-between gap-3 rounded-xl border border-border bg-white p-4"
+              className="flex min-h-20 items-center justify-between gap-3 rounded-2xl border-2 border-border bg-white p-4"
             >
               <div className="min-w-0">
-                <p className="truncate font-medium text-text-main">{row.name}</p>
-                <p className="mt-0.5 text-xs text-text-muted">
-                  {row.amount === null
-                    ? "No fee set"
-                    : `₹${row.amount.toLocaleString("en-IN")}`}
+                <p className="truncate text-lg font-semibold text-text-main">{row.name}</p>
+                <p className="mt-1 text-base text-text-muted">
+                  {row.amount === null ? "No fee set" : `₹${row.amount.toLocaleString("en-IN")}`}
                   {row.paid && " · paid"}
                   {!row.paid && row.owes && isPast && (
-                    <span className="text-red-700"> · overdue</span>
+                    <span className="font-medium text-red-800"> · not paid</span>
                   )}
                   {row.remindersSent > 0 &&
-                    ` · ${row.remindersSent} reminder${row.remindersSent > 1 ? "s" : ""} sent`}
-                  {!row.parentPhone && row.owes && (
-                    <span className="text-amber-700"> · no parent number</span>
-                  )}
+                    ` · told parents ${row.remindersSent} time${row.remindersSent > 1 ? "s" : ""}`}
                 </p>
-                {row.parentPhone && (
-                  <p className="text-xs text-text-muted">{displayPhone(row.parentPhone)}</p>
+                {row.parentPhone ? (
+                  <p className="text-base text-text-muted">{displayPhone(row.parentPhone)}</p>
+                ) : (
+                  row.owes && (
+                    <p className="text-base text-amber-800">No parent phone number</p>
+                  )
                 )}
               </div>
 
@@ -186,17 +185,17 @@ function Stat({
   tone?: "alert";
 }) {
   return (
-    <div className="rounded-xl border border-border bg-white p-4">
+    <div className="rounded-2xl border-2 border-border bg-white p-4">
       <p
         className={
           tone === "alert"
-            ? "font-heading text-xl font-bold tabular-nums text-red-700"
-            : "font-heading text-xl font-bold tabular-nums text-text-main"
+            ? "font-heading text-2xl font-bold tabular-nums text-red-800"
+            : "font-heading text-2xl font-bold tabular-nums text-text-main"
         }
       >
         {value}
       </p>
-      <p className="mt-0.5 text-xs text-text-muted">{label}</p>
+      <p className="mt-1 text-sm text-text-muted">{label}</p>
     </div>
   );
 }

@@ -3,9 +3,6 @@ import { Poppins } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/auth/Providers";
 import { PostHogProvider } from "@/components/PostHogProvider";
-import { Navbar } from "@/components/Navbar";
-import { Footer } from "@/components/Footer";
-import { PWAPrompt } from "@/components/PWAPrompt";
 
 const poppins = Poppins({
   weight: ["400", "500", "600", "700"],
@@ -42,6 +39,14 @@ export const viewport: Viewport = {
   themeColor: "#fa5a5a",
 };
 
+/**
+ * Shared by both sites — the room site and mess.aanganpg.com.
+ *
+ * Deliberately thin: fonts, the session provider and analytics, nothing with an
+ * opinion about what the page is. The room site's navbar and footer live in
+ * `(main)/layout.tsx`, because a page about mess fees must not carry a header
+ * promising hostels with no brokerage.
+ */
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -52,21 +57,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         <Providers>
           <PostHogProvider>
-            {/*
-              * Visually hidden until focused. A keyboard or screen-reader user
-              * otherwise tabs through the whole navbar on every page before
-              * reaching the rooms, which is the only thing they came for.
-              */}
-            <a
-              href="#main-content"
-              className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-white focus:px-4 focus:py-2 focus:font-semibold focus:text-text-main focus:shadow-lg"
-            >
-              Skip to main content
-            </a>
-            <Navbar />
-            <div id="main-content">{children}</div>
-            <Footer />
-            <PWAPrompt />
+            {children}
           </PostHogProvider>
         </Providers>
       </body>

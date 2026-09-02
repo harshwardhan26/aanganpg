@@ -1,37 +1,43 @@
-import { withAuth } from "next-auth/middleware";
+import { NextResponse, type NextRequest, type NextFetchEvent } from "next/server";
+import { withAuth, type NextRequestWithAuth } from "next-auth/middleware";
+import { routeForHost } from "@/lib/hosts";
+import { getBaseUrl, getMessUrl } from "@/lib/url";
 
 /**
- * A second lock on the admin area.
+ * Two sites, one deployment.
  *
- * `admin/layout.tsx` and `requireAdmin()` in the actions both already check the
- * role, and both are correct. What they are not is automatic: a new page under
- * `/admin` or a new route under `/api/admin` is unprotected until someone
- * remembers to add the guard, and forgetting is silent.
+ * Rooms answer on `aanganpg.com`, the mess system on `mess.aanganpg.com`. This
+ * is where a request is told which one it is, and it is also the second lock on
+ * the admin area.
  *
- * This runs before either of them and needs nobody to remember anything. The
- * `role` claim it reads is the one `resolveRole` recomputes from ADMIN_EMAILS on
- * every request, so revocation reaches here too.
+ * The routing itself lives in `lib/hosts.ts` as a pure function with assertions
+ * behind it — a mistake here takes down every page on both hosts at once.
  *
  * Named `proxy.ts`, not `middleware.ts`: Next 16 renamed the file convention and
- * builds under the old name warn on every run. The export is unchanged —
- * `withAuth` still returns the same handler, this file just answers to the name
- * the framework now looks for.
+ * builds under the old name warn on every run.
  */
-export default withAuth({
+const guard = withAuth({
   callbacks: {
     /**
-     * `/mess` (staff) and `/my-mess` (a student's own record) need a signed-in
-     * person, not an admin. *Which* mess either may open is a database question
-     * — membership for staff, an email on the roll for a student — and this
-     * cannot read the database, so the layouts and actions check it again. All
-     * this does is keep signed-out traffic out entirely.
+     * The matcher below covers the whole site, so the default answer is yes —
+     * the room site is public. Only two areas narrow it.
      *
-     * `/admin` keeps the stricter test it always had.
+     * `/admin` keeps the role test. `/mess` (staff) and `/my-mess` (a student's
+     * own record) need a signed-in person but not an admin; *which* mess either
+     * may open is a database question — membership for staff, an email on the
+     * roll for a student — and this cannot read the database, so the layouts and
+     * actions check it again.
      */
     authorized: ({ token, req }) => {
       const path = req.nextUrl.pathname;
+      if (path.startsWith("/admin") || path.startsWith("/api/admin")) {
+        return token?.role === "admin";
+      }
+      // The mess front door explains itself and offers a sign-in button.
+      // Everything under it is somebody's own record.
+      if (path === "/my-mess") return true;
       if (path.startsWith("/my-mess") || path.startsWith("/mess")) return !!token;
-      return token?.role === "admin";
+      return true;
     },
   },
   pages: {
@@ -39,6 +45,37 @@ export default withAuth({
   },
 });
 
+export default function proxy(req: NextRequest, event: NextFetchEvent) {
+  const route = routeForHost(req.headers.get("host"), req.nextUrl.pathname, {
+    main: getBaseUrl(),
+    mess: getMessUrl(),
+  });
+
+  // Which site a request belongs to is settled before the session is consulted,
+  // and deliberately so. `withAuth` returns early on its own sign-in page —
+  // which is `/` — so host rules placed inside it never ran for the one path
+  // that needed them most: the mess site's front door served the room homepage.
+  //
+  // Nothing is lost by deciding first. A request that leaves for the other host
+  // meets that host's rules on arrival, and the rewrite target, `/my-mess`, is
+  // public by design.
+  if (route.kind === "rewrite") {
+    const url = req.nextUrl.clone();
+    url.pathname = route.to;
+    return NextResponse.rewrite(url);
+  }
+
+  if (route.kind === "redirect") {
+    // The query string travels with it: `?k=` on a scan link is the whole point
+    // of the link.
+    return NextResponse.redirect(`${route.to}${req.nextUrl.search}`);
+  }
+
+  return guard(req as NextRequestWithAuth, event);
+}
+
 export const config = {
-  matcher: ["/admin/:path*", "/api/admin/:path*", "/mess/:path*", "/my-mess/:path+"],
+  // Everything, because the host rules have to run everywhere. The exclusions
+  // are static asset paths, served before this and with no host opinion.
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { MessSignIn } from "@/components/MessSignIn";
 
 export const metadata = { title: "My mess" };
 
@@ -18,27 +19,33 @@ export default async function MyMessIndex() {
   const session = await getServerSession(authOptions);
   const email = session?.user?.email?.trim().toLowerCase();
 
-  // Not a redirect. This page is in the main navigation, so a signed-out visitor
-  // clicking "Mess" out of curiosity must land on something that explains
-  // itself — being thrown back to the home page reads as the link being broken.
-  // The `callbackUrl` opens the sign-in sheet and returns them here afterwards.
+  // The front door of mess.aanganpg.com: the host's `/` is rewritten here, so
+  // this is the first thing a signed-out student sees. It has to explain itself
+  // rather than bounce, because there is nowhere else on this host to bounce to.
   if (!email) {
     return (
       <main className="mx-auto max-w-md px-4 py-10">
-        <h1 className="font-heading text-2xl font-bold text-text-main">My mess</h1>
-        <p className="mt-2 text-sm text-text-muted">
-          If your mess uses Aangan, sign in to see today&apos;s menu, mark your meals and check
-          what you owe.
+        <h1 className="font-heading text-3xl font-bold text-text-main">My mess</h1>
+        <p className="mt-3 text-base text-text-muted">
+          Sign in to see today&apos;s food, mark your meals, and see your fees.
         </p>
-        <Link
-          href="/?callbackUrl=%2Fmy-mess"
-          className="mt-4 inline-block rounded-lg bg-primary-strong px-4 py-2.5 font-medium text-white hover:bg-primary-hover"
-        >
-          Sign in
-        </Link>
+        <MessSignIn />
       </main>
     );
   }
+
+  // The navbar has one "Mess" link for everybody, so this page has to sort out
+  // who is knocking. An owner or helper is sent to the staff side, which already
+  // knows how to find their mess — without this they land on "no mess has added
+  // you yet" and their only way in is typing a mess id by hand.
+  //
+  // Membership wins over the roll: an account that is both runs the place.
+  const userId = session?.user?.id;
+  const staff =
+    session?.user?.role === "admin" ||
+    (userId != null &&
+      (await prisma.messMember.findFirst({ where: { userId }, select: { id: true } })) != null);
+  if (staff) redirect("/mess");
 
   const enrolments = await prisma.student.findMany({
     where: { email, leftAt: null },
@@ -50,25 +57,25 @@ export default async function MyMessIndex() {
 
   return (
     <main className="mx-auto max-w-md px-4 py-10">
-      <h1 className="font-heading text-2xl font-bold text-text-main">My mess</h1>
+      <h1 className="font-heading text-3xl font-bold text-text-main">My mess</h1>
 
       {enrolments.length === 0 ? (
-        <div className="mt-4 rounded-xl border border-border bg-white p-6">
-          <p className="text-sm text-text-main">
-            No mess has added this account yet.
+        <div className="mt-4 rounded-2xl border-2 border-border bg-white p-6">
+          <p className="text-lg font-semibold text-text-main">
+            No mess has added you yet.
           </p>
-          <p className="mt-2 text-sm text-text-muted">
-            Ask your mess to add <span className="font-medium">{email}</span> to their list, then
-            open this page again.
+          <p className="mt-2 text-base text-text-muted">
+            Tell your mess to add this email: <span className="font-semibold">{email}</span>
           </p>
+          <p className="mt-2 text-base text-text-muted">Then open this page again.</p>
         </div>
       ) : (
-        <ul className="mt-4 flex flex-col gap-2">
+        <ul className="mt-4 flex flex-col gap-3">
           {enrolments.map(({ mess }) => (
             <li key={mess.id}>
               <Link
                 href={`/my-mess/${mess.id}`}
-                className="block rounded-xl border border-border bg-white px-4 py-4 font-medium text-text-main hover:bg-muted"
+                className="flex min-h-16 items-center rounded-2xl border-2 border-border bg-white px-5 text-lg font-semibold text-text-main transition-colors hover:bg-muted"
               >
                 {mess.name}
               </Link>

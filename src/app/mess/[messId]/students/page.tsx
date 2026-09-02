@@ -54,51 +54,51 @@ export default async function StudentsPage({
 
       <section className="flex flex-col gap-3">
         <div className="flex items-baseline justify-between gap-3">
-          <h2 className="font-heading text-base font-semibold text-text-main">
-            {showLeft ? "Left the mess" : "On the rolls"}{" "}
+          <h2 className="font-heading text-xl font-bold text-text-main">
+            {showLeft ? "Students who left" : "Students"}{" "}
             <span className="tabular-nums text-text-muted">({students.length})</span>
           </h2>
           <a
             href={`/mess/${messId}/students${showLeft ? "" : "?show=left"}`}
-            className="text-sm text-primary-strong underline underline-offset-2"
+            className="flex min-h-11 items-center text-base font-medium text-primary-strong underline underline-offset-4"
           >
-            {showLeft ? "Show current" : "Show who left"}
+            {showLeft ? "See students now" : "See who left"}
           </a>
         </div>
 
         {students.length === 0 ? (
-          <p className="rounded-xl border border-border bg-white p-6 text-center text-sm text-text-muted">
-            {showLeft ? "Nobody has left yet." : "No students yet. Add the first one above."}
+          <p className="rounded-2xl border-2 border-border bg-white p-8 text-center text-base text-text-muted">
+            {showLeft ? "Nobody has left." : "No students yet. Add the first one above."}
           </p>
         ) : (
-          <ul className="flex flex-col gap-2">
+          <ul className="flex flex-col gap-3">
             {students.map((student) => (
               <li
                 key={student.id}
-                className="flex items-start justify-between gap-2 rounded-xl border border-border bg-white p-4"
+                className="flex items-start justify-between gap-3 rounded-2xl border-2 border-border bg-white p-4"
               >
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium text-text-main">{student.name}</p>
-                  <p className="mt-0.5 text-xs text-text-muted">
+                  <p className="truncate text-lg font-semibold text-text-main">{student.name}</p>
+                  <p className="mt-1 text-base text-text-muted">
                     {[
-                      student.monthlyFee !== null && `₹${student.monthlyFee}/month`,
+                      student.monthlyFee !== null && `₹${student.monthlyFee} a month`,
                       student.parentPhone && displayPhone(student.parentPhone),
                     ]
                       .filter(Boolean)
-                      .join(" · ") || "No other details"}
+                      .join(" · ") || "No details added"}
                   </p>
                   {/* Shown back deliberately. A wrong-but-valid address like
                       `gmai.com` cannot be caught by validation, and this is
                       where someone would notice it. */}
-                  <p className="mt-0.5 truncate text-xs text-text-muted">
+                  <p className="mt-1 truncate text-base text-text-muted">
                     {student.email ?? (
-                      <span className="text-amber-700">No email — cannot use the app</span>
+                      <span className="text-amber-800">No email. They cannot use the app.</span>
                     )}
                   </p>
                 </div>
                 <a
                   href={`/mess/${messId}/students?edit=${student.id}`}
-                  className="shrink-0 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-text-main hover:bg-muted"
+                  className="flex min-h-12 shrink-0 items-center rounded-xl border-2 border-border px-4 text-base font-semibold text-text-main transition-colors hover:bg-muted"
                 >
                   Edit
                 </a>

@@ -3,6 +3,13 @@ import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
 import { requireMess } from "@/actions/mess";
 import { MessNav } from "./MessNav";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: { default: "Aangan Mess", template: "%s | Aangan Mess" },
+  // Staff screens. Nothing here is for the public, let alone for a crawler.
+  robots: { index: false, follow: false },
+};
 
 /**
  * The gate every mess page sits behind.
@@ -40,18 +47,21 @@ export default async function MessLayout({
       <header className="sticky top-0 z-30 border-b border-border bg-white shadow-sm">
         <div className="mx-auto flex max-w-5xl flex-col gap-3 px-4 py-3 sm:px-6">
           <div className="flex items-center justify-between gap-3">
-            <Link href={`/mess/${messId}`} className="font-heading text-lg font-bold text-text-main">
-              {mess.name}
+            <Link href={`/mess/${messId}`} className="min-w-0">
+              <span className="block text-sm font-semibold text-primary-strong">Aangan Mess</span>
+              <span className="block truncate font-heading text-xl font-bold text-text-main">
+                {mess.name}
+              </span>
             </Link>
-            <span className="rounded-full bg-muted px-3 py-1 text-xs font-medium text-text-muted">
-              {role === "ADMIN" ? "Aangan admin" : role === "OWNER" ? "Owner" : "Staff"}
+            <span className="rounded-full bg-muted px-3 py-1.5 text-sm font-medium text-text-muted">
+              {role === "ADMIN" ? "Aangan" : role === "OWNER" ? "Owner" : "Helper"}
             </span>
           </div>
           <MessNav messId={messId} canSeeFees={role !== "STAFF"} />
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6">{children}</main>
+      <main className="mx-auto max-w-3xl px-4 py-7 sm:px-6">{children}</main>
     </div>
   );
 }

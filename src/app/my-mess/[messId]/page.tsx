@@ -59,12 +59,10 @@ export default async function StudentMessPage({
   const nextMenu = servingNow ? menuFor(menuRows, day, servingNow) : null;
 
   return (
-    <main className="mx-auto flex max-w-md flex-col gap-4 px-4 py-8">
+    <main className="mx-auto flex max-w-md flex-col gap-5 px-4 py-8">
       <header>
-        <p className="font-heading text-xs font-semibold tracking-wide text-text-muted uppercase">
-          {found.name}
-        </p>
-        <h1 className="font-heading text-2xl font-bold text-text-main">{mess.name}</h1>
+        <p className="text-base text-text-muted">{found.name}</p>
+        <h1 className="font-heading text-3xl font-bold text-text-main">{mess.name}</h1>
       </header>
 
       {/* Money first, and only when something is owed — it is the one thing here
@@ -72,50 +70,50 @@ export default async function StudentMessPage({
       {owes && (
         <Link
           href={`/my-mess/${messId}/payment`}
-          className="rounded-xl border border-red-700 bg-red-100 p-4 text-red-900"
+          className="rounded-2xl border-2 border-red-800 bg-red-100 p-5 text-red-900"
         >
-          <p className="font-heading text-base font-semibold">
-            ₹{(payment?.amount ?? found.monthlyFee ?? 0).toLocaleString("en-IN")} pending for{" "}
+          <p className="font-heading text-xl font-bold">
+            ₹{(payment?.amount ?? found.monthlyFee ?? 0).toLocaleString("en-IN")} not paid for{" "}
             {monthLabel(month)}
           </p>
-          <p className="mt-0.5 text-sm">Pay at the mess counter.</p>
+          <p className="mt-1 text-base">Please pay at the mess.</p>
         </Link>
       )}
 
       <div className="grid grid-cols-2 gap-3">
         <Option
           href={`/my-mess/${messId}/scan`}
-          icon={<QrCode className="h-5 w-5" aria-hidden />}
-          title="Mark my meal"
+          icon={<QrCode className="h-7 w-7" aria-hidden />}
+          title="Mark my food"
           detail={
             servingNow
               ? markedMeals.has(servingNow)
-                ? `${MEAL_LABEL[servingNow]} marked`
-                : `${MEAL_LABEL[servingNow]} being served`
-              : "No meal right now"
+                ? `${MEAL_LABEL[servingNow]} done`
+                : `${MEAL_LABEL[servingNow]} is ready`
+              : "No food right now"
           }
           highlight={Boolean(servingNow) && !markedMeals.has(servingNow!)}
         />
 
         <Option
           href={`/my-mess/${messId}/menu`}
-          icon={<UtensilsCrossed className="h-5 w-5" aria-hidden />}
-          title="Today's menu"
-          detail={nextMenu ?? "See the week"}
+          icon={<UtensilsCrossed className="h-7 w-7" aria-hidden />}
+          title="Today's food"
+          detail={nextMenu ?? "See this week"}
         />
 
         <Option
           href={`/my-mess/${messId}/history`}
-          icon={<CalendarCheck className="h-5 w-5" aria-hidden />}
-          title="My attendance"
-          detail={`${monthCount} meals this month`}
+          icon={<CalendarCheck className="h-7 w-7" aria-hidden />}
+          title="My meals"
+          detail={`${monthCount} this month`}
         />
 
         <Option
           href={`/my-mess/${messId}/payment`}
-          icon={<Wallet className="h-5 w-5" aria-hidden />}
-          title="My payment"
-          detail={owes ? "Pending" : payment?.paidAt ? "Paid" : "Nothing due"}
+          icon={<Wallet className="h-7 w-7" aria-hidden />}
+          title="My fees"
+          detail={owes ? "Not paid" : payment?.paidAt ? "Paid" : "Nothing to pay"}
         />
       </div>
     </main>
@@ -140,15 +138,15 @@ function Option({
       href={href}
       className={
         highlight
-          ? "flex flex-col gap-2 rounded-xl border-2 border-primary-strong bg-white p-4"
-          : "flex flex-col gap-2 rounded-xl border border-border bg-white p-4"
+          ? "flex min-h-32 flex-col gap-2 rounded-2xl border-2 border-primary-strong bg-white p-5"
+          : "flex min-h-32 flex-col gap-2 rounded-2xl border-2 border-border bg-white p-5"
       }
     >
       <span className={highlight ? "text-primary-strong" : "text-text-muted"}>{icon}</span>
-      <span className="font-heading text-sm font-semibold text-text-main">{title}</span>
+      <span className="font-heading text-lg font-bold text-text-main">{title}</span>
       {/* Two lines maximum: a menu is long, and a card that grows to fit it
           breaks the grid into uneven halves. */}
-      <span className="line-clamp-2 text-xs text-text-muted">{detail}</span>
+      <span className="line-clamp-2 text-base text-text-muted">{detail}</span>
     </Link>
   );
 }

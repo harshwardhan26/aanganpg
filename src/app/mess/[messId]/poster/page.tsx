@@ -2,7 +2,7 @@ import QRCode from "qrcode";
 import prisma from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { requireMess } from "@/actions/mess";
-import { getBaseUrl } from "@/lib/url";
+import { getMessUrl } from "@/lib/url";
 import { scanKey } from "@/lib/scan-key";
 import { MEAL_WINDOWS } from "@/lib/mess";
 
@@ -43,7 +43,7 @@ export default async function PosterPage({
   // The key is what makes this printed sheet the only way to mark a meal — see
   // `lib/scan-key.ts`. It is why the poster matters rather than being a
   // convenience shortcut to a page anyone could open.
-  const url = `${getBaseUrl()}/my-mess/${messId}/scan?k=${scanKey(messId)}`;
+  const url = `${getMessUrl()}/my-mess/${messId}/scan?k=${scanKey(messId)}`;
 
   // Rendered on the server as an SVG string: it prints crisply at any size, and
   // no QR code is shipped to the browser as a script.
@@ -57,17 +57,17 @@ export default async function PosterPage({
     <div className="flex flex-col gap-6">
       {/* Screen-only guidance. `print:hidden` keeps it off the sheet itself. */}
       <div className="rounded-xl border border-border bg-white p-4 print:hidden">
-        <h2 className="font-heading text-base font-semibold text-text-main">Print this</h2>
-        <p className="mt-1 text-sm text-text-muted">
-          Stick it where students queue. They scan with any phone camera, sign in
-          once with Google, and their photo appears on screen for you to check.
+        <h2 className="font-heading text-xl font-bold text-text-main">Print this paper</h2>
+        <p className="mt-2 text-base text-text-muted">
+          Stick it near the food counter. Students point their phone camera at it. Their name and
+          photo come on their phone. Look at the photo before you give food.
         </p>
-        <p className="mt-2 text-xs break-all text-text-muted">{url}</p>
+        <p className="mt-3 text-sm break-all text-text-muted">{url}</p>
       </div>
 
       <div className="mx-auto w-full max-w-md rounded-2xl border-2 border-primary-strong bg-white p-8 text-center print:border-black">
         <p className="font-heading text-2xl font-bold text-text-main">{mess.name}</p>
-        <p className="mt-1 text-sm text-text-muted">Scan to mark your meal</p>
+        <p className="mt-2 text-lg text-text-muted">Point your phone camera here</p>
 
         <div
           className="mx-auto mt-6 w-full max-w-64 [&>svg]:h-auto [&>svg]:w-full"
@@ -77,8 +77,8 @@ export default async function PosterPage({
 
         <ul className="mt-6 flex flex-col gap-1 text-sm text-text-main">
           {MEAL_WINDOWS.map((window) => (
-            <li key={window.meal} className="flex justify-between border-b border-border py-1">
-              <span className="font-medium">{window.label}</span>
+            <li key={window.meal} className="flex justify-between border-b border-border py-2 text-base">
+              <span className="font-semibold">{window.label}</span>
               <span className="tabular-nums text-text-muted">
                 {clockLabel(window.from)} – {clockLabel(window.to)}
               </span>
@@ -86,7 +86,7 @@ export default async function PosterPage({
           ))}
         </ul>
 
-        <p className="mt-6 text-xs text-text-muted">Show the receipt at the counter.</p>
+        <p className="mt-6 text-base text-text-muted">Then show your phone at the counter.</p>
       </div>
     </div>
   );

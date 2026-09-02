@@ -8,6 +8,7 @@ import { csvField, jsonLdScript } from "../src/lib/escape";
 import { cloudinaryUrl } from "../src/lib/image";
 import { publicImage } from "../src/lib/publicImage";
 import { directionsUrl, looksLikeKolhapur } from "../src/lib/maps";
+import { routeForHost, isMessHost } from "../src/lib/hosts";
 import { approximateLocation, distanceMetres } from "../src/lib/geo";
 import { enquiryGate, safeCallbackUrl } from "../src/lib/session";
 import { isAdminEmail, resolveRole, isOwner } from "../src/lib/admin";
@@ -859,11 +860,72 @@ async function main() {
     ["#cc4040", white, "mess stat number (primary-strong on white)"],
     ["#82181a", "#ffe2e2", "check-in save failure (red-900 on red-100)"],
     ["#0d542b", "#dcfce7", "student added confirmation (green-900 on green-100)"],
+    // Deepened from red-700 for the older eyes this dashboard is built for:
+    // "not paid" and "no phone number" are the two lines the owner must not
+    // misread, and red-700 on white was only just over the line.
+    ["#9f0712", white, "unpaid fee marker (red-800 on white)"],
+    ["#973c00", white, "missing parent phone warning (amber-800 on white)"],
+    ["#016630", white, "menu slot saved (green-800 on white)"],
   ];
   for (const [fg, bg, what] of messPairs) {
     const r = contrastRatio(fg, bg);
     assert(r >= 4.5, `${what} must be >= 4.5, got ${r.toFixed(2)}`);
   }
+
+  // ---- two sites, one deployment -----------------------------------------
+  // `routeForHost` decides on every request which product a visitor is looking
+  // at. Getting it wrong does not degrade a page, it takes a whole host down —
+  // so the interesting cases are written here rather than clicked through.
+  const HOSTS = { main: "https://aanganpg.com", mess: "https://mess.aanganpg.com" };
+  const route = (host: string, path: string) => routeForHost(host, path, HOSTS);
+
+  assert(isMessHost("mess.aanganpg.com"), "the mess host is the mess host");
+  assert(isMessHost("mess.localhost:3000"), "dev mess host, port and all");
+  assert(!isMessHost("aanganpg.com"), "the room site is not the mess host");
+  assert(!isMessHost("localhost:3000"), "bare localhost is the room site");
+  // The one that would hurt: a host merely containing the word.
+  assert(!isMessHost("aanganpg.com.mess.evil.com"), "suffix match is not a prefix match");
+
+  assert.deepEqual(
+    route("mess.aanganpg.com", "/"),
+    { kind: "rewrite", to: "/my-mess" },
+    "the mess front door lands on the role router",
+  );
+  assert.deepEqual(
+    route("mess.aanganpg.com", "/mess/abc/checkin"),
+    { kind: "pass" },
+    "owner screens are served on the mess host",
+  );
+  assert.deepEqual(
+    route("mess.aanganpg.com", "/search"),
+    { kind: "redirect", to: "https://aanganpg.com/search" },
+    "a room search asked of the mess host goes home",
+  );
+  assert.deepEqual(
+    route("aanganpg.com", "/mess/abc"),
+    { kind: "redirect", to: "https://mess.aanganpg.com/mess/abc" },
+    "old mess bookmarks on the room site still arrive",
+  );
+  assert.deepEqual(route("aanganpg.com", "/search"), { kind: "pass" }, "the room site is untouched");
+
+  // `/messages` must not be mistaken for `/mess`. There is no such page today,
+  // and this is the assertion that keeps it that way if one is ever added.
+  assert.deepEqual(route("aanganpg.com", "/messages"), { kind: "pass" }, "prefix, not substring");
+
+  // Sign-in is per host: bouncing `/api/auth/*` across hosts would set the
+  // session cookie on the wrong domain and silently break login.
+  for (const host of ["aanganpg.com", "mess.aanganpg.com"]) {
+    assert.deepEqual(route(host, "/api/auth/session"), { kind: "pass" }, `auth stays put on ${host}`);
+    assert.deepEqual(route(host, "/robots.txt"), { kind: "pass" }, `robots answers on ${host}`);
+  }
+
+  // An unrecognised host — a preview deployment, a laptop, a bare IP — serves
+  // everything itself. It has no mess host of its own, so bouncing a mess path
+  // to production would throw a developer at live data, and `localhost/mess/x`
+  // has to keep working: Google will not sign anyone in to `mess.localhost`.
+  assert.deepEqual(route("aangan-rooms.vercel.app", "/search"), { kind: "pass" }, "previews serve rooms");
+  assert.deepEqual(route("aangan-rooms.vercel.app", "/mess/abc"), { kind: "pass" }, "previews keep the mess");
+  assert.deepEqual(route("localhost:3000", "/mess/abc"), { kind: "pass" }, "dev keeps the mess");
 
   console.log("Self check passed");
 }

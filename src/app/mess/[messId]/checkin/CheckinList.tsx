@@ -128,7 +128,7 @@ export function CheckinList({
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <nav className="flex gap-2">
           {MEAL_WINDOWS.map((window) => (
@@ -137,7 +137,7 @@ export function CheckinList({
               href={`/mess/${messId}/checkin?meal=${window.meal}`}
               aria-current={window.meal === meal ? "page" : undefined}
               className={cn(
-                "rounded-lg px-3 py-1.5 text-sm font-medium",
+                "flex min-h-11 items-center rounded-xl px-4 text-base font-semibold transition-colors",
                 window.meal === meal
                   ? "bg-primary-strong text-white"
                   : "bg-muted text-text-muted hover:text-text-main",
@@ -147,36 +147,38 @@ export function CheckinList({
             </Link>
           ))}
         </nav>
-        <p className="text-sm text-text-muted">
-          <span className="font-semibold tabular-nums text-text-main">{presentCount}</span> of{" "}
-          <span className="tabular-nums">{rows.length}</span> marked
+        <p className="text-base text-text-muted">
+          <span className="font-heading text-xl font-bold tabular-nums text-text-main">
+            {presentCount}
+          </span>{" "}
+          of <span className="tabular-nums">{rows.length}</span> came
         </p>
       </div>
 
       <div className="relative">
-        <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-text-muted" />
+        <Search className="pointer-events-none absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 text-text-muted" />
         <input
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search name"
-          aria-label="Search students"
-          className="w-full rounded-lg border border-border bg-white py-3 pr-3 pl-9 text-base outline-none focus:border-primary-strong"
+          placeholder="Search a name"
+          aria-label="Search students by name"
+          className="min-h-14 w-full rounded-xl border-2 border-border bg-white py-3 pr-3 pl-11 text-base outline-none focus:border-primary-strong"
         />
       </div>
 
       {failed && (
-        <p role="alert" className="rounded-lg bg-red-100 px-3 py-2 text-sm text-red-900">
-          Could not save {failed}. Check the connection and tap again.
+        <p role="alert" className="rounded-xl bg-red-100 px-4 py-3 text-base text-red-900">
+          {failed} was not saved. Check the internet and tap again.
         </p>
       )}
 
       {visible.length === 0 ? (
-        <p className="rounded-xl border border-border bg-white p-6 text-center text-sm text-text-muted">
-          {rows.length === 0 ? "No students yet. Add them first." : "No student matches that."}
+        <p className="rounded-2xl border-2 border-border bg-white p-8 text-center text-base text-text-muted">
+          {rows.length === 0 ? "No students yet. Add students first." : "No student with that name."}
         </p>
       ) : (
-        <ul className="flex flex-col gap-2">
+        <ul className="flex flex-col gap-3">
           {visible.map((row) => (
             <li key={row.id}>
               <button
@@ -184,7 +186,7 @@ export function CheckinList({
                 onClick={() => toggle(row)}
                 aria-pressed={row.present}
                 className={cn(
-                  "flex w-full items-center justify-between gap-3 rounded-xl border px-4 py-4 text-left transition-colors",
+                  "flex min-h-20 w-full cursor-pointer items-center justify-between gap-3 rounded-2xl border-2 px-4 py-4 text-left transition-colors",
                   row.present
                     ? "border-primary-strong bg-primary-strong/10"
                     : "border-border bg-white hover:bg-muted",
@@ -192,23 +194,25 @@ export function CheckinList({
               >
                 <span className="flex min-w-0 items-center gap-3">
                   {row.photoUrl ? (
-                    <span className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full border border-border">
-                      <Image src={row.photoUrl} alt="" fill sizes="40px" className="object-cover" />
+                    <span className="relative h-14 w-14 shrink-0 overflow-hidden rounded-full border border-border">
+                      <Image src={row.photoUrl} alt="" fill sizes="56px" className="object-cover" />
                     </span>
                   ) : (
-                    <span className="h-10 w-10 shrink-0 rounded-full border border-dashed border-border" />
+                    <span className="h-14 w-14 shrink-0 rounded-full border-2 border-dashed border-border" />
                   )}
-                  <span className="min-w-0 truncate font-medium text-text-main">{row.name}</span>
+                  <span className="min-w-0 truncate text-lg font-semibold text-text-main">
+                    {row.name}
+                  </span>
                 </span>
                 <span
                   className={cn(
-                    "flex h-8 w-8 shrink-0 items-center justify-center rounded-full border",
+                    "flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2",
                     row.present
                       ? "border-primary-strong bg-primary-strong text-white"
                       : "border-border text-transparent",
                   )}
                 >
-                  <Check className="h-4 w-4" aria-hidden />
+                  <Check className="h-6 w-6" aria-hidden />
                 </span>
               </button>
             </li>

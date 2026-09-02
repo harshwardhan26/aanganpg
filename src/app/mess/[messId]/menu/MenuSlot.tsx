@@ -49,12 +49,12 @@ export function MenuSlot({
   }
 
   return (
-    <label className="flex flex-col gap-1 text-sm">
+    <label className="flex flex-col gap-1.5 text-base">
       <span className="flex items-baseline justify-between">
-        <span className="font-medium text-text-main">{label}</span>
-        {saved === "saving" && <span className="text-xs text-text-muted">Saving…</span>}
-        {saved === "done" && <span className="text-xs text-green-800">Saved</span>}
-        {saved === "failed" && <span className="text-xs text-red-700">Not saved — try again</span>}
+        <span className="font-semibold text-text-main">{label}</span>
+        {saved === "saving" && <span className="text-sm text-text-muted">Saving…</span>}
+        {saved === "done" && <span className="text-sm font-medium text-green-800">Saved</span>}
+        {saved === "failed" && <span className="text-sm font-medium text-red-800">Not saved. Try again.</span>}
       </span>
       <input
         value={value}
@@ -64,7 +64,7 @@ export function MenuSlot({
         }}
         onBlur={commit}
         placeholder="Rajma, rice, roti, salad"
-        className="rounded-lg border border-border bg-white px-3 py-2.5 text-base outline-none focus:border-primary-strong"
+        className="min-h-14 rounded-xl border-2 border-border bg-white px-4 text-base outline-none focus:border-primary-strong"
       />
     </label>
   );
