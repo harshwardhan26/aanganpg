@@ -239,8 +239,15 @@ export async function recordScan(
     await prisma.attendance.create({
       data: { studentId: student.id, day, meal, method: "SCAN" },
     });
-    revalidatePath(`/mess/${id}`);
-    revalidatePath(`/mess/${id}/checkin`);
+    // No `revalidatePath` here, deliberately. Unlike every other write in this
+    // file, this one runs while the scan page is rendering — opening that page
+    // *is* the scan — and Next refuses cache mutation during a render, so the
+    // call threw and the student got a 500 instead of their receipt. It only
+    // fired on the FIRST scan of a meal, which is why a second scan looked
+    // fine and the attendance row existed all along.
+    //
+    // Nothing is lost: the owner's dashboard and check-in list are rendered per
+    // request, so there is no cached copy of them to bust.
   }
 
   return {
