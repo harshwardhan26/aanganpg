@@ -13,10 +13,10 @@ import {
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { publicImage } from "@/lib/publicImage";
-import { getBaseUrl } from "@/lib/url";
 import { MessNavbar } from "@/components/mess/MessNavbar";
 import { MessLogin } from "@/components/mess/MessLogin";
 import { AanganStrip } from "@/components/mess/AanganStrip";
+import { MessFooter } from "@/components/mess/MessFooter";
 
 export const metadata = {
   title: "Aangan Mess — your mess on your phone",
@@ -268,49 +268,7 @@ export default async function MessHome({
         </section>
       </main>
 
-      {/*
-        * Who runs this, how to reach them, and where the policies are.
-        *
-        * Not decoration. Google flagged this host as a "deceptive page" with no
-        * example given — the shape it scores is a site asking for a Google
-        * sign-in while showing no identity, no contact and no policy. Saying
-        * plainly who we are, and that we only sign in students a mess has
-        * already added, is the honest answer to that and the true one.
-        */}
-      <footer className="border-t border-border bg-white py-10">
-        <div className="mx-auto flex max-w-[var(--content-max)] flex-col gap-4 px-4 sm:px-6 lg:px-8">
-          <div>
-            <p className="font-heading text-lg font-bold text-text-main">Aangan Mess</p>
-            <p className="mt-1 max-w-xl text-sm text-text-muted">
-              Mess management for hostels and canteens in Kolhapur, India. Owners run
-              attendance, fees and the food menu here. A student can sign in only if their
-              mess has already added their email — we ask for nothing else, take no payment,
-              and never ask for a password.
-            </p>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-text-muted">
-            {phone && (
-              <a href={`tel:${phone}`} className="font-medium text-primary-strong">
-                {phone}
-              </a>
-            )}
-            <a href={`${getBaseUrl()}/privacy`} className="underline underline-offset-4">
-              Privacy
-            </a>
-            <a href={`${getBaseUrl()}/terms`} className="underline underline-offset-4">
-              Terms
-            </a>
-            <a href={`${getBaseUrl()}/about`} className="underline underline-offset-4">
-              About Aangan
-            </a>
-          </div>
-
-          <p className="text-sm text-text-muted">
-            © {new Date().getFullYear()} Aangan, Kolhapur, Maharashtra.
-          </p>
-        </div>
-      </footer>
+      <MessFooter />
     </div>
   );
 }
