@@ -6,7 +6,6 @@ import {
   UtensilsCrossed,
   QrCode,
   CalendarCheck,
-  Wallet,
   Store,
   MessageCircle,
 } from "lucide-react";
@@ -193,15 +192,14 @@ export default async function MessHome({
         {/* FEATURES — one picture each. */}
         <section className="border-y border-border bg-light py-12 lg:py-20">
           <div className="mx-auto max-w-[var(--content-max)] px-4 sm:px-6 lg:px-8">
-            <h2 className="font-heading text-3xl font-bold text-text-main sm:text-4xl">
+            <h2 className="font-heading text-2xl font-bold text-text-main sm:text-3xl">
               What you get
             </h2>
-            <div className="mt-8 grid gap-6 sm:grid-cols-3">
+            <div className="mt-6 grid gap-3 sm:grid-cols-3 sm:gap-5">
               <Feature
                 file="images/mess-thali.jpg"
                 alt="A full Maharashtrian thali on a steel plate"
                 tint="from-amber-700 to-amber-900"
-                icon={<UtensilsCrossed className="h-5 w-5" aria-hidden />}
                 title="Today's food"
                 body="Breakfast, lunch and dinner, put up by your mess."
               />
@@ -209,7 +207,6 @@ export default async function MessHome({
                 file="images/mess-scan.jpg"
                 alt="A student holding a phone showing the mess scan screen"
                 tint="from-[#cc4040] to-[#8f2b2b]"
-                icon={<QrCode className="h-5 w-5" aria-hidden />}
                 title="Mark your meal"
                 body="Scan once. Your photo shows at the counter."
               />
@@ -217,7 +214,6 @@ export default async function MessHome({
                 file="images/mess-counter.jpg"
                 alt="A mess worker serving food to students at a counter"
                 tint="from-emerald-700 to-emerald-900"
-                icon={<Wallet className="h-5 w-5" aria-hidden />}
                 title="Your fees"
                 body="What is paid, what is left, which month."
               />
@@ -301,43 +297,47 @@ function Value({ icon, title, body }: { icon: React.ReactNode; title: string; bo
  *
  * `publicImage` returns null until the file lands in `public/images`, and the
  * slot renders as its own tinted panel rather than a broken image or somebody
- * else's stock food. Dropping the JPEG in is the whole deploy step.
+ * else's stock food.
+ *
+ * A row on a phone and a column from `sm` up. Three tall photo cards stacked
+ * made a student scroll past half a screen each to read one line of text; the
+ * thumbnail says the same thing in a fifth of the height. The floating icon
+ * badge is gone — the icons already appear, larger, in the section above, and a
+ * decoration repeated twice on one page is decoration nobody reads.
  */
 function Feature({
   file,
   alt,
   tint,
-  icon,
   title,
   body,
 }: {
   file: string;
   alt: string;
   tint: string;
-  icon: React.ReactNode;
   title: string;
   body: string;
 }) {
   const src = publicImage(file);
 
   return (
-    <article className="overflow-hidden rounded-2xl border border-border bg-white shadow-sm">
-      {/* Portrait on a phone, square from `sm` up. The photographs are shot
-          tall; a 4:3 card would crop a narrow band out of the middle of each
-          one and throw the rest away. Same shape the room site's tiles use. */}
-      <div className="relative isolate aspect-[4/5] overflow-hidden sm:aspect-square">
+    <article className="flex items-center gap-4 rounded-2xl border border-border bg-white p-3 transition-colors duration-200 hover:border-slate-300 sm:flex-col sm:items-stretch sm:gap-0 sm:overflow-hidden sm:p-0">
+      <div className="relative isolate h-20 w-20 shrink-0 overflow-hidden rounded-xl sm:aspect-[4/3] sm:h-auto sm:w-full sm:rounded-none">
         {src ? (
-          <Image src={src} alt={alt} fill sizes="(min-width: 640px) 33vw, 100vw" className="object-cover object-center" />
+          <Image
+            src={src}
+            alt={alt}
+            fill
+            sizes="(min-width: 640px) 33vw, 80px"
+            className="object-cover object-center"
+          />
         ) : (
           <div className={`absolute inset-0 bg-gradient-to-br ${tint}`} />
         )}
-        <span className="absolute bottom-3 left-3 flex h-10 w-10 items-center justify-center rounded-xl bg-white/90 text-text-main backdrop-blur">
-          {icon}
-        </span>
       </div>
-      <div className="p-5">
-        <h3 className="font-heading text-lg font-bold text-text-main">{title}</h3>
-        <p className="mt-1 text-base text-text-muted">{body}</p>
+      <div className="min-w-0 sm:p-4">
+        <h3 className="font-heading text-base font-bold text-text-main">{title}</h3>
+        <p className="mt-0.5 text-sm leading-relaxed text-text-muted">{body}</p>
       </div>
     </article>
   );
