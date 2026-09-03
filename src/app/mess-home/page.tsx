@@ -310,9 +310,12 @@ function Feature({
 
   return (
     <article className="overflow-hidden rounded-2xl border border-border bg-white shadow-sm">
-      <div className="relative isolate aspect-[4/3] overflow-hidden">
+      {/* Portrait on a phone, square from `sm` up. The photographs are shot
+          tall; a 4:3 card would crop a narrow band out of the middle of each
+          one and throw the rest away. Same shape the room site's tiles use. */}
+      <div className="relative isolate aspect-[4/5] overflow-hidden sm:aspect-square">
         {src ? (
-          <Image src={src} alt={alt} fill sizes="(min-width: 640px) 33vw, 100vw" className="object-cover" />
+          <Image src={src} alt={alt} fill sizes="(min-width: 640px) 33vw, 100vw" className="object-cover object-center" />
         ) : (
           <div className={`absolute inset-0 bg-gradient-to-br ${tint}`} />
         )}
