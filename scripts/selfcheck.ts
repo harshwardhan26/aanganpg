@@ -870,6 +870,8 @@ async function main() {
     ["#016630", white, "menu slot saved (green-800 on white)"],
     // The advert strip on the mess landing page, now red with white text.
     [white, "#cc4040", "aanganpg strip, white on the strip's red"],
+    // Sign out sits in the account menu, in red, on white.
+    ["#c10007", white, "sign out in the account menu (red-700 on white)"],
     // The student screens. The two gradient cards carry white text, and the
     // month grid must stay readable at every fill level — it is the grid a
     // student counts their own month on.
