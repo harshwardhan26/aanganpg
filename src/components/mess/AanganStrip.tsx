@@ -1,5 +1,6 @@
 import { ArrowUpRight, BedDouble, MapPin, ShieldCheck, IndianRupee } from "lucide-react";
 import { getBaseUrl } from "@/lib/url";
+import { cn } from "@/lib/utils";
 
 /**
  * The one place the mess site mentions the room site.
@@ -20,7 +21,7 @@ const PITCHES = [
   { Icon: IndianRupee, text: "Zero brokerage" },
 ];
 
-export function AanganStrip() {
+export function AanganStrip({ className }: { className?: string }) {
   return (
     <a
       href={getBaseUrl()}
@@ -29,7 +30,7 @@ export function AanganStrip() {
       // `--primary-strong` (#cc4040), never the brand coral: #fa5a5a is 3.15:1
       // against white, and white text on it is the one thing the house rules
       // name outright.
-      className="group block overflow-hidden bg-primary-strong py-2.5"
+      className={cn("group block overflow-hidden bg-primary-strong py-2.5", className)}
       aria-label="Looking for a room? Visit aanganpg.com — hostels, rooms and PGs in Kolhapur"
     >
       <div className="marquee" style={{ "--marquee-duration": "22s" } as React.CSSProperties}>

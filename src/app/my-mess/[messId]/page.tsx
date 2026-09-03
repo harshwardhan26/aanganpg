@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { QrCode, UtensilsCrossed, CalendarCheck, Wallet, Check, ChevronRight } from "lucide-react";
 import prisma from "@/lib/prisma";
 import { findStudent } from "@/actions/mess";
+import { AanganStrip } from "@/components/mess/AanganStrip";
 import {
   attendanceDay,
   startOfIstMonth,
@@ -201,6 +202,10 @@ export default async function StudentMessPage({
           detail="At the counter"
         />
       </div>
+
+      {/* Under everything they came for, never above it. A student opening this
+          in a queue is here for the card at the top. */}
+      <AanganStrip className="rounded-2xl shadow-[var(--shadow-soft)]" />
     </main>
   );
 }
