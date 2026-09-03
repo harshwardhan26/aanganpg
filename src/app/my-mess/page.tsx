@@ -37,6 +37,10 @@ export default async function MyMessIndex({
         <p className="mt-3 text-base text-text-muted">
           Sign in to see today&apos;s food, mark your meals, and see your fees.
         </p>
+        {/* Said where the decision is made, not only in the footer. */}
+        <p className="mt-2 text-sm text-text-muted">
+          Google signs you in. We never see your password, and we ask for nothing else.
+        </p>
         <MessLogin />
       </main>
     );
