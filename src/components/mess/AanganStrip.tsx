@@ -14,11 +14,16 @@ import { cn } from "@/lib/utils";
  * a database and neither is ever meant to show that — a link a student can
  * choose to follow is a different thing from a dependency.
  */
+/**
+ * Written as the question a student already has, not as a list of features.
+ * "Zero brokerage" is an answer; "Looking for a hostel?" is the thought they
+ * were having anyway, and it is the one that makes an address worth reading.
+ */
 const PITCHES = [
-  { Icon: BedDouble, text: "Hostels, Rooms & PGs in Kolhapur" },
-  { Icon: ShieldCheck, text: "Every room visited and photographed" },
-  { Icon: MapPin, text: "Near every college" },
-  { Icon: IndianRupee, text: "Zero brokerage" },
+  { Icon: BedDouble, text: "Looking for a hostel?" },
+  { Icon: MapPin, text: "Need a PG near your college?" },
+  { Icon: ShieldCheck, text: "Room hunting in Kolhapur?" },
+  { Icon: IndianRupee, text: "Want a room with no brokerage?" },
 ];
 
 export function AanganStrip({ className }: { className?: string }) {
@@ -31,7 +36,7 @@ export function AanganStrip({ className }: { className?: string }) {
       // against white, and white text on it is the one thing the house rules
       // name outright.
       className={cn("group block overflow-hidden bg-primary-strong py-2.5", className)}
-      aria-label="Looking for a room? Visit aanganpg.com — hostels, rooms and PGs in Kolhapur"
+      aria-label="Looking for a hostel, PG or room in Kolhapur? Visit aanganpg.com"
     >
       <div className="marquee" style={{ "--marquee-duration": "22s" } as React.CSSProperties}>
         {/* Twice, so the slide can loop on a seam nobody can see. The copy a
