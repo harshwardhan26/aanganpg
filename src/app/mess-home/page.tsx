@@ -15,6 +15,7 @@ import prisma from "@/lib/prisma";
 import { publicImage } from "@/lib/publicImage";
 import { MessNavbar } from "@/components/mess/MessNavbar";
 import { MessLogin } from "@/components/mess/MessLogin";
+import { AanganStrip } from "@/components/mess/AanganStrip";
 
 export const metadata = {
   title: "Aangan Mess — your mess on your phone",
@@ -156,6 +157,8 @@ export default async function MessHome({
             </div>
           </div>
         </section>
+
+        <AanganStrip />
 
         {/* VALUE — three lines, the whole product. */}
         <section className="mx-auto max-w-[var(--content-max)] px-4 py-12 sm:px-6 lg:px-8 lg:py-20">

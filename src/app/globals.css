@@ -161,4 +161,31 @@
       opacity: 0;
     }
   }
+
+  /*
+   * A strip that scrolls its contents forever.
+   *
+   * The track holds the same list twice and slides exactly half its width, so
+   * the moment it finishes the second copy is sitting where the first began and
+   * the loop is invisible. `translate3d` keeps it on the compositor — animating
+   * `left` would repaint the strip on every frame of every page.
+   *
+   * The reduced-motion block above collapses the duration, which parks the
+   * track on that seam. Because both halves are identical, a reader who asked
+   * for no motion sees the same row, standing still.
+   */
+  .marquee {
+    display: flex;
+    width: max-content;
+    animation: marquee var(--marquee-duration, 30s) linear infinite;
+  }
+
+  @keyframes marquee {
+    from {
+      transform: translate3d(0, 0, 0);
+    }
+    to {
+      transform: translate3d(-50%, 0, 0);
+    }
+  }
 }

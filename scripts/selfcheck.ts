@@ -868,6 +868,11 @@ async function main() {
     ["#9f0712", white, "unpaid fee marker (red-800 on white)"],
     ["#973c00", white, "missing parent phone warning (amber-800 on white)"],
     ["#016630", white, "menu slot saved (green-800 on white)"],
+    // The advert strip on the mess landing page. White at 80% over the dark
+    // slate reads as #494f5c-on-#1e293b for contrast purposes; both are checked
+    // at full strength here, which is the stricter of the two.
+    [white, "#1e293b", "aanganpg strip, its own name on the dark bar"],
+    ["#cbd0d8", "#1e293b", "aanganpg strip, the fainter pitch text"],
     // The student screens. The two gradient cards carry white text, and the
     // month grid must stay readable at every fill level — it is the grid a
     // student counts their own month on.
