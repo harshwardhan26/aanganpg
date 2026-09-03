@@ -468,6 +468,38 @@ export function plural(count: number, one: string, many = `${one}s`): string {
   return `${count} ${count === 1 ? one : many}`;
 }
 
+/**
+ * The key out of a scanned poster link, if that link belongs to this mess.
+ *
+ * A camera reads whatever is in front of it — another mess's poster, a payment
+ * QR, a sticker on a lamppost. Everything that is not this mess's own entry
+ * link is turned away by name, so a student pointing at the wrong poster is
+ * told which mistake they made rather than watching the scanner sit there.
+ *
+ * The key itself is not trusted here. It is copied out and handed to the server,
+ * which is the only place that knows whether it is right.
+ */
+export function scanLinkKey(
+  raw: string,
+  messId: string,
+): { ok: true; key: string } | { ok: false; reason: "not-ours" | "other-mess" } {
+  let url: URL;
+  try {
+    url = new URL(raw);
+  } catch {
+    return { ok: false, reason: "not-ours" };
+  }
+
+  const match = /^\/my-mess\/([^/]+)\/scan\/?$/.exec(url.pathname);
+  if (!match) return { ok: false, reason: "not-ours" };
+  if (match[1] !== messId) return { ok: false, reason: "other-mess" };
+
+  const key = url.searchParams.get("k");
+  if (!key) return { ok: false, reason: "not-ours" };
+
+  return { ok: true, key };
+}
+
 /** Present today, out of the students still on the rolls. */
 export function attendanceSummary(present: number, active: number) {
   return {

@@ -18,7 +18,7 @@ import { trustedIp } from "../src/lib/request";
 import { allowRequest } from "../src/lib/rate-limit";
 import { parseLeadView, parseLeadKind, parseLeadGrouping, parseHostelSearch, buildLeadWhere, buildLeadOrderBy, groupByHostel, startOfIstDay, followupState } from "../src/lib/lead-filters";
 import { parseListingView, parseListingSearch, buildListingWhere, listingStatus } from "../src/lib/listing-filters";
-import { messRoleAllows, attendanceDay, recentDays, dayKey, studentFormIssues, attendanceSummary, msUntilNextIstDay, startOfIstMonth, monthKey, dueDate, shouldRemind, owesForMonth, mealAt, nearestMeal, DEFAULT_MEAL_WINDOWS, DEFAULT_MEAL_TIMES, mealWindows, mealTimesIssues, toClockValue, fromClockValue, clockLabel, menuFor, weekdayOf } from "../src/lib/mess";
+import { messRoleAllows, attendanceDay, recentDays, dayKey, studentFormIssues, attendanceSummary, msUntilNextIstDay, startOfIstMonth, monthKey, dueDate, shouldRemind, owesForMonth, mealAt, nearestMeal, DEFAULT_MEAL_WINDOWS, DEFAULT_MEAL_TIMES, mealWindows, mealTimesIssues, toClockValue, fromClockValue, clockLabel, scanLinkKey, menuFor, weekdayOf } from "../src/lib/mess";
 import { overdueMessage } from "../src/lib/sms";
 import { scanKey, scanKeyMatches } from "../src/lib/scan-key";
 
@@ -1087,6 +1087,39 @@ async function main() {
   // `--primary-strong`; the brand coral fails and must never be used here.
   assert(contrastRatio(white, "#cc4040") >= 4.5, "the strip's red carries white text");
   assert(contrastRatio(white, "#fa5a5a") < 4.5, "the brand coral still cannot, and this proves it");
+
+  // ---- what the in-app camera is allowed to act on -------------------------
+  // A camera reads whatever is in front of it. Only this mess's own entry link
+  // may be followed, and the key is copied out for the server to judge.
+  const mine = "cmtjowvq10000in2zh9alxwo6";
+  assert.deepEqual(
+    scanLinkKey(`https://mess.aanganpg.com/my-mess/${mine}/scan?k=6edbe6b1edd3353b`, mine),
+    { ok: true, key: "6edbe6b1edd3353b" },
+    "our own poster hands over its key",
+  );
+  assert.deepEqual(
+    scanLinkKey(`https://mess.aanganpg.com/my-mess/someone-else/scan?k=abc`, mine),
+    { ok: false, reason: "other-mess" },
+    "another mess's poster is named as such, not ignored",
+  );
+  assert.deepEqual(
+    scanLinkKey(`https://mess.aanganpg.com/my-mess/${mine}/scan`, mine),
+    { ok: false, reason: "not-ours" },
+    "our own page without a key is not a scan",
+  );
+  assert.deepEqual(
+    scanLinkKey("https://evil.example/pay?amount=5000", mine),
+    { ok: false, reason: "not-ours" },
+    "a payment QR taped over the poster is refused",
+  );
+  assert.deepEqual(scanLinkKey("hello world", mine), { ok: false, reason: "not-ours" }, "plain text is refused");
+  // The same link on any host is still this mess's link — a printed poster from
+  // before the move to the subdomain must keep working in the camera.
+  assert.deepEqual(
+    scanLinkKey(`https://www.aanganpg.com/my-mess/${mine}/scan?k=deadbeef`, mine),
+    { ok: true, key: "deadbeef" },
+    "an older printed poster still scans",
+  );
 
   console.log("Self check passed");
 }

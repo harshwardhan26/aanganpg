@@ -4,6 +4,7 @@ import { recordScan } from "@/actions/mess";
 import { MEAL_LABEL } from "@/lib/mess";
 import { LiveClock } from "./LiveClock";
 import { MessLogin } from "@/components/mess/MessLogin";
+import { QrScanner } from "@/components/mess/QrScanner";
 
 export const metadata = { title: "Mess entry" };
 
@@ -63,11 +64,20 @@ export default async function ScanPage({
           </p>
           <p className="mt-3 text-base text-text-muted">
             {result.reason === "no-key" &&
-              "Open your phone camera and point it at the QR paper near the counter. You can mark your food only there."}
+              "Point the camera at the QR paper near the counter. You can mark your food only there."}
             {result.reason === "no-meal" && "Come at food time and scan again."}
             {(result.reason === "not-a-student" || result.reason === "left") &&
               "Ask the mess to add you. Then scan again."}
           </p>
+
+          {/* The camera, right here. The poster still works on its own; this is
+              for the student who is already in their own browser, which is the
+              one place their sign-in is certain to be. */}
+          {result.reason === "no-key" && (
+            <div className="mt-5">
+              <QrScanner messId={messId} />
+            </div>
+          )}
         </div>
       </Shell>
     );
