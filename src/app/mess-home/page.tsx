@@ -153,7 +153,10 @@ export default async function MessHome({
                 Today&apos;s food, your meals, your fees. Open it before you walk over.
               </p>
 
-              {isAdmin ? <ConsoleLink /> : <MessLogin />}
+              {/* No sign-in button here. The bar already carries Login, and the
+                  page has one at the end where a visitor has actually read what
+                  they would be signing in to. */}
+              {isAdmin && <ConsoleLink />}
             </div>
           </div>
         </section>
