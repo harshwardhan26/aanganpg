@@ -22,6 +22,11 @@ export const metadata = {
   description:
     "See today's food, mark your meal, and know what you owe. For students eating at a mess in Kolhapur.",
   robots: { index: true, follow: true },
+  // Proves this host to Google Search Console, which is what lets us see why
+  // Safe Browsing flagged the subdomain and ask for a review. On this page
+  // rather than the shared root layout: the token belongs to the mess property,
+  // and the room site has its own.
+  verification: { google: "LO2TDwktK6qNh1zexQ5ES2oYvg95TJBS_4RIcsF5ySc" },
 };
 
 /**
