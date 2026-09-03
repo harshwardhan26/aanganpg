@@ -26,10 +26,13 @@ export function AanganStrip() {
       href={getBaseUrl()}
       // Not `noopener` alone: this opens a sister site, and a student who taps
       // it should be able to come back with the browser's own back button.
-      className="group block overflow-hidden border-y border-border bg-text-main py-2.5"
+      // `--primary-strong` (#cc4040), never the brand coral: #fa5a5a is 3.15:1
+      // against white, and white text on it is the one thing the house rules
+      // name outright.
+      className="group block overflow-hidden bg-primary-strong py-2.5"
       aria-label="Looking for a room? Visit aanganpg.com — hostels, rooms and PGs in Kolhapur"
     >
-      <div className="marquee" style={{ "--marquee-duration": "36s" } as React.CSSProperties}>
+      <div className="marquee" style={{ "--marquee-duration": "22s" } as React.CSSProperties}>
         {/* Twice, so the slide can loop on a seam nobody can see. The copy a
             screen reader would repeat is hidden from it. */}
         {[0, 1].map((copy) => (
@@ -37,9 +40,9 @@ export function AanganStrip() {
             {PITCHES.map(({ Icon, text }) => (
               <span
                 key={text}
-                className="flex shrink-0 items-center gap-2 px-6 text-sm font-medium whitespace-nowrap text-white/80"
+                className="flex shrink-0 items-center gap-2 px-6 text-sm font-medium whitespace-nowrap text-white"
               >
-                <Icon className="h-4 w-4 shrink-0 text-white/60" aria-hidden />
+                <Icon className="h-4 w-4 shrink-0 text-white/75" aria-hidden />
                 {text}
               </span>
             ))}

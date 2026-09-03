@@ -868,11 +868,8 @@ async function main() {
     ["#9f0712", white, "unpaid fee marker (red-800 on white)"],
     ["#973c00", white, "missing parent phone warning (amber-800 on white)"],
     ["#016630", white, "menu slot saved (green-800 on white)"],
-    // The advert strip on the mess landing page. White at 80% over the dark
-    // slate reads as #494f5c-on-#1e293b for contrast purposes; both are checked
-    // at full strength here, which is the stricter of the two.
-    [white, "#1e293b", "aanganpg strip, its own name on the dark bar"],
-    ["#cbd0d8", "#1e293b", "aanganpg strip, the fainter pitch text"],
+    // The advert strip on the mess landing page, now red with white text.
+    [white, "#cc4040", "aanganpg strip, white on the strip's red"],
     // The student screens. The two gradient cards carry white text, and the
     // month grid must stay readable at every fill level — it is the grid a
     // student counts their own month on.
@@ -1085,6 +1082,11 @@ async function main() {
   assert.equal(clockLabel(390), "6:30 AM", "how a time is written to a person");
   assert.equal(clockLabel(720), "12:00 PM", "noon is 12 PM, not 0 PM");
   assert.equal(clockLabel(0), "12:00 AM", "midnight is 12 AM");
+
+  // The strip is red with white text. That is only allowed on the darker
+  // `--primary-strong`; the brand coral fails and must never be used here.
+  assert(contrastRatio(white, "#cc4040") >= 4.5, "the strip's red carries white text");
+  assert(contrastRatio(white, "#fa5a5a") < 4.5, "the brand coral still cannot, and this proves it");
 
   console.log("Self check passed");
 }
