@@ -59,10 +59,14 @@ export function MessLogin({
     <Sheet open={open} onOpenChange={setOpen}>
       {/* The trigger renders its own button rather than wrapping a child: this
           Sheet is Base UI, which composes with `render`, not `asChild`. */}
+      {/* Filled by default, because on the page itself this is the one thing to
+          do. The navbar passes its own quieter class: a red block in the bar was
+          shouting over the headline it sits above. */}
       <SheetTrigger
         className={cn(
-          "inline-flex cursor-pointer items-center justify-center rounded-xl bg-primary-strong font-semibold text-white transition-colors hover:bg-primary-hover",
-          className ?? "min-h-14 px-7 text-lg",
+          "inline-flex cursor-pointer items-center justify-center rounded-xl font-semibold transition-colors",
+          className ??
+            "min-h-14 bg-primary-strong px-7 text-lg text-white hover:bg-primary-hover",
         )}
       >
         {label}

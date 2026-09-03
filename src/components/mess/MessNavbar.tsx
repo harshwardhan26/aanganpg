@@ -57,7 +57,10 @@ export function MessNavbar({ name }: { name?: string | null }) {
             <SignOutButton />
           </div>
         ) : (
-          <MessLogin label="Login" className="min-h-11 px-5 text-base" />
+          <MessLogin
+            label="Login"
+            className="min-h-11 border border-border bg-white px-5 text-base text-text-main hover:bg-slate-100"
+          />
         )}
       </div>
     </header>
