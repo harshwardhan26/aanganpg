@@ -32,10 +32,18 @@ import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/s
 export function MessLogin({
   label = "Sign in",
   className,
+  pillClassName,
   callbackUrl,
 }: {
   label?: string;
   className?: string;
+  /**
+   * Styles the visible box, while `className` sizes the thing a thumb hits.
+   * That split is the only way to draw a button smaller than 44px without
+   * making it smaller than 44px: the padding around the pill still belongs to
+   * the button.
+   */
+  pillClassName?: string;
   /** Where to return after Google. Sanitised; anything off-site is ignored. */
   callbackUrl?: string;
 }) {
@@ -69,7 +77,7 @@ export function MessLogin({
             "min-h-14 bg-primary-strong px-7 text-lg text-white hover:bg-primary-hover",
         )}
       >
-        {label}
+        {pillClassName ? <span className={pillClassName}>{label}</span> : label}
       </SheetTrigger>
       {/* A sheet, not a centre modal: it is what the room site's sign-in already
           is, and on a phone it opens under the thumb rather than under the

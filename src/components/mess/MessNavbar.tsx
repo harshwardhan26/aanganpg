@@ -96,10 +96,11 @@ export function MessNavbar({ name }: { name?: string | null }) {
         ) : (
           <MessLogin
             label="Login"
-            // Red, regular weight, tighter. `twMerge` lets these beat the
-            // filled defaults in `MessLogin`. The height stays 44px — the
-            // padding that came off is horizontal only.
-            className="min-h-11 border border-border bg-white px-3.5 text-base font-normal text-primary-strong hover:bg-slate-100"
+            // The button is still 44px tall to a thumb; the pill drawn inside
+            // it is not. Shrinking the button itself would have made the only
+            // control in the bar the hardest thing on the page to hit.
+            className="min-h-11 px-0"
+            pillClassName="inline-flex items-center rounded-lg border border-border bg-white px-3 py-1.5 text-sm font-normal text-primary-strong transition-colors hover:bg-slate-100"
           />
         )}
       </div>
