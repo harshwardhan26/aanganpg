@@ -1138,6 +1138,31 @@ async function main() {
   assert(contrastRatio(white, "#0f172a") >= 3, "and on the dark footer");
   assert(contrastRatio("#cc4040", white) >= 3, "the red ring still works on the pages that are white");
 
+  // ---- the windows the mess actions run under ------------------------------
+  // Not a test of Upstash, which is not here — a test of the sizes. A limiter
+  // that trips while a helper works a door is worse than no limiter, because it
+  // fails at the one moment the mess is relying on it.
+  //
+  // A helper marking every student in a 200-seat mess, at a brisk two taps a
+  // second, must stay inside the marking window.
+  const MARK_PER_MINUTE = 300;
+  assert(200 < MARK_PER_MINUTE, "a full roll marked in one minute must not trip the limiter");
+  assert(2 * 60 < MARK_PER_MINUTE, "nor two taps a second for a solid minute");
+
+  // A student reopening their receipt to show it at the counter, repeatedly.
+  const SCAN_PER_MINUTE = 30;
+  assert(10 < SCAN_PER_MINUTE, "showing a receipt ten times over is normal, not abuse");
+
+  // An owner entering students, or ticking off a month of payments in a sitting.
+  const WRITE_PER_MINUTE = 120;
+  assert(60 < WRITE_PER_MINUTE, "an owner working quickly through a list is not abuse");
+
+  // And the shape that matters most: no limiter at all must refuse in
+  // production and allow in development. One dropped variable must not quietly
+  // remove every brake on the site.
+  assert.equal(await allowRequest(null, "mess:scan:someone", true), false, "no limiter refuses in production");
+  assert.equal(await allowRequest(null, "mess:scan:someone", false), true, "and allows in development");
+
   console.log("Self check passed");
 }
 

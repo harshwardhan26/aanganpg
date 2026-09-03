@@ -7,6 +7,7 @@ import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { canonicalPhone } from "@/lib/phone";
 import { scanKeyMatches } from "@/lib/scan-key";
+import { slidingLimiter, allowRequest } from "@/lib/rate-limit";
 import {
   attendanceDay,
   mealAt,
@@ -21,6 +22,30 @@ import {
 } from "@/lib/mess";
 
 const idSchema = z.string().trim().min(1).max(64);
+
+/*
+ * Windows sized against the busiest real minute, not the average one.
+ *
+ * A helper at the door marking two hundred students is the load this has to
+ * survive; a limiter that trips there is worse than no limiter, because it
+ * fails at exactly the moment the mess is relying on it. So these are generous
+ * and their only job is to stop a script, not to ration honest work.
+ *
+ * Keyed by user id — every one of these actions is already behind a session, so
+ * there is no anonymous traffic to key on an address instead.
+ */
+const scanLimiter = slidingLimiter(30, "1 m");
+const markLimiter = slidingLimiter(300, "1 m");
+const writeLimiter = slidingLimiter(120, "1 m");
+
+/** Throws the same way an unauthorised call does: the caller sees one failure. */
+async function withinLimit(
+  limiter: ReturnType<typeof slidingLimiter>,
+  action: string,
+  userId: string,
+): Promise<boolean> {
+  return allowRequest(limiter, `mess:${action}:${userId}`);
+}
 
 
 /**
@@ -88,7 +113,10 @@ export async function saveStudent(
     monthlyFee: formData.get("monthlyFee") ?? "",
   });
 
-  await requireMess(input.messId, "STAFF");
+  const { userId } = await requireMess(input.messId, "STAFF");
+  if (!(await withinLimit(writeLimiter, "student", userId))) {
+    return { ok: false, issues: ["Too many changes at once. Wait a minute and try again."] };
+  }
 
   const parentPhone = canonicalPhone(input.parentPhone);
   const monthlyFee = parseFee(input.monthlyFee);
@@ -139,7 +167,8 @@ export async function setStudentLeft(
   left: boolean,
 ): Promise<void> {
   const id = idSchema.parse(studentId);
-  await requireMess(messId, "OWNER");
+  const { userId } = await requireMess(messId, "OWNER");
+  if (!(await withinLimit(writeLimiter, "leave", userId))) throw new Error("Too many requests");
 
   const updated = await prisma.student.updateMany({
     where: { id, messId },
@@ -191,7 +220,7 @@ export async function findStudent(messId: string): Promise<FoundStudent | null> 
 
 export type ScanOutcome =
   | { ok: true; name: string; photoUrl: string | null; meal: MealName; alreadyMarked: boolean }
-  | { ok: false; reason: "no-key" | "signed-out" | "no-meal" | "not-a-student" | "left" };
+  | { ok: false; reason: "no-key" | "signed-out" | "too-fast" | "no-meal" | "not-a-student" | "left" };
 
 /**
  * A student marking themselves present by opening the poster link.
@@ -221,6 +250,14 @@ export async function recordScan(
   // is the wrong instruction — they need a sign-in button, not the mess office.
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) return { ok: false, reason: "signed-out" };
+
+  // Reopening the receipt at the counter is normal and stays free; thirty in a
+  // minute is well past that and into scripting. Checked after the session, so
+  // a stranger holding the poster link cannot spend a student's allowance for
+  // them.
+  if (!(await withinLimit(scanLimiter, "scan", session.user.id ?? session.user.email))) {
+    return { ok: false, reason: "too-fast" };
+  }
 
   const mess = await prisma.mess.findUnique({
     where: { id },
@@ -291,7 +328,8 @@ export async function setPaid(
   // page, never from a person typing.
   const month = new Date(`${z.string().regex(/^\d{4}-\d{2}-01$/).parse(monthIso)}T00:00:00.000Z`);
 
-  await requireMess(messId, "OWNER");
+  const { userId } = await requireMess(messId, "OWNER");
+  if (!(await withinLimit(writeLimiter, "paid", userId))) throw new Error("Too many requests");
 
   const student = await prisma.student.findFirst({
     where: { id, messId },
@@ -335,7 +373,8 @@ export async function saveMenu(formData: FormData): Promise<void> {
     items: formData.get("items") ?? "",
   });
 
-  await requireMess(input.messId, "OWNER");
+  const { userId } = await requireMess(input.messId, "OWNER");
+  if (!(await withinLimit(writeLimiter, "menu", userId))) throw new Error("Too many requests");
 
   const where = {
     messId_weekday_meal: {
@@ -381,7 +420,10 @@ export async function toggleAttendance(
 ): Promise<{ present: boolean }> {
   const id = idSchema.parse(studentId);
   const mealName = z.enum(["BREAKFAST", "LUNCH", "DINNER"]).parse(meal);
-  await requireMess(messId, "STAFF");
+  const { userId } = await requireMess(messId, "STAFF");
+  // The widest window in the file. A door being worked fast must never be the
+  // thing that trips it.
+  if (!(await withinLimit(markLimiter, "mark", userId))) throw new Error("Too many requests");
 
   const student = await prisma.student.findFirst({
     where: { id, messId },
@@ -426,7 +468,10 @@ export type TimesResult = { ok: true } | { ok: false; issues: string[] };
  */
 export async function saveMealTimes(formData: FormData): Promise<TimesResult> {
   const messId = idSchema.parse(formData.get("messId"));
-  await requireMess(messId, "OWNER");
+  const { userId } = await requireMess(messId, "OWNER");
+  if (!(await withinLimit(writeLimiter, "times", userId))) {
+    return { ok: false, issues: ["Too many changes at once. Wait a minute and try again."] };
+  }
 
   const times = {} as Record<(typeof MEAL_FIELDS)[number], number>;
   for (const field of MEAL_FIELDS) {

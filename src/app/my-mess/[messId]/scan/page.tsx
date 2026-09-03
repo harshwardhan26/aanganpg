@@ -58,6 +58,7 @@ export default async function ScanPage({
         <div className="rounded-2xl border-2 border-border bg-white p-8 text-center">
           <p className="font-heading text-2xl font-bold text-text-main">
             {result.reason === "no-key" && "Scan the QR paper at the mess"}
+            {result.reason === "too-fast" && "Too many tries"}
             {result.reason === "no-meal" && "No food right now"}
             {result.reason === "not-a-student" && "You are not in this mess"}
             {result.reason === "left" && "You are not in this mess now"}
@@ -65,6 +66,8 @@ export default async function ScanPage({
           <p className="mt-3 text-base text-text-muted">
             {result.reason === "no-key" &&
               "Point the camera at the QR paper near the counter. You can mark your food only there."}
+            {result.reason === "too-fast" &&
+              "Wait a minute, then scan again. Your meal is already safe if it was marked."}
             {result.reason === "no-meal" && "Come at food time and scan again."}
             {(result.reason === "not-a-student" || result.reason === "left") &&
               "Ask the mess to add you. Then scan again."}

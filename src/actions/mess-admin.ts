@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { slidingLimiter, allowRequest } from "@/lib/rate-limit";
 
 /**
  * Aangan's own controls: making a mess exist, and saying who runs it.
@@ -20,11 +21,24 @@ const emailSchema = z.string().trim().max(160).toLowerCase();
  * The security boundary. The layout guard is convenience — it stops a wrong
  * screen rendering; this stops a wrong write, and it is the one that matters.
  */
-async function requireAdmin() {
+/*
+ * Tighter than the mess actions, deliberately. Nobody onboards twenty messes a
+ * minute, and these are the calls that hand out access to somebody else's
+ * students — the ones worth slowing down if an admin session is ever taken.
+ */
+const adminLimiter = slidingLimiter(20, "1 m");
+
+async function requireAdmin(): Promise<string> {
   const session = await getServerSession(authOptions);
-  if (session?.user?.role !== "admin") {
+  if (session?.user?.role !== "admin" || !session.user.id) {
     throw new Error("Unauthorized");
   }
+
+  if (!(await allowRequest(adminLimiter, `mess-admin:${session.user.id}`))) {
+    throw new Error("Too many requests");
+  }
+
+  return session.user.id;
 }
 
 export type AdminResult = { ok: true } | { ok: false; error: string };
