@@ -9,6 +9,9 @@ if (process.env.NODE_ENV === "production" && !process.env.NEXT_PUBLIC_SITE_URL) 
 }
 
 const nextConfig: NextConfig = {
+  // Lets CI or a verification run build beside an active local dev server.
+  // Production keeps Next's standard directory unless explicitly overridden.
+  distDir: process.env.AANGAN_NEXT_DIST_DIR || ".next",
   // The Postgres driver must not be bundled. Turbopack's rewrite of `pg` broke
   // connection setup, and every database query failed with "Connection
   // terminated unexpectedly" while the identical code worked outside Next.

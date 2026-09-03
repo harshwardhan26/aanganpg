@@ -18,9 +18,11 @@ import { trustedIp } from "../src/lib/request";
 import { allowRequest } from "../src/lib/rate-limit";
 import { parseLeadView, parseLeadKind, parseLeadGrouping, parseHostelSearch, buildLeadWhere, buildLeadOrderBy, groupByHostel, startOfIstDay, followupState } from "../src/lib/lead-filters";
 import { parseListingView, parseListingSearch, buildListingWhere, listingStatus } from "../src/lib/listing-filters";
-import { messRoleAllows, attendanceDay, recentDays, dayKey, studentFormIssues, attendanceSummary, msUntilNextIstDay, startOfIstMonth, monthKey, dueDate, shouldRemind, owesForMonth, mealAt, nearestMeal, DEFAULT_MEAL_WINDOWS, DEFAULT_MEAL_TIMES, mealWindows, mealTimesIssues, toClockValue, fromClockValue, clockLabel, scanLinkKey, menuFor, weekdayOf } from "../src/lib/mess";
+import { messRoleAllows, attendanceDay, recentDays, dayKey, studentFormIssues, attendanceSummary, msUntilNextIstDay, startOfIstMonth, monthKey, dueDate, shouldRemind, owesForMonth, mealAt, nearestMeal, DEFAULT_MEAL_WINDOWS, DEFAULT_MEAL_TIMES, mealWindows, mealTimesIssues, toClockValue, fromClockValue, clockLabel, scanLinkKey, menuFor, weekdayOf, mealSkipDeadline, canChangeMealSkip, manualReminderAllowed, MANUAL_REMINDER_COOLDOWN_HOURS } from "../src/lib/mess";
 import { overdueMessage } from "../src/lib/sms";
 import { scanKey, scanKeyMatches } from "../src/lib/scan-key";
+import { feeBalance, feeEntryEffect, feeStatus, receiptNumber } from "../src/lib/mess-finance";
+import { parseStudentCsv } from "../src/lib/csv-import";
 
 try { process.loadEnvFile(); } catch {}
 
@@ -65,6 +67,50 @@ export function contrastRatio(hex1: string, hex2: string) {
 }
 
 async function main() {
+  assert(feeEntryEffect("PAYMENT", 500) === -500, "payments must reduce the balance");
+  assert(feeEntryEffect("REFUND", 200) === 200, "refunds must increase the balance");
+  assert(
+    feeBalance(2000, [
+      { kind: "PAYMENT", amount: 500 },
+      { kind: "DISCOUNT", amount: 100 },
+      { kind: "PAYMENT", amount: 400, reversedAt: new Date() },
+    ]) === 1400,
+    "feeBalance must ignore reversed entries",
+  );
+  assert(
+    feeStatus({ charge: 2000, balance: 500, due: new Date("2026-09-05"), today: new Date("2026-09-06"), hasPayment: true }) === "PARTIAL",
+    "a payment with money left must be partial even after the due date",
+  );
+  assert(receiptNumber(42, new Date("2026-09-03")) === "AM-2026-000042", "receipt numbering failed");
+  assert.deepStrictEqual(
+    parseStudentCsv('Student Name,Email,Parent Phone,Fee\n"Patil, Asha",asha@example.com,9876543210,2500').rows[0],
+    { name: "Patil, Asha", email: "asha@example.com", parentName: "", parentPhone: "9876543210", monthlyFee: "2500" },
+    "student CSV import must handle quoted commas and header aliases",
+  );
+  assert.equal(
+    mealSkipDeadline(new Date("2026-09-05T00:00:00Z"), 20 * 60).toISOString(),
+    "2026-09-04T14:30:00.000Z",
+    "meal-skip cutoff must be the prior day in IST",
+  );
+  assert(canChangeMealSkip(new Date("2026-09-05T00:00:00Z"), 20 * 60, new Date("2026-09-04T14:30:00Z")), "cutoff instant is allowed");
+
+  // A parent must never get two messages about the same money. The owner taps
+  // Send, the page is slow, the owner taps again: the second tap lands seconds
+  // after the first and has to be refused.
+  {
+    const first = new Date("2026-09-03T09:00:00Z");
+    const hour = 60 * 60 * 1000;
+    assert(manualReminderAllowed(null, first), "a fee never reminded about must be remindable");
+    assert(!manualReminderAllowed(first, new Date(first.getTime() + 4_000)), "a double tap must not send twice");
+    assert(
+      !manualReminderAllowed(first, new Date(first.getTime() + (MANUAL_REMINDER_COOLDOWN_HOURS - 1) * hour)),
+      "inside the cooldown must still be refused",
+    );
+    assert(
+      manualReminderAllowed(first, new Date(first.getTime() + MANUAL_REMINDER_COOLDOWN_HOURS * hour)),
+      "the owner must be able to send again once the cooldown is over",
+    );
+  }
   const white = "#ffffff";
   const brandCoral = "#fa5a5a";
   const primaryStrong = "#cc4040";
@@ -735,6 +781,8 @@ async function main() {
     assert.equal(scanKey(messA), scanKey(messA), "the key for one mess must not change");
     assert.notEqual(scanKey(messA), scanKey(messB), "two messes must not share a key");
     assert(scanKeyMatches(messA, scanKey(messA)), "a mess's own key must be accepted");
+    assert.notEqual(scanKey(messA, 1), scanKey(messA, 2), "rotating the version must rotate the key");
+    assert(!scanKeyMatches(messA, scanKey(messA, 1), 2), "an old poster key must stop working after rotation");
 
     // The whole point: opening the scan page without the poster's key marks
     // nothing, so a student cannot mark a meal from their bed.

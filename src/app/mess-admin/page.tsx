@@ -11,6 +11,7 @@ import {
   mealWindows,
   onRollDuringWhere,
 } from "@/lib/mess";
+import { feeBalance } from "@/lib/mess-finance";
 
 export const metadata = { title: "All messes" };
 
@@ -49,14 +50,20 @@ export default async function MessAdminHome() {
       // different question, counted separately below.
       students: {
         where: onRollDuringWhere(month),
-        select: { id: true, joinedAt: true, leftAt: true, monthlyFee: true },
+        select: {
+          id: true,
+          joinedAt: true,
+          leftAt: true,
+          monthlyFee: true,
+          payments: { where: { month }, select: { amount: true, entries: { select: { kind: true, amount: true, reversedAt: true } } } },
+        },
       },
     },
   });
 
   const studentIds = messes.flatMap((m) => m.students.map((s) => s.id));
 
-  const [activeCounts, ateNow, paidRows] = await Promise.all([
+  const [activeCounts, ateNow] = await Promise.all([
     prisma.student.groupBy({
       by: ["messId"],
       where: { leftAt: null },
@@ -69,14 +76,9 @@ export default async function MessAdminHome() {
       where: { day, studentId: { in: studentIds } },
       select: { studentId: true, meal: true },
     }),
-    prisma.payment.findMany({
-      where: { month, studentId: { in: studentIds }, paidAt: { not: null } },
-      select: { studentId: true },
-    }),
   ]);
 
   const ateByMeal = ateNow;
-  const paid = new Set(paidRows.map((r) => r.studentId));
   const active = new Map(activeCounts.map((r) => [r.messId, r._count._all]));
 
   return (
@@ -101,14 +103,15 @@ export default async function MessAdminHome() {
           {messes.map((mess) => {
             const due = dueDate(month, mess.dueDay);
             const unpaid = mess.students.reduce((sum, s) => {
-              if (paid.has(s.id)) return sum;
               const owes = owesForMonth({
                 joinedAt: s.joinedAt,
                 leftAt: s.leftAt,
                 monthlyFee: s.monthlyFee,
                 due,
               });
-              return owes ? sum + (s.monthlyFee ?? 0) : sum;
+              if (!owes) return sum;
+              const statement = s.payments[0];
+              return sum + Math.max(0, feeBalance(statement?.amount ?? s.monthlyFee, statement?.entries ?? []));
             }, 0);
             const windows = mealWindows(mess);
             const meal = mealAt(now, windows);

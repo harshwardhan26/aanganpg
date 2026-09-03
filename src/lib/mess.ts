@@ -387,6 +387,23 @@ export function shouldRemind(input: {
 }
 
 /**
+ * How long a payment is closed to another hand-sent reminder.
+ *
+ * Separate from `REMINDER_GAP_DAYS` on purpose. The nightly job is chasing on a
+ * schedule and five days is the right distance; the owner tapping Send is doing
+ * something deliberate and should not be told to wait five days. Six hours is
+ * only long enough to swallow a double tap on a slow page and a same-morning
+ * repeat, which are the two ways a parent ends up with two texts about money.
+ */
+export const MANUAL_REMINDER_COOLDOWN_HOURS = 6;
+
+/** Whether a hand-sent reminder for this payment is far enough from the last. */
+export function manualReminderAllowed(lastReminderAt: Date | null, now: Date): boolean {
+  if (!lastReminderAt) return true;
+  return now.getTime() - lastReminderAt.getTime() >= MANUAL_REMINDER_COOLDOWN_HOURS * 60 * 60 * 1000;
+}
+
+/**
  * Whether this student owes anything for this month at all.
  *
  * A student who joined after the due date is not chased for a month they were
@@ -508,4 +525,17 @@ export function attendanceSummary(present: number, active: number) {
     // Guard the divide: a mess with no students yet is 0%, not NaN%.
     percent: active === 0 ? 0 : Math.round((present / active) * 100),
   };
+}
+
+/** The previous day's configured IST cut-off, expressed as an absolute time. */
+export function mealSkipDeadline(day: Date, cutoffMinutes: number): Date {
+  if (!Number.isInteger(cutoffMinutes) || cutoffMinutes < 0 || cutoffMinutes >= 24 * 60) {
+    throw new Error("Meal-skip cutoff must be minutes within one day");
+  }
+  const istOffset = 5.5 * 60 * 60 * 1000;
+  return new Date(day.getTime() - istOffset - 24 * 60 * 60 * 1000 + cutoffMinutes * 60 * 1000);
+}
+
+export function canChangeMealSkip(day: Date, cutoffMinutes: number, now: Date): boolean {
+  return now.getTime() <= mealSkipDeadline(day, cutoffMinutes).getTime();
 }

@@ -9,8 +9,8 @@ import {
   monthLabel,
   dueDate,
   owesForMonth,
-  feeState,
 } from "@/lib/mess";
+import { feeBalance, feeStatus as ledgerStatus, money } from "@/lib/mess-finance";
 
 export const metadata = { title: "My payment" };
 
@@ -31,7 +31,15 @@ export default async function StudentPaymentPage({
     prisma.mess.findUnique({ where: { id: messId }, select: { name: true, dueDay: true } }),
     prisma.payment.findMany({
       where: { studentId: student.id },
-      select: { month: true, amount: true, paidAt: true },
+      select: {
+        id: true,
+        month: true,
+        amount: true,
+        entries: {
+          orderBy: { occurredAt: "desc" },
+          select: { id: true, amount: true, receiptNumber: true, occurredAt: true, reversedAt: true, kind: true },
+        },
+      },
       orderBy: { month: "desc" },
       take: 12,
     }),
@@ -40,17 +48,15 @@ export default async function StudentPaymentPage({
 
   const due = dueDate(month, mess.dueDay);
   const thisMonth = payments.find((p) => p.month.getTime() === month.getTime()) ?? null;
-  const state = feeState({
-    today: attendanceDay(now),
-    due,
-    owes: owesForMonth({
+  const owes = owesForMonth({
       joinedAt: student.joinedAt,
       leftAt: student.leftAt,
       monthlyFee: student.monthlyFee,
       due,
-    }),
-    paid: thisMonth?.paidAt != null,
   });
+  const balance = feeBalance(thisMonth?.amount ?? student.monthlyFee, thisMonth?.entries ?? []);
+  const detailedState = ledgerStatus({ charge: thisMonth?.amount ?? student.monthlyFee, balance, due, today: attendanceDay(now), hasPayment: (thisMonth?.entries.length ?? 0) > 0 });
+  const state = detailedState === "PAID" || detailedState === "CREDIT" ? "paid" : !owes ? "none" : detailedState === "OVERDUE" ? "overdue" : "due";
   // Red is reserved for actually late. Before the due date this is a reminder,
   // not a warning.
   const late = state === "overdue";
@@ -85,11 +91,11 @@ export default async function StudentPaymentPage({
               : "font-heading text-4xl font-bold tabular-nums text-text-main"
           }
         >
-          ₹{(thisMonth?.amount ?? student.monthlyFee ?? 0).toLocaleString("en-IN")}
+          {money(balance)}
         </p>
         <p className={late ? "mt-1 text-base text-red-900" : "mt-1 text-base text-text-muted"}>
           {state === "paid"
-            ? `Paid on ${thisMonth!.paidAt!.toLocaleDateString("en-IN", { day: "numeric", month: "short" })}`
+            ? balance < 0 ? `${money(balance)} credit on your account` : "Paid in full"
             : state === "overdue"
               ? `You had to pay by ${dueLabel}. Please pay at the mess.`
               : state === "due"
@@ -124,20 +130,35 @@ export default async function StudentPaymentPage({
                   </span>
                   <span className="flex items-center gap-3">
                     <span className="text-base tabular-nums text-text-muted">
-                      ₹{(p.amount ?? 0).toLocaleString("en-IN")}
+                      {money(feeBalance(p.amount, p.entries))}
                     </span>
                     <span
                       className={
-                        p.paidAt
+                        feeBalance(p.amount, p.entries) <= 0
                           ? "rounded-full bg-green-100 px-3 py-1 text-base font-semibold text-green-900"
                           : "rounded-full bg-red-100 px-3 py-1 text-base font-semibold text-red-900"
                       }
                     >
-                      {p.paidAt ? "Paid" : "Not paid"}
+                      {feeBalance(p.amount, p.entries) <= 0 ? "Paid" : "Due"}
                     </span>
                   </span>
                 </li>
               ))}
+          </ul>
+        </section>
+      )}
+
+      {payments.some((payment) => payment.entries.some((entry) => entry.receiptNumber && !entry.reversedAt)) && (
+        <section className="mt-6">
+          <h2 className="font-heading text-xl font-bold text-text-main">Receipts</h2>
+          <ul className="mt-3 flex flex-col gap-3">
+            {payments.flatMap((payment) => payment.entries.filter((entry) => entry.receiptNumber).map((entry) => (
+              <li key={entry.id}>
+                <Link href={`/my-mess/${messId}/payment/${entry.id}`} className="flex min-h-14 items-center justify-between rounded-xl border border-border bg-white px-4 text-base font-semibold text-text-main">
+                  <span>{entry.receiptNumber}</span><span className="text-text-muted">{money(entry.amount)} →</span>
+                </Link>
+              </li>
+            ))) }
           </ul>
         </section>
       )}

@@ -52,7 +52,7 @@ export async function runFeeReminders(now: Date): Promise<ReminderRun> {
           monthlyFee: true,
           joinedAt: true,
           leftAt: true,
-          payments: { where: { month }, select: { paidAt: true, remindersSent: true, lastReminderAt: true } },
+          payments: { where: { month }, select: { id: true, paidAt: true, remindersSent: true, lastReminderAt: true } },
         },
       },
     },
@@ -86,6 +86,11 @@ export async function runFeeReminders(now: Date): Promise<ReminderRun> {
 
       run.due++;
 
+      const statement = payment ?? await prisma.payment.create({
+        data: { studentId: student.id, month, amount: student.monthlyFee },
+        select: { id: true, paidAt: true, remindersSent: true, lastReminderAt: true },
+      });
+
       const result = await sendSms(
         student.parentPhone,
         overdueMessage({
@@ -97,6 +102,17 @@ export async function runFeeReminders(now: Date): Promise<ReminderRun> {
       );
 
       if (!result.sent) {
+        await prisma.reminderDelivery.create({
+          data: {
+            messId: mess.id,
+            paymentId: statement.id,
+            channel: "SMS",
+            target: student.parentPhone ?? "missing",
+            status: "FAILED",
+            error: result.reason,
+            automated: true,
+          },
+        });
         if (!result.configured) run.dryRun = true;
         run.skipped++;
         // The counter is deliberately not advanced. A message that never left
@@ -106,17 +122,23 @@ export async function runFeeReminders(now: Date): Promise<ReminderRun> {
         continue;
       }
 
-      await prisma.payment.upsert({
-        where: { studentId_month: { studentId: student.id, month } },
-        create: {
-          studentId: student.id,
-          month,
-          amount: student.monthlyFee,
-          remindersSent: 1,
-          lastReminderAt: now,
-        },
-        update: { remindersSent: { increment: 1 }, lastReminderAt: now },
-      });
+      await prisma.$transaction([
+        prisma.payment.update({
+          where: { id: statement.id },
+          data: { remindersSent: { increment: 1 }, lastReminderAt: now },
+        }),
+        prisma.reminderDelivery.create({
+          data: {
+            messId: mess.id,
+            paymentId: statement.id,
+            channel: "SMS",
+            target: student.parentPhone!,
+            status: "SENT",
+            automated: true,
+            sentAt: now,
+          },
+        }),
+      ]);
       run.sent++;
     }
   }

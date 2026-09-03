@@ -74,11 +74,30 @@ export async function createMess(formData: FormData): Promise<AdminResult> {
   }
 
   const mess = await prisma.mess.create({
-    data: { name, members: { create: { userId: user.id, role: "OWNER" } } },
+    data: {
+      name,
+      trialEndsAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+      members: { create: { userId: user.id, role: "OWNER" } },
+    },
   });
 
   revalidatePath("/mess-admin");
   revalidatePath(`/mess-admin/${mess.id}`);
+  return { ok: true };
+}
+
+export async function updateMessSubscription(formData: FormData): Promise<AdminResult> {
+  await requireAdmin();
+  const parsed = z.object({
+    messId: idSchema,
+    plan: z.enum(["TRIAL", "STARTER", "GROWTH"]),
+    status: z.enum(["TRIAL", "ACTIVE", "PAST_DUE", "PAUSED", "CANCELLED"]),
+  }).safeParse({ messId: formData.get("messId"), plan: formData.get("plan"), status: formData.get("status") });
+  if (!parsed.success) return { ok: false, error: "Choose a valid plan and status." };
+  await prisma.mess.update({ where: { id: parsed.data.messId }, data: { subscriptionPlan: parsed.data.plan, subscriptionStatus: parsed.data.status } });
+  await prisma.activityEvent.create({ data: { messId: parsed.data.messId, actorUserId: "aangan-admin", kind: "SUBSCRIPTION_UPDATED", entityType: "Mess", entityId: parsed.data.messId, summary: `Changed subscription to ${parsed.data.plan} · ${parsed.data.status}` } });
+  revalidatePath("/mess-admin");
+  revalidatePath(`/mess-admin/${parsed.data.messId}`);
   return { ok: true };
 }
 

@@ -242,30 +242,47 @@ model Review {
 // ---------------------------------------------------------------------------
 
 model Mess {
-  id            String   @id @default(cuid())
-  name          String
+  id                 String             @id @default(cuid())
+  name               String
+  address            String?
+  contactPhone       String?
+  setupCompletedAt   DateTime?
+  scanKeyVersion     Int                @default(1)
+  skipCutoffMinutes  Int                @default(1200)
+  receiptCounter     Int                @default(0)
+  subscriptionPlan   MessPlan           @default(TRIAL)
+  subscriptionStatus SubscriptionStatus @default(TRIAL)
+  trialEndsAt        DateTime?
   /// Day of the month a fee becomes overdue. One number for the whole mess
   /// rather than one per student: every mess we have asked runs a single
   /// collection date, and a per-student date is a field nobody would ever fill
   /// in differently.
-  dueDay        Int      @default(5)
+  dueDay             Int                @default(5)
   /// When each meal is served, in minutes past midnight IST. Six numbers rather
   /// than six strings: every comparison in the app is "is now inside this
   /// window", and a "07:30" that has to be parsed before it can be compared is
   /// a parse that will one day be skipped. The defaults are the times the first
   /// mess ran, so an existing row keeps behaving exactly as it did.
-  breakfastFrom Int      @default(390)
-  breakfastTo   Int      @default(660)
-  lunchFrom     Int      @default(660)
-  lunchTo       Int      @default(960)
-  dinnerFrom    Int      @default(1080)
-  dinnerTo      Int      @default(1410)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  breakfastFrom      Int                @default(390)
+  breakfastTo        Int                @default(660)
+  lunchFrom          Int                @default(660)
+  lunchTo            Int                @default(960)
+  dinnerFrom         Int                @default(1080)
+  dinnerTo           Int                @default(1410)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
 
-  members  MessMember[]
-  students Student[]
-  menu     MenuItem[]
+  members        MessMember[]
+  students       Student[]
+  menu           MenuItem[]
+  paymentEntries PaymentEntry[]
+  activityEvents ActivityEvent[]
+  reminders      ReminderDelivery[]
+  mealSkips      MealSkip[]
+  kitchenLogs    KitchenLog[]
+  notices        Notice[]
+  invites        MessInvite[]
+  feedback       MessFeedback[]
 }
 
 /**
@@ -359,6 +376,8 @@ model Student {
 
   attendance Attendance[]
   payments   Payment[]
+  mealSkips  MealSkip[]
+  feedback   MessFeedback[]
 
   @@unique([messId, email])
   @@index([messId, leftAt])
@@ -387,6 +406,9 @@ model Payment {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  entries   PaymentEntry[]
+  reminders ReminderDelivery[]
 
   @@unique([studentId, month])
   @@index([month])
@@ -423,4 +445,214 @@ enum AttendanceMethod {
   /// The student scanned the poster themselves.
   SCAN
   FACE
+}
+
+enum MessPlan {
+  TRIAL
+  STARTER
+  GROWTH
+}
+
+enum SubscriptionStatus {
+  TRIAL
+  ACTIVE
+  PAST_DUE
+  PAUSED
+  CANCELLED
+}
+
+enum FeeEntryKind {
+  PAYMENT
+  REFUND
+  DISCOUNT
+  EXTRA_CHARGE
+  CREDIT
+}
+
+enum PaymentMethod {
+  CASH
+  UPI
+  BANK
+  OTHER
+}
+
+model PaymentEntry {
+  id        String  @id @default(cuid())
+  paymentId String
+  payment   Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  messId    String
+  mess      Mess    @relation(fields: [messId], references: [id], onDelete: Cascade)
+
+  kind              FeeEntryKind
+  amount            Int
+  method            PaymentMethod?
+  // What was typed, kept forever: the audit trail must survive a reversal.
+  externalReference String?
+  // The same string while the entry stands, NULL once it is reversed. The
+  // uniqueness lives here rather than on `externalReference` so that reversing
+  // a payment recorded against the wrong student hands the UPI reference back
+  // instead of burning it for the life of the mess.
+  activeReference   String?
+  receiptNumber     String?
+  note              String?
+  occurredAt        DateTime       @default(now())
+  createdById       String
+  reversedAt        DateTime?
+  reversedById      String?
+  reversalReason    String?
+  createdAt         DateTime       @default(now())
+
+  @@unique([messId, receiptNumber])
+  @@unique([messId, activeReference])
+  @@index([paymentId, occurredAt])
+  @@index([messId, occurredAt])
+}
+
+model ActivityEvent {
+  id          String   @id @default(cuid())
+  messId      String
+  mess        Mess     @relation(fields: [messId], references: [id], onDelete: Cascade)
+  actorUserId String?
+  kind        String
+  entityType  String
+  entityId    String?
+  summary     String
+  details     Json?
+  createdAt   DateTime @default(now())
+
+  @@index([messId, createdAt])
+}
+
+enum ReminderChannel {
+  SMS
+  WHATSAPP
+}
+
+enum DeliveryStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+model ReminderDelivery {
+  id          String          @id @default(cuid())
+  messId      String
+  mess        Mess            @relation(fields: [messId], references: [id], onDelete: Cascade)
+  paymentId   String
+  payment     Payment         @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  channel     ReminderChannel
+  target      String
+  status      DeliveryStatus  @default(PENDING)
+  providerRef String?
+  error       String?
+  automated   Boolean         @default(false)
+  createdById String?
+  sentAt      DateTime?
+  createdAt   DateTime        @default(now())
+
+  @@index([messId, createdAt])
+  @@index([paymentId, createdAt])
+}
+
+model MealSkip {
+  id        String   @id @default(cuid())
+  messId    String
+  mess      Mess     @relation(fields: [messId], references: [id], onDelete: Cascade)
+  studentId String
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  day       DateTime @db.Date
+  meal      Meal
+  note      String?
+  createdAt DateTime @default(now())
+
+  @@unique([studentId, day, meal])
+  @@index([messId, day, meal])
+}
+
+model KitchenLog {
+  id            String   @id @default(cuid())
+  messId        String
+  mess          Mess     @relation(fields: [messId], references: [id], onDelete: Cascade)
+  day           DateTime @db.Date
+  meal          Meal
+  preparedCount Int
+  leftoverCount Int
+  note          String?
+  updatedById   String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([messId, day, meal])
+  @@index([messId, day])
+}
+
+enum NoticeAudience {
+  ALL
+  STUDENTS
+  STAFF
+}
+
+model Notice {
+  id          String         @id @default(cuid())
+  messId      String
+  mess        Mess           @relation(fields: [messId], references: [id], onDelete: Cascade)
+  title       String
+  body        String
+  audience    NoticeAudience @default(ALL)
+  startsAt    DateTime       @default(now())
+  expiresAt   DateTime?
+  createdById String
+  createdAt   DateTime       @default(now())
+
+  @@index([messId, startsAt])
+  @@index([messId, expiresAt])
+}
+
+model MessInvite {
+  id          String    @id @default(cuid())
+  messId      String
+  mess        Mess      @relation(fields: [messId], references: [id], onDelete: Cascade)
+  email       String
+  role        MessRole  @default(STAFF)
+  token       String    @unique
+  invitedById String
+  expiresAt   DateTime
+  acceptedAt  DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@unique([messId, email])
+  @@index([email, acceptedAt])
+}
+
+enum FeedbackCategory {
+  FOOD
+  CLEANLINESS
+  SERVICE
+  BILLING
+  OTHER
+}
+
+enum FeedbackStatus {
+  OPEN
+  RESOLVED
+}
+
+model MessFeedback {
+  id            String           @id @default(cuid())
+  messId        String
+  mess          Mess             @relation(fields: [messId], references: [id], onDelete: Cascade)
+  studentId     String
+  student       Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  category      FeedbackCategory
+  rating        Int?
+  message       String
+  status        FeedbackStatus   @default(OPEN)
+  ownerResponse String?
+  resolvedAt    DateTime?
+  resolvedById  String?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  @@index([messId, status, createdAt])
+  @@index([studentId, createdAt])
 }

@@ -8,10 +8,8 @@ const TABS = [
   { href: "", label: "Today" },
   { href: "/checkin", label: "Who came" },
   { href: "/students", label: "Students" },
-  // Money is owner-only. The page itself redirects staff away — this only keeps
-  // a tab they cannot use out of their way.
-  { href: "/menu", label: "Food", ownerOnly: true },
   { href: "/fees", label: "Money", ownerOnly: true },
+  { href: "/more", label: "More", ownerOnly: true },
 ];
 
 export function MessNav({ messId, canSeeFees }: { messId: string; canSeeFees: boolean }) {
@@ -22,7 +20,7 @@ export function MessNav({ messId, canSeeFees }: { messId: string; canSeeFees: bo
     <nav className="flex gap-2 overflow-x-auto pb-1">
       {TABS.filter((tab) => canSeeFees || !tab.ownerOnly).map((tab) => {
         const href = `${base}${tab.href}`;
-        const active = pathname === href;
+        const active = pathname === href || (tab.href !== "" && pathname.startsWith(`${href}/`));
         return (
           <Link
             key={tab.href}

@@ -25,6 +25,12 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // The alternate build directory `AANGAN_NEXT_DIST_DIR` points at, so that a
+    // verification build beside a running dev server does not bury the real
+    // findings under thousands of errors from its own generated chunks.
+    ".next-check/**",
+    // Agent skill bundles are development tools, not application source.
+    ".agents/**",
   ]),
 ]);
 

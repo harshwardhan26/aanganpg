@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { QrCode, UtensilsCrossed, CalendarCheck, Wallet, Check, ChevronRight } from "lucide-react";
+import { QrCode, UtensilsCrossed, CalendarCheck, Wallet, Check, ChevronRight, CalendarX2, MessageSquareText } from "lucide-react";
 import prisma from "@/lib/prisma";
 import { findStudent } from "@/actions/mess";
 import { AanganStrip } from "@/components/mess/AanganStrip";
@@ -10,7 +10,6 @@ import {
   monthLabel,
   dueDate,
   owesForMonth,
-  feeState,
   menuFor,
   mealAt,
   nearestMeal,
@@ -20,6 +19,7 @@ import {
   clockLabel,
   MESS_TIMES_SELECT,
 } from "@/lib/mess";
+import { feeBalance, feeStatus as ledgerStatus } from "@/lib/mess-finance";
 
 export const metadata = { title: "My mess" };
 
@@ -48,13 +48,27 @@ export default async function StudentMessPage({
   const [mess, todayRows, monthCount, payment, menuRows] = await Promise.all([
     prisma.mess.findUnique({
       where: { id: messId },
-      select: { name: true, dueDay: true, ...MESS_TIMES_SELECT },
+      select: {
+        name: true,
+        dueDay: true,
+        ...MESS_TIMES_SELECT,
+        notices: {
+          where: {
+            audience: { in: ["ALL", "STUDENTS"] },
+            startsAt: { lte: now },
+            OR: [{ expiresAt: null }, { expiresAt: { gte: now } }],
+          },
+          orderBy: { startsAt: "desc" },
+          take: 2,
+          select: { id: true, title: true, body: true },
+        },
+      },
     }),
     prisma.attendance.findMany({ where: { studentId: found.id, day }, select: { meal: true } }),
     prisma.attendance.count({ where: { studentId: found.id, day: { gte: month } } }),
     prisma.payment.findUnique({
       where: { studentId_month: { studentId: found.id, month } },
-      select: { paidAt: true, amount: true },
+      select: { amount: true, entries: { select: { kind: true, amount: true, reversedAt: true } } },
     }),
     prisma.menuItem.findMany({
       where: { messId },
@@ -67,18 +81,16 @@ export default async function StudentMessPage({
   const serving = mealAt(now, windows);
   const markedMeals = new Set(todayRows.map((row) => row.meal));
   const due = dueDate(month, mess.dueDay);
-  const state = feeState({
-    today: day,
-    due,
-    owes: owesForMonth({
+  const owes = owesForMonth({
       joinedAt: found.joinedAt,
       leftAt: found.leftAt,
       monthlyFee: found.monthlyFee,
       due,
-    }),
-    paid: payment?.paidAt != null,
   });
-  const amount = payment?.amount ?? found.monthlyFee ?? 0;
+  const charge = payment?.amount ?? found.monthlyFee;
+  const amount = feeBalance(charge, payment?.entries ?? []);
+  const detailedState = ledgerStatus({ charge, balance: amount, due, today: day, hasPayment: payment?.entries.some((entry) => entry.kind === "PAYMENT" && !entry.reversedAt) ?? false });
+  const state = detailedState === "PAID" || detailedState === "CREDIT" ? "paid" : !owes ? "none" : detailedState === "OVERDUE" ? "overdue" : "due";
 
   // The meal the card is about: the one being served, or the next one up.
   const focusMeal = serving ?? nearestMeal(now, windows);
@@ -159,6 +171,13 @@ export default async function StudentMessPage({
         />
       )}
 
+      {mess.notices.map((notice) => (
+        <section key={notice.id} className="rise rounded-2xl border border-amber-200 bg-amber-50 p-4">
+          <h2 className="font-heading text-lg font-bold text-amber-950">{notice.title}</h2>
+          <p className="mt-1 whitespace-pre-wrap text-sm text-amber-950">{notice.body}</p>
+        </section>
+      ))}
+
       <div className="grid grid-cols-2 gap-3">
         <Tile
           href={`/my-mess/${messId}/menu`}
@@ -167,6 +186,22 @@ export default async function StudentMessPage({
           tint="bg-amber-50 text-amber-800"
           title="Food"
           detail="This week"
+        />
+        <Tile
+          href={`/my-mess/${messId}/skip`}
+          delay={340}
+          icon={<CalendarX2 className="h-5 w-5" aria-hidden />}
+          tint="bg-violet-50 text-violet-900"
+          title="Skip meals"
+          detail="Tell the kitchen early"
+        />
+        <Tile
+          href={`/my-mess/${messId}/feedback`}
+          delay={390}
+          icon={<MessageSquareText className="h-5 w-5" aria-hidden />}
+          tint="bg-blue-50 text-blue-900"
+          title="Feedback"
+          detail="Private to the owner"
         />
         <Tile
           href={`/my-mess/${messId}/history`}

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ClipboardCheck, Users, QrCode } from "lucide-react";
+import { ClipboardCheck, Users, QrCode, AlertCircle } from "lucide-react";
 import prisma from "@/lib/prisma";
 import {
   attendanceDay,
@@ -32,7 +32,7 @@ export default async function MessDashboard({
   });
   const windows = mealWindows(mess ?? DEFAULT_MEAL_TIMES);
 
-  const [activeCount, rows, todayByMeal] = await Promise.all([
+  const [activeCount, rows, todayByMeal, incompleteStudents, openFeedback, notices] = await Promise.all([
     prisma.student.count({ where: { messId, leftAt: null } }),
     // One grouped query for the whole strip rather than fourteen counts. The
     // student join is what keeps another mess's attendance out of this count.
@@ -46,6 +46,20 @@ export default async function MessDashboard({
       where: { student: { messId }, day: today },
       _count: { _all: true },
     }),
+    prisma.student.count({
+      where: {
+        messId,
+        leftAt: null,
+        OR: [{ email: null }, { photoUrl: null }, { monthlyFee: null }, { parentPhone: null }],
+      },
+    }),
+    prisma.messFeedback.count({ where: { messId, status: "OPEN" } }),
+    prisma.notice.findMany({
+      where: { messId, audience: { in: ["ALL", "STAFF"] }, startsAt: { lte: now }, OR: [{ expiresAt: null }, { expiresAt: { gte: now } }] },
+      orderBy: { startsAt: "desc" },
+      take: 2,
+      select: { id: true, title: true, body: true },
+    }),
   ]);
 
   const byDay = new Map(rows.map((r) => [dayKey(r.day), r._count._all]));
@@ -54,6 +68,16 @@ export default async function MessDashboard({
 
   return (
     <div className="flex flex-col gap-8">
+      {(incompleteStudents > 0 || openFeedback > 0) && (
+        <section className="rounded-2xl border-2 border-amber-300 bg-amber-50 p-5">
+          <h1 className="flex items-center gap-2 font-heading text-xl font-bold text-amber-950"><AlertCircle className="h-5 w-5" aria-hidden /> Needs attention</h1>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {incompleteStudents > 0 && <Link href={`/mess/${messId}/students`} className="inline-flex min-h-11 items-center rounded-xl bg-white px-4 text-sm font-semibold text-amber-950">{incompleteStudents} incomplete student record{incompleteStudents === 1 ? "" : "s"}</Link>}
+            {openFeedback > 0 && <Link href={`/mess/${messId}/more/feedback`} className="inline-flex min-h-11 items-center rounded-xl bg-white px-4 text-sm font-semibold text-amber-950">{openFeedback} open feedback item{openFeedback === 1 ? "" : "s"}</Link>}
+          </div>
+        </section>
+      )}
+      {notices.map((notice) => <section key={notice.id} className="rounded-2xl border border-border bg-white p-5"><p className="text-xs font-bold uppercase tracking-wide text-primary-strong">Notice</p><h2 className="mt-1 font-heading text-xl font-bold text-text-main">{notice.title}</h2><p className="mt-1 whitespace-pre-wrap text-sm text-text-muted">{notice.body}</p></section>)}
       <section>
         <h2 className="mb-3 font-heading text-xl font-bold text-text-main">Today</h2>
         <div className="grid grid-cols-3 gap-3">

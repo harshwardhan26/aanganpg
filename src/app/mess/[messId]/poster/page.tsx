@@ -28,14 +28,14 @@ export default async function PosterPage({
 
   const mess = await prisma.mess.findUnique({
     where: { id: messId },
-    select: { name: true, ...MESS_TIMES_SELECT },
+    select: { name: true, scanKeyVersion: true, ...MESS_TIMES_SELECT },
   });
   if (!mess) redirect("/mess");
 
   // The key is what makes this printed sheet the only way to mark a meal — see
   // `lib/scan-key.ts`. It is why the poster matters rather than being a
   // convenience shortcut to a page anyone could open.
-  const url = `${getMessUrl()}/my-mess/${messId}/scan?k=${scanKey(messId)}`;
+  const url = `${getMessUrl()}/my-mess/${messId}/scan?k=${scanKey(messId, mess.scanKeyVersion)}`;
 
   // Rendered on the server as an SVG string: it prints crisply at any size, and
   // no QR code is shipped to the browser as a script.

@@ -241,9 +241,16 @@ export async function recordScan(
 ): Promise<ScanOutcome> {
   const id = idSchema.parse(messId);
 
-  // Checked before anything else, including the meal window: the answer to
-  // "open this page from your bed" must not depend on the time of day.
-  if (!scanKeyMatches(id, key)) return { ok: false, reason: "no-key" };
+  const mess = await prisma.mess.findUnique({
+    where: { id },
+    select: { ...MESS_TIMES_SELECT, scanKeyVersion: true },
+  });
+  if (!mess) return { ok: false, reason: "not-a-student" };
+
+  // Checked before the session and meal window: the answer to "open this page
+  // from your bed" must not depend on the time of day. Incrementing the stored
+  // version invalidates every photographed copy without changing app secrets.
+  if (!scanKeyMatches(id, key, mess.scanKeyVersion)) return { ok: false, reason: "no-key" };
 
   // Before the meal window and before the roll: "you are not in this mess" is a
   // frightening thing to tell a student who is simply not signed in yet, and it
@@ -258,12 +265,6 @@ export async function recordScan(
   if (!(await withinLimit(scanLimiter, "scan", session.user.id ?? session.user.email))) {
     return { ok: false, reason: "too-fast" };
   }
-
-  const mess = await prisma.mess.findUnique({
-    where: { id },
-    select: MESS_TIMES_SELECT,
-  });
-  if (!mess) return { ok: false, reason: "not-a-student" };
 
   const meal = mealAt(now, mealWindows(mess));
   if (!meal) return { ok: false, reason: "no-meal" };
@@ -305,50 +306,6 @@ export async function recordScan(
     meal,
     alreadyMarked: existing !== null,
   };
-}
-
-/**
- * Records a fee as paid, or undoes that.
- *
- * Owner only. Staff run the door and never see money — the same split the plan
- * promised the client, enforced here rather than by hiding the tab.
- *
- * The amount is copied from the student's current fee at the moment of payment,
- * so raising the fee in November does not retroactively change what October
- * says was collected.
- */
-export async function setPaid(
-  messId: string,
-  studentId: string,
-  monthIso: string,
-  paid: boolean,
-): Promise<void> {
-  const id = idSchema.parse(studentId);
-  // `YYYY-MM-DD`, always the first of a month — it comes from `monthKey` on the
-  // page, never from a person typing.
-  const month = new Date(`${z.string().regex(/^\d{4}-\d{2}-01$/).parse(monthIso)}T00:00:00.000Z`);
-
-  const { userId } = await requireMess(messId, "OWNER");
-  if (!(await withinLimit(writeLimiter, "paid", userId))) throw new Error("Too many requests");
-
-  const student = await prisma.student.findFirst({
-    where: { id, messId },
-    select: { monthlyFee: true },
-  });
-  if (!student) throw new Error("Not found");
-
-  await prisma.payment.upsert({
-    where: { studentId_month: { studentId: id, month } },
-    create: {
-      studentId: id,
-      month,
-      amount: student.monthlyFee,
-      paidAt: paid ? new Date() : null,
-    },
-    update: { paidAt: paid ? new Date() : null },
-  });
-
-  revalidatePath(`/mess/${messId}/fees`);
 }
 
 const menuSchema = z.object({

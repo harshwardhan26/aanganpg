@@ -22,18 +22,19 @@ import { createHmac, timingSafeEqual } from "node:crypto";
  * Server only — importing `node:crypto` from a client component breaks the
  * bundle, which is why this is not in `lib/mess.ts`.
  */
-export function scanKey(messId: string): string {
+export function scanKey(messId: string, version = 1): string {
   const secret = process.env.NEXTAUTH_SECRET;
   if (!secret) throw new Error("NEXTAUTH_SECRET is required to issue a scan key");
 
-  return createHmac("sha256", secret).update(`mess-scan:${messId}`).digest("hex").slice(0, 16);
+  const payload = version === 1 ? `mess-scan:${messId}` : `mess-scan:${messId}:v${version}`;
+  return createHmac("sha256", secret).update(payload).digest("hex").slice(0, 16);
 }
 
 /** Constant-time compare, so a wrong key cannot be guessed one character at a time. */
-export function scanKeyMatches(messId: string, given: string | undefined): boolean {
+export function scanKeyMatches(messId: string, given: string | undefined, version = 1): boolean {
   if (!given) return false;
 
-  const expected = Buffer.from(scanKey(messId));
+  const expected = Buffer.from(scanKey(messId, version));
   const actual = Buffer.from(given);
   if (expected.length !== actual.length) return false;
 
