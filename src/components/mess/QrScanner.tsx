@@ -5,13 +5,7 @@ import { useRouter } from "next/navigation";
 import { Camera, CameraOff } from "lucide-react";
 import { scanLinkKey } from "@/lib/mess";
 
-type State =
-  | { kind: "idle" }
-  | { kind: "starting" }
-  | { kind: "scanning" }
-  | { kind: "wrong-mess" }
-  | { kind: "denied" }
-  | { kind: "unavailable" };
+type Status = "idle" | "starting" | "scanning" | "wrong-mess" | "denied" | "unavailable";
 
 /** Chrome and most Android browsers decode QR natively; Safari does not. */
 type Detector = { detect: (source: CanvasImageSource) => Promise<{ rawValue: string }[]> };
@@ -38,13 +32,17 @@ declare global {
 export function QrScanner({ messId }: { messId: string }) {
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [state, setState] = useState<State>({ kind: "idle" });
-  // A ref, not state: the frame loop reads it every frame and must not be the
-  // reason the component re-renders sixty times a second.
+  // `on` is the only thing the effect watches. `status` is what the screen
+  // says, and it changes *while* the camera runs — the first version had the
+  // effect depending on it, so reporting "scanning" tore the effect down and
+  // React ran the cleanup, which stopped the tracks. The camera opened and went
+  // black in the same frame.
+  const [on, setOn] = useState(false);
+  const [status, setStatus] = useState<Status>("idle");
   const stopped = useRef(false);
 
   useEffect(() => {
-    if (state.kind !== "starting") return;
+    if (!on) return;
 
     let stream: MediaStream | null = null;
     stopped.current = false;
@@ -56,7 +54,7 @@ export function QrScanner({ messId }: { messId: string }) {
 
     (async () => {
       if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
-        setState({ kind: "unavailable" });
+        setStatus("unavailable");
         return;
       }
 
@@ -67,7 +65,11 @@ export function QrScanner({ messId }: { messId: string }) {
           video: { facingMode: { ideal: "environment" } },
         });
       } catch {
-        setState({ kind: "denied" });
+        setStatus("denied");
+        return;
+      }
+      if (stopped.current) {
+        stream.getTracks().forEach((track) => track.stop());
         return;
       }
 
@@ -77,8 +79,9 @@ export function QrScanner({ messId }: { messId: string }) {
         return;
       }
       video.srcObject = stream;
+      // iOS refuses to play an inline video that was not explicitly asked to.
       await video.play().catch(() => {});
-      setState({ kind: "scanning" });
+      setStatus("scanning");
 
       const detector = window.BarcodeDetector
         ? new window.BarcodeDetector({ formats: ["qr_code"] })
@@ -93,7 +96,7 @@ export function QrScanner({ messId }: { messId: string }) {
       const read = async () => {
         if (stopped.current) return;
 
-        if (video.readyState === video.HAVE_ENOUGH_DATA && context) {
+        if (video.readyState === video.HAVE_ENOUGH_DATA && context && video.videoWidth > 0) {
           canvas.width = video.videoWidth;
           canvas.height = video.videoHeight;
           context.drawImage(video, 0, 0, canvas.width, canvas.height);
@@ -118,7 +121,8 @@ export function QrScanner({ messId }: { messId: string }) {
             }
             if (result.reason === "other-mess") {
               stop();
-              setState({ kind: "wrong-mess" });
+              setOn(false);
+              setStatus("wrong-mess");
               return;
             }
             // Anything else in shot — a sticker, a payment code — is simply not
@@ -133,46 +137,43 @@ export function QrScanner({ messId }: { messId: string }) {
     })();
 
     return stop;
-  }, [state.kind, messId, router]);
+  }, [on, messId, router]);
 
-  if (state.kind === "idle") {
-    return (
-      <button
-        type="button"
-        onClick={() => setState({ kind: "starting" })}
-        className="flex min-h-16 w-full cursor-pointer items-center justify-center gap-2 rounded-2xl bg-primary-strong px-6 text-lg font-semibold text-white transition-transform duration-200 active:scale-[0.98]"
-      >
-        <Camera className="h-5 w-5" aria-hidden />
-        Open camera
-      </button>
-    );
-  }
+  if (!on) {
+    const problem =
+      status === "denied" || status === "unavailable" || status === "wrong-mess" ? status : null;
 
-  if (state.kind === "denied" || state.kind === "unavailable" || state.kind === "wrong-mess") {
     return (
-      <div className="rounded-2xl border-2 border-amber-800 bg-amber-50 p-5 text-center">
-        <p className="flex items-center justify-center gap-2 font-heading text-lg font-bold text-amber-900">
-          <CameraOff className="h-5 w-5" aria-hidden />
-          {state.kind === "wrong-mess"
-            ? "That is another mess's paper"
-            : state.kind === "denied"
-              ? "The camera did not open"
-              : "This phone cannot open the camera here"}
-        </p>
-        <p className="mt-2 text-base text-amber-900">
-          {state.kind === "wrong-mess"
-            ? "Point it at the paper in your own mess."
-            : "Use your phone camera app on the QR paper instead. It works the same way."}
-        </p>
-        {state.kind === "wrong-mess" && (
-          <button
-            type="button"
-            onClick={() => setState({ kind: "starting" })}
-            className="mt-4 min-h-14 cursor-pointer rounded-xl bg-primary-strong px-6 text-base font-semibold text-white"
-          >
-            Try again
-          </button>
+      <div className="flex flex-col gap-4">
+        {problem && (
+          <div className="rounded-2xl border-2 border-amber-800 bg-amber-50 p-5 text-center">
+            <p className="flex items-center justify-center gap-2 font-heading text-lg font-bold text-amber-900">
+              <CameraOff className="h-5 w-5" aria-hidden />
+              {problem === "wrong-mess"
+                ? "That is another mess's paper"
+                : problem === "denied"
+                  ? "The camera did not open"
+                  : "This phone cannot open the camera here"}
+            </p>
+            <p className="mt-2 text-base text-amber-900">
+              {problem === "wrong-mess"
+                ? "Point it at the paper in your own mess."
+                : "Use your phone camera app on the QR paper instead. It works the same way."}
+            </p>
+          </div>
         )}
+
+        <button
+          type="button"
+          onClick={() => {
+            setStatus("starting");
+            setOn(true);
+          }}
+          className="flex min-h-16 w-full cursor-pointer items-center justify-center gap-2 rounded-2xl bg-primary-strong px-6 text-lg font-semibold text-white transition-transform duration-200 active:scale-[0.98]"
+        >
+          <Camera className="h-5 w-5" aria-hidden />
+          {problem ? "Try again" : "Open camera"}
+        </button>
       </div>
     );
   }
@@ -183,12 +184,13 @@ export function QrScanner({ messId }: { messId: string }) {
         ref={videoRef}
         playsInline
         muted
+        autoPlay
         // Square: a QR is square, and a tall video on a phone puts the poster
         // somewhere the student has to hunt for.
         className="aspect-square w-full object-cover"
       />
       <p className="bg-primary-strong px-4 py-3 text-center text-base font-semibold text-white">
-        {state.kind === "starting" ? "Opening the camera…" : "Point at the QR paper"}
+        {status === "scanning" ? "Point at the QR paper" : "Opening the camera…"}
       </p>
     </div>
   );
