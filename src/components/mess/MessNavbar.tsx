@@ -96,7 +96,10 @@ export function MessNavbar({ name }: { name?: string | null }) {
         ) : (
           <MessLogin
             label="Login"
-            className="min-h-11 border border-border bg-white px-5 text-base text-text-main hover:bg-slate-100"
+            // Red, regular weight, tighter. `twMerge` lets these beat the
+            // filled defaults in `MessLogin`. The height stays 44px — the
+            // padding that came off is horizontal only.
+            className="min-h-11 border border-border bg-white px-3.5 text-base font-normal text-primary-strong hover:bg-slate-100"
           />
         )}
       </div>

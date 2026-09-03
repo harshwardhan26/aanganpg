@@ -872,6 +872,9 @@ async function main() {
     [white, "#cc4040", "aanganpg strip, white on the strip's red"],
     // Sign out sits in the account menu, in red, on white.
     ["#c10007", white, "sign out in the account menu (red-700 on white)"],
+    // The navbar's Login is now red text on white rather than white on red.
+    // Regular weight, so it is judged as normal text: 4.5, not 3.
+    ["#cc4040", white, "Login in the mess navbar (primary-strong on white)"],
     // The student screens. The two gradient cards carry white text, and the
     // month grid must stay readable at every fill level — it is the grid a
     // student counts their own month on.
