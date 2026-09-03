@@ -30,7 +30,7 @@ export function MessFooter() {
   const site = getBaseUrl();
 
   return (
-    <footer className="mt-auto border-t border-light/10 bg-dark text-light">
+    <footer className="mt-auto border-t border-light/10 bg-dark text-light [&_a:focus-visible]:outline-white">
       <div className="mx-auto max-w-[var(--content-max)] px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
         <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
           <div className="max-w-sm">

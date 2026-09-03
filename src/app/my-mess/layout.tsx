@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { MessNavbar } from "@/components/mess/MessNavbar";
+import { SkipLink } from "@/components/mess/SkipLink";
 
 export const metadata: Metadata = {
   title: { default: "Aangan Mess", template: "%s | Aangan Mess" },
@@ -40,8 +41,9 @@ export default async function MyMessLayout({
 
   return (
     <div className="min-h-screen bg-light">
+      <SkipLink />
       <MessNavbar name={student?.name} />
-      {children}
+      <div id="main-content">{children}</div>
     </div>
   );
 }

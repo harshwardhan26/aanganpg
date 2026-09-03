@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { Logo } from "@/components/Logo";
+import { SkipLink } from "@/components/mess/SkipLink";
 
 export const metadata: Metadata = {
   title: { default: "Aangan Mess Admin", template: "%s | Aangan Mess Admin" },
@@ -27,6 +28,7 @@ export default async function MessAdminLayout({ children }: { children: React.Re
 
   return (
     <div className="min-h-screen bg-slate-50">
+      <SkipLink />
       <header className="sticky top-0 z-30 border-b border-border bg-white shadow-sm">
         <div className="mx-auto flex h-16 max-w-5xl items-center px-4 sm:px-6">
           <Link href="/mess-admin" className="flex items-center gap-2.5 text-primary-strong">
@@ -40,7 +42,7 @@ export default async function MessAdminLayout({ children }: { children: React.Re
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6">{children}</main>
+      <main id="main-content" className="mx-auto max-w-5xl px-4 py-6 sm:px-6">{children}</main>
     </div>
   );
 }

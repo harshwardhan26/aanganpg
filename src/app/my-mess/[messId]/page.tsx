@@ -44,7 +44,6 @@ export default async function StudentMessPage({
   const now = new Date();
   const day = attendanceDay(now);
   const month = startOfIstMonth(now);
-  const servingNow = null as ReturnType<typeof mealAt>;
 
   const [mess, todayRows, monthCount, payment, menuRows] = await Promise.all([
     prisma.mess.findUnique({
@@ -108,13 +107,13 @@ export default async function StudentMessPage({
           }
         >
           <p className="flex items-center gap-2.5 text-sm font-semibold tracking-wide text-white/85 uppercase">
-            {servingNow && (
+            {serving && (
               <span className="relative flex h-2.5 w-2.5">
                 <span className="live-dot absolute inline-flex h-full w-full" />
                 <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-white" />
               </span>
             )}
-            {servingNow ? "Serving now" : `Next · ${clockLabel(focusWindow.from)}`}
+            {serving ? "Serving now" : `Next · ${clockLabel(focusWindow.from)}`}
           </p>
 
           <p className="mt-2 font-heading text-4xl font-bold">{MEAL_LABEL[focusMeal]}</p>
@@ -131,7 +130,7 @@ export default async function StudentMessPage({
           ) : (
             <Link
               href={`/my-mess/${messId}/scan`}
-              className="mt-5 flex min-h-14 items-center justify-between gap-2 rounded-2xl bg-white px-5 text-lg font-semibold text-primary-strong transition-transform duration-200 active:scale-[0.98]"
+              className="on-dark mt-5 flex min-h-14 items-center justify-between gap-2 rounded-2xl bg-white px-5 text-lg font-semibold text-primary-strong transition-transform duration-200 active:scale-[0.98]"
             >
               <span className="flex items-center gap-2">
                 <QrCode className="h-5 w-5" aria-hidden />

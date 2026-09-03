@@ -1126,6 +1126,18 @@ async function main() {
     "an older printed poster still scans",
   );
 
+  // ---- the focus ring has to be visible where it lands --------------------
+  // A ring is only a ring if it can be seen against what is behind it. The
+  // brand red sits at 2.09 on the student's meal card — the most important
+  // button in the app, and the one a keyboard user would lose.
+  assert(
+    contrastRatio("#cc4040", "#7f1d1d") < 3,
+    "the red ring is invisible on the meal card, which is why `.on-dark` exists",
+  );
+  assert(contrastRatio(white, "#7f1d1d") >= 3, "the white ring is visible there");
+  assert(contrastRatio(white, "#0f172a") >= 3, "and on the dark footer");
+  assert(contrastRatio("#cc4040", white) >= 3, "the red ring still works on the pages that are white");
+
   console.log("Self check passed");
 }
 

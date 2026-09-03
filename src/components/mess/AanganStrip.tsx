@@ -32,7 +32,7 @@ export function AanganStrip({ className }: { className?: string }) {
       // `--primary-strong` (#cc4040), never the brand coral: #fa5a5a is 3.15:1
       // against white, and white text on it is the one thing the house rules
       // name outright.
-      className={cn("group block overflow-hidden bg-primary-strong py-2.5", className)}
+      className={cn("on-dark group block overflow-hidden bg-primary-strong py-2.5", className)}
       aria-label="Looking for hostels, rooms and PGs in Kolhapur? Visit aanganpg.com"
     >
       <div className="marquee" style={{ "--marquee-duration": "22s" } as React.CSSProperties}>

@@ -110,6 +110,9 @@ export function CheckinList({
   }, [rows, query]);
 
   const presentCount = rows.filter((r) => r.present).length;
+  // What the last tap did, as a whole sentence. A tick appearing is silent to
+  // anyone not looking at it, and this screen is worked at a door with a queue.
+  const [announcement, setAnnouncement] = useState("");
 
   function toggle(row: Row) {
     // Flip first, reconcile after: at a mess door the tap has to feel instant,
@@ -122,6 +125,7 @@ export function CheckinList({
       try {
         const { present } = await toggleAttendance(messId, row.id, meal);
         setRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, present } : r)));
+        setAnnouncement(`${row.name} ${present ? "marked" : "unmarked"}`);
       } catch {
         setRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, present: row.present } : r)));
         setFailed(row.name);
@@ -131,6 +135,11 @@ export function CheckinList({
 
   return (
     <div className="flex flex-col gap-5">
+      {/* Polite, so it waits for a gap rather than cutting across whatever is
+          being read. Off screen, because the tick is already there for eyes. */}
+      <p role="status" aria-live="polite" className="sr-only">
+        {announcement}
+      </p>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <nav className="flex gap-2">
           {windows.map((window) => (

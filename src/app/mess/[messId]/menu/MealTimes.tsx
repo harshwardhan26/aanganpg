@@ -90,7 +90,11 @@ export function MealTimes({ messId, times }: { messId: string; times: Times }) {
         >
           {pending ? "Saving…" : "Save times"}
         </button>
-        {saved && <span className="text-base font-semibold text-green-800">Saved</span>}
+        {saved && (
+          <span role="status" className="text-base font-semibold text-green-800">
+            Saved
+          </span>
+        )}
       </div>
     </form>
   );

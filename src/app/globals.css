@@ -79,6 +79,10 @@
   body {
     @apply bg-light text-text-main;
     overflow-x: clip;
+    /* Removes the ~300ms wait some mobile browsers keep in case a tap turns
+     * into a double-tap zoom. Every control here is tap-once; the delay is felt
+     * as the app being slow, which it is not. */
+    touch-action: manipulation;
   }
   html {
     @apply font-body;
@@ -97,6 +101,17 @@
     outline: 2px solid var(--primary-strong);
     outline-offset: 2px;
     border-radius: 2px;
+  }
+
+  /*
+   * The same ring, on a dark or coloured surface.
+   *
+   * Coral on the student's red meal card measures 2.09:1 — below the 3:1 a
+   * focus indicator needs, on the most important button in the app. White is
+   * 4.80:1 there and 17.9:1 on the dark footer.
+   */
+  .on-dark:focus-visible {
+    outline-color: #ffffff;
   }
 
   /*

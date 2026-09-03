@@ -4,6 +4,7 @@ import prisma from "@/lib/prisma";
 import { requireMess } from "@/actions/mess";
 import { MessNav } from "./MessNav";
 import { SignOutButton } from "@/components/mess/SignOutButton";
+import { SkipLink } from "@/components/mess/SkipLink";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -45,6 +46,7 @@ export default async function MessLayout({
 
   return (
     <div className="min-h-screen bg-light">
+      <SkipLink />
       <header className="sticky top-0 z-30 border-b border-border bg-white shadow-sm">
         <div className="mx-auto flex max-w-5xl flex-col gap-3 px-4 py-3 sm:px-6">
           <div className="flex items-center justify-between gap-3">
@@ -67,7 +69,7 @@ export default async function MessLayout({
         </div>
       </header>
 
-      <main className="mx-auto max-w-3xl px-4 py-7 sm:px-6">{children}</main>
+      <main id="main-content" className="mx-auto max-w-3xl px-4 py-7 sm:px-6">{children}</main>
     </div>
   );
 }

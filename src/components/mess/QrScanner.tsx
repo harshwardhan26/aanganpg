@@ -185,11 +185,18 @@ export function QrScanner({ messId }: { messId: string }) {
         playsInline
         muted
         autoPlay
+        // A live camera preview says nothing useful to a screen reader; the
+        // line underneath is what carries the state.
+        aria-hidden
         // Square: a QR is square, and a tall video on a phone puts the poster
         // somewhere the student has to hunt for.
         className="aspect-square w-full object-cover"
       />
-      <p className="bg-primary-strong px-4 py-3 text-center text-base font-semibold text-white">
+      <p
+        role="status"
+        aria-live="polite"
+        className="bg-primary-strong px-4 py-3 text-center text-base font-semibold text-white"
+      >
         {status === "scanning" ? "Point at the QR paper" : "Opening the camera…"}
       </p>
     </div>
