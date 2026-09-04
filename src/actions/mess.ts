@@ -5,6 +5,7 @@ import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { canonicalPhone } from "@/lib/phone";
 import { scanKeyMatches } from "@/lib/scan-key";
 import { slidingLimiter, allowRequest } from "@/lib/rate-limit";
@@ -76,6 +77,25 @@ export async function requireMess(
 
   if (!messRoleAllows(member?.role, required)) throw new Error("Unauthorized");
   return { userId, role: member!.role };
+}
+
+/**
+ * The guard every owner-only page uses.
+ *
+ * `requireMess(messId, "OWNER")` throws, which on a page renders the error
+ * boundary rather than sending a helper somewhere they can actually go. So the
+ * pages were written as `requireMess(messId, "STAFF")` followed by a hand-written
+ * `if (role === "STAFF") redirect(...)`. That was correct in all nine places, but
+ * it is a convention rather than a mechanism: a tenth page that calls
+ * `requireMess` and forgets the second line shows a helper the money, and
+ * nothing anywhere would complain.
+ *
+ * One call that cannot be half-applied.
+ */
+export async function requireMessOwner(messId: string): Promise<{ userId: string }> {
+  const { userId, role } = await requireMess(messId, "STAFF");
+  if (role === "STAFF") redirect(`/mess/${messId}`);
+  return { userId };
 }
 
 const studentSchema = z.object({

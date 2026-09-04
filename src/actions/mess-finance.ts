@@ -237,7 +237,10 @@ export async function reverseFeeEntry(formData: FormData): Promise<void> {
       summary: `Reversed ${entry.kind.toLowerCase().replace("_", " ")} of ₹${entry.amount.toLocaleString("en-IN")}`,
       details: { reason: input.reason, paymentId: entry.paymentId, balance },
     });
-  });
+    // Serializable, to match `recordFeeEntry`. At the default isolation two
+    // reversals of one entry arriving together both read `reversedAt` as null
+    // and both write the audit line, leaving one reversal recorded twice.
+  }, { isolationLevel: "Serializable" });
   revalidatePath(`/mess/${input.messId}/fees`);
 }
 
@@ -251,6 +254,12 @@ export async function sendFeeReminder(
   });
   if (!input.success) return { ok: false, issues: ["This fee record could not be found."] };
   const { userId } = await requireMess(input.data.messId, "OWNER");
+  // The per-payment cooldown below stops one parent being texted twice, but it
+  // does not cap how many different parents one session can text in a minute.
+  // This is the only unlimited action that spends money on every call.
+  if (!(await allowRequest(writeLimiter, `mess:fee-reminder:${userId}`))) {
+    return { ok: false, issues: ["Too many reminders at once. Wait a minute and try again."] };
+  }
   const payment = await prisma.payment.findFirst({
     where: { id: input.data.paymentId, student: { messId: input.data.messId } },
     select: {

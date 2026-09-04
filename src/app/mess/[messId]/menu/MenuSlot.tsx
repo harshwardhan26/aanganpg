@@ -54,7 +54,9 @@ export function MenuSlot({
         <span className="font-semibold text-text-main">{label}</span>
         {saved === "saving" && <span className="text-sm text-text-muted">Saving…</span>}
         {saved === "done" && <span className="text-sm font-medium text-green-800">Saved</span>}
-        {saved === "failed" && <span className="text-sm font-medium text-red-800">Not saved. Try again.</span>}
+        {saved === "failed" && (
+          <span className="text-sm font-medium text-red-800">Not saved. Try again.</span>
+        )}
       </span>
       <input
         value={value}

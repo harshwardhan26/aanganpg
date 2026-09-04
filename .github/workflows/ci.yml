@@ -10,31 +10,74 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    # A real Postgres, so the money checks in `scripts/dbcheck.ts` have
+    # something to run against. Without one they can only be run by hand, and a
+    # check that is only ever run by hand is a check that stops being run.
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Use Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '20.x'
         cache: 'npm'
-        
+
     - name: Install dependencies
       run: npm ci
-      
+
     - name: Type Check
       run: npx tsc --noEmit
-      
+
     - name: Lint
       run: npm run lint
-      
+
+    - name: Format Check
+      run: npm run format:check
+
     - name: Self Check
       run: npm run check
+
+    # Proves the migration history still replays from an empty database. It did
+    # not for months — a backfill read a table no migration created — and
+    # nothing caught it, because nothing ever built a database from scratch.
+    - name: Migrate
+      run: npx prisma migrate deploy
+
+    - name: Database Check
+      run: npm run check:db
 
     - name: Env Check
       run: npm run env
       env:
-        DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+        NEXT_PUBLIC_SITE_URL: https://example.com
+        GOOGLE_CLIENT_ID: ci
+        GOOGLE_CLIENT_SECRET: ci
+        NEXTAUTH_SECRET: ci
+        ADMIN_EMAILS: ci@example.com
+
+    # Vercel was the first place a build error appeared, which meant finding out
+    # on the deploy that follows the merge instead of on the pull request.
+    - name: Build
+      run: npm run build
+      env:
         NEXT_PUBLIC_SITE_URL: https://example.com
         GOOGLE_CLIENT_ID: ci
         GOOGLE_CLIENT_SECRET: ci

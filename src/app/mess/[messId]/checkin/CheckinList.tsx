@@ -64,10 +64,13 @@ function useDayRollover(onRollover: () => void) {
       // +1s so the reload lands after the boundary, never a millisecond before
       // it, which would reload into the same day and schedule a zero-length
       // timeout in a loop.
-      timer = setTimeout(() => {
-        onRollover();
-        schedule();
-      }, msUntilNextIstDay(new Date()) + 1000);
+      timer = setTimeout(
+        () => {
+          onRollover();
+          schedule();
+        },
+        msUntilNextIstDay(new Date()) + 1000,
+      );
     }
 
     schedule();
@@ -186,7 +189,9 @@ export function CheckinList({
 
       {visible.length === 0 ? (
         <p className="rounded-2xl border-2 border-border bg-white p-8 text-center text-base text-text-muted">
-          {rows.length === 0 ? "No students yet. Add students first." : "No student with that name."}
+          {rows.length === 0
+            ? "No students yet. Add students first."
+            : "No student with that name."}
         </p>
       ) : (
         <ul className="flex flex-col gap-3">

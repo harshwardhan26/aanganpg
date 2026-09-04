@@ -1,6 +1,15 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { QrCode, UtensilsCrossed, CalendarCheck, Wallet, Check, ChevronRight, CalendarX2, MessageSquareText } from "lucide-react";
+import {
+  QrCode,
+  UtensilsCrossed,
+  CalendarCheck,
+  Wallet,
+  Check,
+  ChevronRight,
+  CalendarX2,
+  MessageSquareText,
+} from "lucide-react";
 import prisma from "@/lib/prisma";
 import { findStudent } from "@/actions/mess";
 import { AanganStrip } from "@/components/mess/AanganStrip";
@@ -23,7 +32,6 @@ import { feeBalance, feeStatus as ledgerStatus } from "@/lib/mess-finance";
 
 export const metadata = { title: "My mess" };
 
-
 /**
  * The screen a student opens at the counter.
  *
@@ -31,11 +39,7 @@ export const metadata = { title: "My mess" };
  * everything else stepping back behind it. The four equal tiles this replaced
  * made a student read all four every time to find the one they came for.
  */
-export default async function StudentMessPage({
-  params,
-}: {
-  params: Promise<{ messId: string }>;
-}) {
+export default async function StudentMessPage({ params }: { params: Promise<{ messId: string }> }) {
   const { messId } = await params;
 
   const found = await findStudent(messId);
@@ -82,15 +86,29 @@ export default async function StudentMessPage({
   const markedMeals = new Set(todayRows.map((row) => row.meal));
   const due = dueDate(month, mess.dueDay);
   const owes = owesForMonth({
-      joinedAt: found.joinedAt,
-      leftAt: found.leftAt,
-      monthlyFee: found.monthlyFee,
-      due,
+    joinedAt: found.joinedAt,
+    leftAt: found.leftAt,
+    monthlyFee: found.monthlyFee,
+    due,
   });
   const charge = payment?.amount ?? found.monthlyFee;
   const amount = feeBalance(charge, payment?.entries ?? []);
-  const detailedState = ledgerStatus({ charge, balance: amount, due, today: day, hasPayment: payment?.entries.some((entry) => entry.kind === "PAYMENT" && !entry.reversedAt) ?? false });
-  const state = detailedState === "PAID" || detailedState === "CREDIT" ? "paid" : !owes ? "none" : detailedState === "OVERDUE" ? "overdue" : "due";
+  const detailedState = ledgerStatus({
+    charge,
+    balance: amount,
+    due,
+    today: day,
+    hasPayment:
+      payment?.entries.some((entry) => entry.kind === "PAYMENT" && !entry.reversedAt) ?? false,
+  });
+  const state =
+    detailedState === "PAID" || detailedState === "CREDIT"
+      ? "paid"
+      : !owes
+        ? "none"
+        : detailedState === "OVERDUE"
+          ? "overdue"
+          : "due";
 
   // The meal the card is about: the one being served, or the next one up.
   const focusMeal = serving ?? nearestMeal(now, windows);
@@ -172,7 +190,10 @@ export default async function StudentMessPage({
       )}
 
       {mess.notices.map((notice) => (
-        <section key={notice.id} className="rise rounded-2xl border border-amber-200 bg-amber-50 p-4">
+        <section
+          key={notice.id}
+          className="rise rounded-2xl border border-amber-200 bg-amber-50 p-4"
+        >
           <h2 className="font-heading text-lg font-bold text-amber-950">{notice.title}</h2>
           <p className="mt-1 whitespace-pre-wrap text-sm text-amber-950">{notice.body}</p>
         </section>
@@ -284,7 +305,9 @@ function Money({
         </span>
       </span>
       <ChevronRight
-        className={tone === "late" ? "h-5 w-5 shrink-0 text-red-900" : "h-5 w-5 shrink-0 text-slate-400"}
+        className={
+          tone === "late" ? "h-5 w-5 shrink-0 text-red-900" : "h-5 w-5 shrink-0 text-slate-400"
+        }
         aria-hidden
       />
     </Link>
@@ -312,7 +335,9 @@ function Tile({
       style={{ "--rise-delay": `${delay}ms` } as React.CSSProperties}
       className="rise flex min-h-28 flex-col gap-2 rounded-2xl border border-border bg-white p-4 shadow-[var(--shadow-soft)] transition-transform duration-200 active:scale-[0.98]"
     >
-      <span className={`flex h-10 w-10 items-center justify-center rounded-xl ${tint}`}>{icon}</span>
+      <span className={`flex h-10 w-10 items-center justify-center rounded-xl ${tint}`}>
+        {icon}
+      </span>
       <span className="font-heading text-base font-bold text-text-main">{title}</span>
       <span className="line-clamp-1 text-sm text-text-muted">{detail}</span>
     </Link>

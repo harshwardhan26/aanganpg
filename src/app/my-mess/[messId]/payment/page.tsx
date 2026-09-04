@@ -3,13 +3,7 @@ import { ChevronLeft } from "lucide-react";
 import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
 import { findStudent } from "@/actions/mess";
-import {
-  attendanceDay,
-  startOfIstMonth,
-  monthLabel,
-  dueDate,
-  owesForMonth,
-} from "@/lib/mess";
+import { attendanceDay, startOfIstMonth, monthLabel, dueDate, owesForMonth } from "@/lib/mess";
 import { feeBalance, feeStatus as ledgerStatus, money } from "@/lib/mess-finance";
 
 export const metadata = { title: "My payment" };
@@ -37,7 +31,14 @@ export default async function StudentPaymentPage({
         amount: true,
         entries: {
           orderBy: { occurredAt: "desc" },
-          select: { id: true, amount: true, receiptNumber: true, occurredAt: true, reversedAt: true, kind: true },
+          select: {
+            id: true,
+            amount: true,
+            receiptNumber: true,
+            occurredAt: true,
+            reversedAt: true,
+            kind: true,
+          },
         },
       },
       orderBy: { month: "desc" },
@@ -49,14 +50,27 @@ export default async function StudentPaymentPage({
   const due = dueDate(month, mess.dueDay);
   const thisMonth = payments.find((p) => p.month.getTime() === month.getTime()) ?? null;
   const owes = owesForMonth({
-      joinedAt: student.joinedAt,
-      leftAt: student.leftAt,
-      monthlyFee: student.monthlyFee,
-      due,
+    joinedAt: student.joinedAt,
+    leftAt: student.leftAt,
+    monthlyFee: student.monthlyFee,
+    due,
   });
   const balance = feeBalance(thisMonth?.amount ?? student.monthlyFee, thisMonth?.entries ?? []);
-  const detailedState = ledgerStatus({ charge: thisMonth?.amount ?? student.monthlyFee, balance, due, today: attendanceDay(now), hasPayment: (thisMonth?.entries.length ?? 0) > 0 });
-  const state = detailedState === "PAID" || detailedState === "CREDIT" ? "paid" : !owes ? "none" : detailedState === "OVERDUE" ? "overdue" : "due";
+  const detailedState = ledgerStatus({
+    charge: thisMonth?.amount ?? student.monthlyFee,
+    balance,
+    due,
+    today: attendanceDay(now),
+    hasPayment: (thisMonth?.entries.length ?? 0) > 0,
+  });
+  const state =
+    detailedState === "PAID" || detailedState === "CREDIT"
+      ? "paid"
+      : !owes
+        ? "none"
+        : detailedState === "OVERDUE"
+          ? "overdue"
+          : "due";
   // Red is reserved for actually late. Before the due date this is a reminder,
   // not a warning.
   const late = state === "overdue";
@@ -95,7 +109,9 @@ export default async function StudentPaymentPage({
         </p>
         <p className={late ? "mt-1 text-base text-red-900" : "mt-1 text-base text-text-muted"}>
           {state === "paid"
-            ? balance < 0 ? `${money(balance)} credit on your account` : "Paid in full"
+            ? balance < 0
+              ? `${money(balance)} credit on your account`
+              : "Paid in full"
             : state === "overdue"
               ? `You had to pay by ${dueLabel}. Please pay at the mess.`
               : state === "due"
@@ -105,11 +121,11 @@ export default async function StudentPaymentPage({
       </section>
 
       {/*
-        * Payment is recorded by the owner when he receives the money, so this is
-        * a record, not a receipt the student can produce on their own. Said
-        * plainly, because a student who thinks this page proves payment will
-        * argue with it.
-        */}
+       * Payment is recorded by the owner when he receives the money, so this is
+       * a record, not a receipt the student can produce on their own. Said
+       * plainly, because a student who thinks this page proves payment will
+       * argue with it.
+       */}
       <p className="mt-3 text-base text-text-muted">
         The mess marks this when they get your money.
       </p>
@@ -148,17 +164,27 @@ export default async function StudentPaymentPage({
         </section>
       )}
 
-      {payments.some((payment) => payment.entries.some((entry) => entry.receiptNumber && !entry.reversedAt)) && (
+      {payments.some((payment) =>
+        payment.entries.some((entry) => entry.receiptNumber && !entry.reversedAt),
+      ) && (
         <section className="mt-6">
           <h2 className="font-heading text-xl font-bold text-text-main">Receipts</h2>
           <ul className="mt-3 flex flex-col gap-3">
-            {payments.flatMap((payment) => payment.entries.filter((entry) => entry.receiptNumber).map((entry) => (
-              <li key={entry.id}>
-                <Link href={`/my-mess/${messId}/payment/${entry.id}`} className="flex min-h-14 items-center justify-between rounded-xl border border-border bg-white px-4 text-base font-semibold text-text-main">
-                  <span>{entry.receiptNumber}</span><span className="text-text-muted">{money(entry.amount)} →</span>
-                </Link>
-              </li>
-            ))) }
+            {payments.flatMap((payment) =>
+              payment.entries
+                .filter((entry) => entry.receiptNumber)
+                .map((entry) => (
+                  <li key={entry.id}>
+                    <Link
+                      href={`/my-mess/${messId}/payment/${entry.id}`}
+                      className="flex min-h-14 items-center justify-between rounded-xl border border-border bg-white px-4 text-base font-semibold text-text-main"
+                    >
+                      <span>{entry.receiptNumber}</span>
+                      <span className="text-text-muted">{money(entry.amount)} →</span>
+                    </Link>
+                  </li>
+                )),
+            )}
           </ul>
         </section>
       )}

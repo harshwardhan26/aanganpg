@@ -23,7 +23,16 @@ export async function GET(request: Request) {
   }
 
   const run = await runFeeReminders(new Date());
-  console.log("[mess-reminders]", run);
+
+  // A run that found parents to chase and reached none of them is the failure
+  // that otherwise goes unnoticed for a month: the job "succeeded", the owner
+  // assumes reminders went out, and the first sign of trouble is unpaid fees.
+  // Sentry picks `console.error` up as an issue; `console.log` it does not.
+  if (run.due > 0 && run.sent === 0) {
+    console.error("[mess-reminders] nothing sent", { ...run, reason: run.dryRun ? "SMS gateway not configured" : "every send failed" });
+  } else {
+    console.log("[mess-reminders]", run);
+  }
 
   return NextResponse.json(run);
 }

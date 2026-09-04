@@ -22,7 +22,6 @@ const PITCHES = [
   { Icon: IndianRupee, text: "Zero brokerage" },
 ];
 
-
 export function AanganStrip({ className }: { className?: string }) {
   return (
     <a

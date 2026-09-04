@@ -55,7 +55,13 @@ export default async function MessAdminHome() {
           joinedAt: true,
           leftAt: true,
           monthlyFee: true,
-          payments: { where: { month }, select: { amount: true, entries: { select: { kind: true, amount: true, reversedAt: true } } } },
+          payments: {
+            where: { month },
+            select: {
+              amount: true,
+              entries: { select: { kind: true, amount: true, reversedAt: true } },
+            },
+          },
         },
       },
     },
@@ -111,7 +117,10 @@ export default async function MessAdminHome() {
               });
               if (!owes) return sum;
               const statement = s.payments[0];
-              return sum + Math.max(0, feeBalance(statement?.amount ?? s.monthlyFee, statement?.entries ?? []));
+              return (
+                sum +
+                Math.max(0, feeBalance(statement?.amount ?? s.monthlyFee, statement?.entries ?? []))
+              );
             }, 0);
             const windows = mealWindows(mess);
             const meal = mealAt(now, windows);

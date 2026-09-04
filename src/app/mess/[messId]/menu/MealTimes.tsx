@@ -73,7 +73,10 @@ export function MealTimes({ messId, times }: { messId: string; times: Times }) {
       />
 
       {issues.length > 0 && (
-        <ul role="alert" className="flex flex-col gap-1 rounded-xl border border-red-200 bg-red-50 p-4">
+        <ul
+          role="alert"
+          className="flex flex-col gap-1 rounded-xl border border-red-200 bg-red-50 p-4"
+        >
           {issues.map((issue) => (
             <li key={issue} className="text-base text-red-900">
               {issue}

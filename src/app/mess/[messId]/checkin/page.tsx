@@ -13,11 +13,7 @@ import { CheckinList } from "./CheckinList";
 
 export const metadata = { title: "Check-in" };
 
-function parseMeal(
-  raw: string | string[] | undefined,
-  now: Date,
-  windows: MealWindow[],
-): MealName {
+function parseMeal(raw: string | string[] | undefined, now: Date, windows: MealWindow[]): MealName {
   const found = windows.find((w) => w.meal === raw);
   return found?.meal ?? nearestMeal(now, windows);
 }

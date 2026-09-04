@@ -56,12 +56,12 @@ export function MessNavbar({ name }: { name?: string | null }) {
               className="z-50 mt-2 w-56 border border-border bg-white shadow-md"
             >
               {/*
-                * A plain div, not `DropdownMenuLabel`. That maps to Base UI's
-                * `Menu.GroupLabel`, which throws outright when it is not inside
-                * a `Menu.Group` — opening this menu crashed the page. There is
-                * no group here to label; this is just the name of whoever is
-                * signed in.
-                */}
+               * A plain div, not `DropdownMenuLabel`. That maps to Base UI's
+               * `Menu.GroupLabel`, which throws outright when it is not inside
+               * a `Menu.Group` — opening this menu crashed the page. There is
+               * no group here to label; this is just the name of whoever is
+               * signed in.
+               */}
               {shown && (
                 <>
                   <div className="truncate px-2 py-1.5 text-sm font-semibold text-text-main">

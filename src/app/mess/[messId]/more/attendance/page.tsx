@@ -1,19 +1,129 @@
-import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
-import { requireMess } from "@/actions/mess";
+import { requireMessOwner } from "@/actions/mess";
 import { correctAttendance } from "@/actions/mess-operations";
 import { attendanceDay } from "@/lib/mess";
 
 export const metadata = { title: "Correct attendance" };
 
-export default async function AttendanceCorrectionPage({ params }: { params: Promise<{ messId: string }> }) {
+export default async function AttendanceCorrectionPage({
+  params,
+}: {
+  params: Promise<{ messId: string }>;
+}) {
   const { messId } = await params;
-  const { role } = await requireMess(messId, "STAFF");
-  if (role === "STAFF") redirect(`/mess/${messId}`);
+  await requireMessOwner(messId);
   const today = attendanceDay(new Date());
   const [students, events] = await Promise.all([
-    prisma.student.findMany({ where: { messId }, orderBy: { name: "asc" }, select: { id: true, name: true, leftAt: true } }),
-    prisma.activityEvent.findMany({ where: { messId, kind: "ATTENDANCE_CORRECTED" }, orderBy: { createdAt: "desc" }, take: 30, select: { id: true, summary: true, details: true, createdAt: true } }),
+    prisma.student.findMany({
+      where: { messId },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true, leftAt: true },
+    }),
+    prisma.activityEvent.findMany({
+      where: { messId, kind: "ATTENDANCE_CORRECTED" },
+      orderBy: { createdAt: "desc" },
+      take: 30,
+      select: { id: true, summary: true, details: true, createdAt: true },
+    }),
   ]);
-  return <div><h1 className="font-heading text-3xl font-bold text-text-main">Correct attendance</h1><p className="mt-1 text-base text-text-muted">Every owner correction requires a reason and remains in activity history.</p><form action={correctAttendance} className="mt-5 rounded-2xl border-2 border-border bg-white p-5"><input type="hidden" name="messId" value={messId} /><div className="grid gap-4 sm:grid-cols-2"><label className="flex flex-col gap-1.5 text-sm font-semibold text-text-main sm:col-span-2">Student<select name="studentId" required className="min-h-12 rounded-xl border-2 border-border bg-white px-3 text-base font-normal"><option value="">Choose student</option>{students.map((student) => <option key={student.id} value={student.id}>{student.name}{student.leftAt ? " (left)" : ""}</option>)}</select></label><label className="flex flex-col gap-1.5 text-sm font-semibold text-text-main">Date<input type="date" name="day" required defaultValue={today.toISOString().slice(0, 10)} max={today.toISOString().slice(0, 10)} className="min-h-12 rounded-xl border-2 border-border px-3 text-base font-normal" /></label><label className="flex flex-col gap-1.5 text-sm font-semibold text-text-main">Meal<select name="meal" className="min-h-12 rounded-xl border-2 border-border bg-white px-3 text-base font-normal"><option value="BREAKFAST">Breakfast</option><option value="LUNCH">Lunch</option><option value="DINNER">Dinner</option></select></label><label className="flex flex-col gap-1.5 text-sm font-semibold text-text-main">Correction<select name="present" className="min-h-12 rounded-xl border-2 border-border bg-white px-3 text-base font-normal"><option value="true">Add attendance</option><option value="false">Remove attendance</option></select></label><label className="flex flex-col gap-1.5 text-sm font-semibold text-text-main">Reason<input name="reason" required minLength={3} className="min-h-12 rounded-xl border-2 border-border px-3 text-base font-normal" placeholder="Why is this correction needed?" /></label></div><button className="mt-5 min-h-12 w-full rounded-xl bg-primary-strong px-5 text-base font-semibold text-white">Save correction</button></form><section className="mt-6"><h2 className="font-heading text-xl font-bold text-text-main">Recent corrections</h2>{events.length === 0 ? <p className="mt-3 rounded-2xl border-2 border-border bg-white p-6 text-text-muted">No corrections yet.</p> : <ul className="mt-3 flex flex-col gap-3">{events.map((event) => { const details = event.details as { reason?: string } | null; return <li key={event.id} className="rounded-2xl border-2 border-border bg-white p-4"><p className="font-semibold text-text-main">{event.summary}</p><p className="mt-1 text-sm text-text-muted">{event.createdAt.toLocaleString("en-IN")}{details?.reason ? ` · ${details.reason}` : ""}</p></li>; })}</ul>}</section></div>;
+  return (
+    <div>
+      <h1 className="font-heading text-3xl font-bold text-text-main">Correct attendance</h1>
+      <p className="mt-1 text-base text-text-muted">
+        Every owner correction requires a reason and remains in activity history.
+      </p>
+      <form
+        action={correctAttendance}
+        className="mt-5 rounded-2xl border-2 border-border bg-white p-5"
+      >
+        <input type="hidden" name="messId" value={messId} />
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className="flex flex-col gap-1.5 text-sm font-semibold text-text-main sm:col-span-2">
+            Student
+            <select
+              name="studentId"
+              required
+              className="min-h-12 rounded-xl border-2 border-border bg-white px-3 text-base font-normal"
+            >
+              <option value="">Choose student</option>
+              {students.map((student) => (
+                <option key={student.id} value={student.id}>
+                  {student.name}
+                  {student.leftAt ? " (left)" : ""}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex flex-col gap-1.5 text-sm font-semibold text-text-main">
+            Date
+            <input
+              type="date"
+              name="day"
+              required
+              defaultValue={today.toISOString().slice(0, 10)}
+              max={today.toISOString().slice(0, 10)}
+              className="min-h-12 rounded-xl border-2 border-border px-3 text-base font-normal"
+            />
+          </label>
+          <label className="flex flex-col gap-1.5 text-sm font-semibold text-text-main">
+            Meal
+            <select
+              name="meal"
+              className="min-h-12 rounded-xl border-2 border-border bg-white px-3 text-base font-normal"
+            >
+              <option value="BREAKFAST">Breakfast</option>
+              <option value="LUNCH">Lunch</option>
+              <option value="DINNER">Dinner</option>
+            </select>
+          </label>
+          <label className="flex flex-col gap-1.5 text-sm font-semibold text-text-main">
+            Correction
+            <select
+              name="present"
+              className="min-h-12 rounded-xl border-2 border-border bg-white px-3 text-base font-normal"
+            >
+              <option value="true">Add attendance</option>
+              <option value="false">Remove attendance</option>
+            </select>
+          </label>
+          <label className="flex flex-col gap-1.5 text-sm font-semibold text-text-main">
+            Reason
+            <input
+              name="reason"
+              required
+              minLength={3}
+              className="min-h-12 rounded-xl border-2 border-border px-3 text-base font-normal"
+              placeholder="Why is this correction needed?"
+            />
+          </label>
+        </div>
+        <button className="mt-5 min-h-12 w-full rounded-xl bg-primary-strong px-5 text-base font-semibold text-white">
+          Save correction
+        </button>
+      </form>
+      <section className="mt-6">
+        <h2 className="font-heading text-xl font-bold text-text-main">Recent corrections</h2>
+        {events.length === 0 ? (
+          <p className="mt-3 rounded-2xl border-2 border-border bg-white p-6 text-text-muted">
+            No corrections yet.
+          </p>
+        ) : (
+          <ul className="mt-3 flex flex-col gap-3">
+            {events.map((event) => {
+              const details = event.details as { reason?: string } | null;
+              return (
+                <li key={event.id} className="rounded-2xl border-2 border-border bg-white p-4">
+                  <p className="font-semibold text-text-main">{event.summary}</p>
+                  <p className="mt-1 text-sm text-text-muted">
+                    {event.createdAt.toLocaleString("en-IN")}
+                    {details?.reason ? ` · ${details.reason}` : ""}
+                  </p>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
+    </div>
+  );
 }

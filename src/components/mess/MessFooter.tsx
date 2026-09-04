@@ -39,8 +39,8 @@ export function MessFooter() {
               <span className="mt-0.5 text-xs font-semibold tracking-wide text-light/60">Mess</span>
             </Link>
             <p className="mt-3 text-sm leading-relaxed text-light/70">
-              Mess and canteen management in Kolhapur — attendance, fees and the daily menu.
-              Google signs you in; we never see your password and take no payment here.
+              Mess and canteen management in Kolhapur — attendance, fees and the daily menu. Google
+              signs you in; we never see your password and take no payment here.
             </p>
           </div>
 

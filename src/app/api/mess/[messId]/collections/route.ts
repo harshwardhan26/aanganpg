@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 import { requireMess } from "@/actions/mess";
 import { csvField } from "@/lib/escape";
-import { attendanceDay, dueDate, monthLabel, onRollDuringWhere, startOfIstMonth } from "@/lib/mess";
+import { attendanceDay, dueDate, monthKey, monthLabel, onRollDuringWhere, startOfIstMonth } from "@/lib/mess";
 import { feeBalance, feeStatus } from "@/lib/mess-finance";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ messId: string }> }) {
@@ -10,7 +10,13 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   const { role } = await requireMess(messId, "STAFF");
   if (role === "STAFF") return new Response("Forbidden", { status: 403 });
   const raw = request.nextUrl.searchParams.get("month");
-  const month = raw && /^\d{4}-\d{2}$/.test(raw) ? new Date(`${raw}-01T00:00:00.000Z`) : startOfIstMonth(new Date());
+  // One validated value, used for both the query and the filename. Passing the
+  // unchecked parameter to the header meant anything the caller typed reached
+  // `Content-Disposition`, so a crafted link could name the download whatever
+  // it liked. `monthKey` re-derives the string from the parsed date instead.
+  const valid = raw !== null && /^\d{4}-\d{2}$/.test(raw);
+  const month = valid ? new Date(`${raw}-01T00:00:00.000Z`) : startOfIstMonth(new Date());
+  const filenameMonth = monthKey(month);
   const mess = await prisma.mess.findUnique({ where: { id: messId }, select: { name: true, dueDay: true } });
   if (!mess) return new Response("Not found", { status: 404 });
   const students = await prisma.student.findMany({
@@ -31,5 +37,5 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     lines.push([student.name, student.email ?? "", student.parentPhone ?? "", monthLabel(month), String(charge ?? ""), String(received), String(balance), status, [...new Set(payments.map((entry) => entry.method ?? "OTHER"))].join("; "), payments.map((entry) => entry.externalReference).filter(Boolean).join("; ")]);
   }
   const body = lines.map((line) => line.map(csvField).join(",")).join("\r\n");
-  return new Response(`\uFEFF${body}`, { headers: { "Content-Type": "text/csv; charset=utf-8", "Content-Disposition": `attachment; filename="${raw ?? "current"}-collections.csv"`, "Cache-Control": "private, no-store" } });
+  return new Response(`\uFEFF${body}`, { headers: { "Content-Type": "text/csv; charset=utf-8", "Content-Disposition": `attachment; filename="${filenameMonth}-collections.csv"`, "Cache-Control": "private, no-store" } });
 }

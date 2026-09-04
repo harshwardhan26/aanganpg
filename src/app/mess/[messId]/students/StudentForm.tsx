@@ -18,13 +18,7 @@ export type EditableStudent = {
   monthlyFee: number | null;
 };
 
-export function StudentForm({
-  messId,
-  student,
-}: {
-  messId: string;
-  student?: EditableStudent;
-}) {
+export function StudentForm({ messId, student }: { messId: string; student?: EditableStudent }) {
   const formRef = useRef<HTMLFormElement>(null);
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -112,10 +106,10 @@ export function StudentForm({
         <div className="min-w-0">
           <label className="inline-flex min-h-12 cursor-pointer items-center rounded-xl border-2 border-border px-4 text-base font-semibold text-text-main transition-colors hover:bg-muted">
             {/*
-              * `capture` opens the camera straight away on a phone, which is how
-              * this is actually used — staff is standing in front of the student,
-              * not browsing a gallery.
-              */}
+             * `capture` opens the camera straight away on a phone, which is how
+             * this is actually used — staff is standing in front of the student,
+             * not browsing a gallery.
+             */}
             <input
               type="file"
               accept="image/*"
@@ -135,7 +129,13 @@ export function StudentForm({
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
-        <Field name="name" label="Student name" required autoComplete="off" defaultValue={student?.name ?? ""} />
+        <Field
+          name="name"
+          label="Student name"
+          required
+          autoComplete="off"
+          defaultValue={student?.name ?? ""}
+        />
         <Field
           name="email"
           label="Gmail address"
@@ -144,7 +144,12 @@ export function StudentForm({
           placeholder="name@gmail.com"
           defaultValue={student?.email ?? ""}
         />
-        <Field name="parentName" label="Parent name" autoComplete="off" defaultValue={student?.parentName ?? ""} />
+        <Field
+          name="parentName"
+          label="Parent name"
+          autoComplete="off"
+          defaultValue={student?.parentName ?? ""}
+        />
         <Field
           name="parentPhone"
           label="Parent phone number"
@@ -164,7 +169,10 @@ export function StudentForm({
       </div>
 
       {issues.length > 0 && (
-        <ul role="alert" className="flex list-disc flex-col gap-1 rounded-xl bg-red-100 px-6 py-3 text-base text-red-900">
+        <ul
+          role="alert"
+          className="flex list-disc flex-col gap-1 rounded-xl bg-red-100 px-6 py-3 text-base text-red-900"
+        >
           {issues.map((issue) => (
             <li key={issue}>{issue}</li>
           ))}

@@ -42,6 +42,7 @@ export async function setMealSkip(
   if (!parsed.success) return { ok: false, issues: ["Choose a valid date and meal."] };
   const student = await findStudent(parsed.data.messId);
   if (!student || student.leftAt) return { ok: false, issues: ["You are not active in this mess."] };
+  if (!(await allowRequest(limiter, `mess:skip:${student.id}`))) return { ok: false, issues: ["Too many changes at once. Try again shortly."] };
   const mess = await prisma.mess.findUnique({ where: { id: parsed.data.messId }, select: { skipCutoffMinutes: true } });
   if (!mess) return { ok: false, issues: ["Mess not found."] };
   const day = new Date(`${parsed.data.day}T00:00:00.000Z`);
@@ -119,6 +120,7 @@ export async function saveNotice(
   });
   if (!parsed.success) return { ok: false, issues: ["Add a title, message, audience, and valid expiry date."] };
   const { userId } = await requireMess(parsed.data.messId, "OWNER");
+  if (!(await allowRequest(limiter, `mess:notice:${userId}`))) return { ok: false, issues: ["Too many notices at once. Try again shortly."] };
   const notice = await prisma.notice.create({
     data: {
       messId: parsed.data.messId,
@@ -140,6 +142,7 @@ export async function saveNotice(
 export async function deleteNotice(formData: FormData): Promise<void> {
   const input = z.object({ messId: id, noticeId: id }).parse({ messId: formData.get("messId"), noticeId: formData.get("noticeId") });
   const { userId } = await requireMess(input.messId, "OWNER");
+  if (!(await allowRequest(limiter, `mess:notice:${userId}`))) throw new Error("Too many requests");
   const notice = await prisma.notice.findFirst({ where: { id: input.noticeId, messId: input.messId }, select: { id: true, title: true } });
   if (!notice) throw new Error("Notice not found");
   await prisma.$transaction([
@@ -162,6 +165,7 @@ export async function submitMessFeedback(
   if (!parsed.success) return { ok: false, issues: ["Choose a category and write at least a few words."] };
   const student = await findStudent(parsed.data.messId);
   if (!student || student.leftAt) return { ok: false, issues: ["You are not active in this mess."] };
+  if (!(await allowRequest(limiter, `mess:feedback:${student.id}`))) return { ok: false, issues: ["Too many messages at once. Try again shortly."] };
   await prisma.messFeedback.create({ data: { messId: parsed.data.messId, studentId: student.id, category: parsed.data.category, rating: typeof parsed.data.rating === "number" ? parsed.data.rating : null, message: parsed.data.message } });
   revalidatePath(`/my-mess/${parsed.data.messId}/feedback`);
   revalidatePath(`/mess/${parsed.data.messId}/more/feedback`);
@@ -177,6 +181,7 @@ export async function respondToFeedback(
   });
   if (!parsed.success) return { ok: false, issues: ["Write a response and choose whether the issue is resolved."] };
   const { userId } = await requireMess(parsed.data.messId, "OWNER");
+  if (!(await allowRequest(limiter, `mess:feedback-reply:${userId}`))) return { ok: false, issues: ["Too many replies at once. Try again shortly."] };
   const updated = await prisma.messFeedback.updateMany({
     where: { id: parsed.data.feedbackId, messId: parsed.data.messId },
     data: {
@@ -205,6 +210,7 @@ export async function correctAttendance(formData: FormData): Promise<void> {
     messId: formData.get("messId"), studentId: formData.get("studentId"), day: formData.get("day"), meal: formData.get("meal"), present: formData.get("present"), reason: formData.get("reason"),
   });
   const { userId } = await requireMess(input.messId, "OWNER");
+  if (!(await allowRequest(limiter, `mess:attendance-fix:${userId}`))) throw new Error("Too many requests");
   const student = await prisma.student.findFirst({ where: { id: input.studentId, messId: input.messId }, select: { id: true, name: true } });
   if (!student) throw new Error("Student not found");
   const day = new Date(`${input.day}T00:00:00.000Z`);

@@ -37,12 +37,12 @@ export default async function MessAdminLayout({ children }: { children: React.Re
               Mess Admin
             </span>
           </Link>
-
-
         </div>
       </header>
 
-      <main id="main-content" className="mx-auto max-w-5xl px-4 py-6 sm:px-6">{children}</main>
+      <main id="main-content" className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
+        {children}
+      </main>
     </div>
   );
 }

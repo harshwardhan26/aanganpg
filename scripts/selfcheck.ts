@@ -87,6 +87,21 @@ async function main() {
     { name: "Patil, Asha", email: "asha@example.com", parentName: "", parentPhone: "9876543210", monthlyFee: "2500" },
     "student CSV import must handle quoted commas and header aliases",
   );
+  // A line break inside a quoted cell is still one row. Splitting the file on
+  // newlines before parsing quotes tore this into two rows that both parsed,
+  // so the import succeeded and silently filed two broken students.
+  {
+    const parsed = parseStudentCsv('Name,Parent Phone,Fee\n"Asha\nPatil",9876543210,2500\nRavi,9876543211,1800');
+    assert.equal(parsed.rows.length, 2, "a newline inside quotes must not split the row");
+    assert.equal(parsed.rows[0].name, "Asha\nPatil", "the quoted cell must survive intact");
+    assert.equal(parsed.rows[1].name, "Ravi", "the row after a multi-line cell must still parse");
+    assert.deepStrictEqual(parsed.issues, [], "a valid multi-line CSV must import without complaint");
+  }
+  assert.equal(
+    parseStudentCsv("Name,Fee\r\nAsha,2500\r\n").rows.length,
+    1,
+    "a CRLF file must not produce a phantom trailing row",
+  );
   assert.equal(
     mealSkipDeadline(new Date("2026-09-05T00:00:00Z"), 20 * 60).toISOString(),
     "2026-09-04T14:30:00.000Z",

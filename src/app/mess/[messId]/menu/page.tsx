@@ -1,6 +1,5 @@
-import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
-import { requireMess } from "@/actions/mess";
+import { requireMessOwner } from "@/actions/mess";
 import {
   WEEKDAY_LABEL,
   mealWindows,
@@ -14,14 +13,9 @@ import { MealTimes } from "./MealTimes";
 
 export const metadata = { title: "Menu" };
 
-export default async function MenuPage({
-  params,
-}: {
-  params: Promise<{ messId: string }>;
-}) {
+export default async function MenuPage({ params }: { params: Promise<{ messId: string }> }) {
   const { messId } = await params;
-  const { role } = await requireMess(messId, "STAFF");
-  if (role === "STAFF") redirect(`/mess/${messId}`);
+  await requireMessOwner(messId);
 
   const mess = await prisma.mess.findUnique({
     where: { id: messId },

@@ -23,11 +23,7 @@ export const metadata = { title: "My meals" };
  * they did eat, because "which meals on the 14th" is the question that settles
  * an argument.
  */
-export default async function HistoryPage({
-  params,
-}: {
-  params: Promise<{ messId: string }>;
-}) {
+export default async function HistoryPage({ params }: { params: Promise<{ messId: string }> }) {
   const { messId } = await params;
 
   const student = await findStudent(messId);

@@ -25,11 +25,7 @@ function clockLabel(minutes: number): string {
   return `${twelve}:${String(minute).padStart(2, "0")} ${suffix}`;
 }
 
-export default async function StudentMenuPage({
-  params,
-}: {
-  params: Promise<{ messId: string }>;
-}) {
+export default async function StudentMenuPage({ params }: { params: Promise<{ messId: string }> }) {
   const { messId } = await params;
 
   const student = await findStudent(messId);
@@ -88,7 +84,10 @@ export default async function StudentMenuPage({
                 const items = menuFor(rows, date, window.meal);
                 const isNow = offset === 0 && window.meal === servingNow;
                 return (
-                  <li key={window.meal} className="border-b border-border pb-2 last:border-0 last:pb-0">
+                  <li
+                    key={window.meal}
+                    className="border-b border-border pb-2 last:border-0 last:pb-0"
+                  >
                     <div className="flex items-baseline justify-between gap-2">
                       <span className="text-base font-semibold text-text-main">
                         {window.label}

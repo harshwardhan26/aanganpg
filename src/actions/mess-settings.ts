@@ -92,6 +92,7 @@ export async function importStudents(
     return { ok: false, issues: ["Choose a CSV file smaller than 1 MB."] };
   }
   const { userId } = await requireMess(messId.data, "OWNER");
+  if (!(await allowRequest(writeLimiter, `mess:import:${userId}`))) return { ok: false, issues: ["Too many imports at once. Try again shortly."] };
   const parsed = parseStudentCsv(await file.text());
   if (parsed.rows.length > 1_000) return { ok: false, issues: ["Import at most 1,000 students at a time."] };
   const issues = [...parsed.issues];
@@ -149,6 +150,7 @@ export async function inviteMessMember(
   }).safeParse({ messId: formData.get("messId"), email: formData.get("email"), role: formData.get("role") });
   if (!parsed.success) return { ok: false, issues: ["Enter a valid email and role."] };
   const { userId } = await requireMess(parsed.data.messId, "OWNER");
+  if (!(await allowRequest(writeLimiter, `mess:invite:${userId}`))) return { ok: false, issues: ["Too many invites at once. Try again shortly."] };
   const token = randomBytes(24).toString("base64url");
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
   const existingUser = await prisma.user.findUnique({ where: { email: parsed.data.email }, select: { id: true } });
@@ -191,6 +193,12 @@ export async function acceptMessInvite(tokenValue: string): Promise<SettingsResu
   const userId = session?.user?.id;
   const email = session?.user?.email?.trim().toLowerCase();
   if (!userId || !email) return { ok: false, issues: ["Sign in with the email that was invited."] };
+  // The token is 192 bits, so this is not what stops it being guessed. It caps
+  // how fast one signed-in account can probe tokens at all, which keeps a
+  // pointless loop from turning into database load.
+  if (!(await allowRequest(writeLimiter, `mess:accept-invite:${userId}`))) {
+    return { ok: false, issues: ["Too many attempts. Wait a minute and try again."] };
+  }
   const invite = await prisma.messInvite.findUnique({ where: { token: token.data } });
   if (!invite || invite.acceptedAt || invite.expiresAt.getTime() < Date.now() || invite.email !== email) {
     return { ok: false, issues: ["This invite is expired, already used, or belongs to another email."] };
@@ -220,6 +228,7 @@ export async function acceptMessInvite(tokenValue: string): Promise<SettingsResu
 export async function rotateMessScanKey(messIdValue: string): Promise<void> {
   const messId = id.parse(messIdValue);
   const { userId } = await requireMess(messId, "OWNER");
+  if (!(await allowRequest(writeLimiter, `mess:rotate-key:${userId}`))) throw new Error("Too many requests");
   await prisma.$transaction([
     prisma.mess.update({ where: { id: messId }, data: { scanKeyVersion: { increment: 1 } } }),
     prisma.activityEvent.create({
@@ -239,6 +248,7 @@ export async function rotateMessScanKey(messIdValue: string): Promise<void> {
 export async function removeMessMember(formData: FormData): Promise<void> {
   const input = z.object({ messId: id, memberUserId: id }).parse({ messId: formData.get("messId"), memberUserId: formData.get("memberUserId") });
   const { userId } = await requireMess(input.messId, "OWNER");
+  if (!(await allowRequest(writeLimiter, `mess:remove-member:${userId}`))) throw new Error("Too many requests");
   const member = await prisma.messMember.findUnique({ where: { messId_userId: { messId: input.messId, userId: input.memberUserId } }, select: { id: true, role: true, user: { select: { email: true, name: true } } } });
   if (!member) throw new Error("Member not found");
   if (member.role === "OWNER") {

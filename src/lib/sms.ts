@@ -49,6 +49,9 @@ export function overdueMessage(input: {
  * Never throws: the caller is a scheduled job walking a list of parents, and one
  * bad number must not stop the rest of the run.
  */
+/** How long the gateway gets to answer before the message counts as failed. */
+const SMS_TIMEOUT_MS = 10_000;
+
 export async function sendSms(to: string | null, text: string): Promise<SmsResult> {
   const number = dialablePhone(to);
   if (!number) return { sent: false, configured: true, reason: "no usable number" };
@@ -74,6 +77,13 @@ export async function sendSms(to: string | null, text: string): Promise<SmsResul
         template_id: process.env.SMS_TEMPLATE_ID,
         recipients: [{ mobiles: number, message: text }],
       }),
+      // A gateway that accepts the connection and then never answers would
+      // otherwise hold the request open until the platform kills the whole
+      // function — which, mid-way through a bulk send, means the run stops
+      // with no summary and no record of who was already texted. Ten seconds
+      // is far longer than a healthy MSG91 call and far shorter than any
+      // serverless timeout.
+      signal: AbortSignal.timeout(SMS_TIMEOUT_MS),
     });
 
     if (!response.ok) {
@@ -85,6 +95,11 @@ export async function sendSms(to: string | null, text: string): Promise<SmsResul
     }
     return { sent: true };
   } catch (error) {
+    // An abort is a timeout, and `error.message` for one is just "The operation
+    // was aborted" — useless in a delivery log that someone reads a week later.
+    if (error instanceof Error && error.name === "TimeoutError") {
+      return { sent: false, configured: true, reason: `gateway did not answer within ${SMS_TIMEOUT_MS / 1000}s` };
+    }
     return {
       sent: false,
       configured: true,

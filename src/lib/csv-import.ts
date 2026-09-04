@@ -6,32 +6,58 @@ export type StudentImportRow = {
   monthlyFee: string;
 };
 
-function parseCsvLine(line: string): string[] {
-  const cells: string[] = [];
+/**
+ * The whole file into rows of cells.
+ *
+ * Row splitting happens here rather than before, because a quoted cell may
+ * legally contain the line break that would otherwise end the row — a pasted
+ * address is the usual way this arrives. Splitting on newlines first and
+ * parsing quotes afterwards tears exactly those rows in half, and the halves
+ * still parse, so the import succeeds and silently files two broken students.
+ */
+function parseCsvRows(csv: string): string[][] {
+  const rows: string[][] = [];
+  let cells: string[] = [];
   let cell = "";
   let quoted = false;
-  for (let index = 0; index < line.length; index++) {
-    const character = line[index];
-    if (character === '"' && quoted && line[index + 1] === '"') {
+
+  const endCell = () => { cells.push(cell.trim()); cell = ""; };
+  const endRow = () => {
+    endCell();
+    // A trailing newline produces one empty cell, which is not a row.
+    if (cells.some((value) => value !== "")) rows.push(cells);
+    cells = [];
+  };
+
+  for (let index = 0; index < csv.length; index++) {
+    const character = csv[index];
+
+    if (character === '"' && quoted && csv[index + 1] === '"') {
       cell += '"';
       index++;
     } else if (character === '"') {
       quoted = !quoted;
     } else if (character === "," && !quoted) {
-      cells.push(cell.trim());
-      cell = "";
+      endCell();
+    } else if ((character === "\n" || character === "\r") && !quoted) {
+      // Swallow the second half of a CRLF so it does not open an empty row.
+      if (character === "\r" && csv[index + 1] === "\n") index++;
+      endRow();
     } else {
       cell += character;
     }
   }
-  cells.push(cell.trim());
-  return cells;
+  // Whatever is still in hand when the file ends is the last row, with or
+  // without a trailing newline.
+  endRow();
+
+  return rows;
 }
 
 export function parseStudentCsv(csv: string): { rows: StudentImportRow[]; issues: string[] } {
-  const lines = csv.replace(/^\uFEFF/, "").split(/\r?\n/).filter((line) => line.trim());
+  const lines = parseCsvRows(csv.replace(/^\uFEFF/, ""));
   if (lines.length === 0) return { rows: [], issues: ["The CSV file is empty."] };
-  const header = parseCsvLine(lines[0]).map((cell) => cell.toLowerCase().replace(/[^a-z]/g, ""));
+  const header = lines[0].map((cell) => cell.toLowerCase().replace(/[^a-z]/g, ""));
   const aliases: Record<keyof StudentImportRow, string[]> = {
     name: ["name", "studentname"],
     email: ["email", "studentemail"],
@@ -47,7 +73,7 @@ export function parseStudentCsv(csv: string): { rows: StudentImportRow[]; issues
   const rows: StudentImportRow[] = [];
   const issues: string[] = [];
   for (let index = 1; index < lines.length; index++) {
-    const cells = parseCsvLine(lines[index]);
+    const cells = lines[index];
     const value = (key: keyof StudentImportRow) => positions[key] < 0 ? "" : (cells[positions[key]] ?? "").trim();
     const row = { name: value("name"), email: value("email"), parentName: value("parentName"), parentPhone: value("parentPhone"), monthlyFee: value("monthlyFee") };
     if (!row.name) issues.push(`Row ${index + 1}: name is missing.`);

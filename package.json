@@ -9,6 +9,9 @@
     "postinstall": "prisma generate",
     "lint": "eslint",
     "check": "tsx scripts/selfcheck.ts",
+    "check:db": "tsx scripts/dbcheck.ts",
+    "format": "prettier --write \"src/app/mess/**/*.tsx\" \"src/app/mess-admin/**/*.tsx\" \"src/app/my-mess/**/*.tsx\" \"src/components/mess/**/*.tsx\"",
+    "format:check": "prettier --check \"src/app/mess/**/*.tsx\" \"src/app/mess-admin/**/*.tsx\" \"src/app/my-mess/**/*.tsx\" \"src/components/mess/**/*.tsx\"",
     "env": "tsx scripts/check-env.ts",
     "migrate:deploy": "prisma migrate deploy",
     "seed": "tsx prisma/seed.ts"
@@ -47,6 +50,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.3.1",
+    "prettier": "^3.9.6",
     "prisma": "^7.9.1",
     "shadcn": "^4.18.0",
     "tailwindcss": "^4",

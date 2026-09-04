@@ -40,7 +40,9 @@ export default async function ScanPage({
     return (
       <Shell messName={mess?.name}>
         <div className="rounded-2xl border-2 border-border bg-white p-8 text-center">
-          <p className="font-heading text-2xl font-bold text-text-main">Sign in to mark your food</p>
+          <p className="font-heading text-2xl font-bold text-text-main">
+            Sign in to mark your food
+          </p>
           <p className="mt-3 text-base text-text-muted">
             Use the Gmail your mess put on their list. You come straight back here.
           </p>
@@ -89,27 +91,19 @@ export default async function ScanPage({
   return (
     <Shell messName={mess?.name}>
       {/*
-        * The receipt. The photo is the point: it was taken by this mess at
-        * enrollment, so a receipt forwarded to a friend shows the wrong face and
-        * fails at a glance, with nothing for anyone to check or scan.
-        */}
+       * The receipt. The photo is the point: it was taken by this mess at
+       * enrollment, so a receipt forwarded to a friend shows the wrong face and
+       * fails at a glance, with nothing for anyone to check or scan.
+       */}
       <div className="overflow-hidden rounded-2xl border-2 border-primary-strong bg-white">
         <div className="bg-primary-strong px-5 py-3 text-center">
-          <p className="font-heading text-2xl font-bold text-white">
-            {MEAL_LABEL[result.meal]}
-          </p>
+          <p className="font-heading text-2xl font-bold text-white">{MEAL_LABEL[result.meal]}</p>
         </div>
 
         <div className="flex flex-col items-center gap-4 p-6">
           {result.photoUrl ? (
             <div className="relative h-36 w-36 overflow-hidden rounded-full border-4 border-primary-strong">
-              <Image
-                src={result.photoUrl}
-                alt=""
-                fill
-                sizes="144px"
-                className="object-cover"
-              />
+              <Image src={result.photoUrl} alt="" fill sizes="144px" className="object-cover" />
             </div>
           ) : (
             <div className="flex h-36 w-36 items-center justify-center rounded-full border-4 border-dashed border-border text-center text-base text-text-muted">
@@ -120,11 +114,11 @@ export default async function ScanPage({
           <p className="font-heading text-3xl font-bold text-text-main">{result.name}</p>
 
           {/*
-            * A ticking clock, not the time this page rendered. A screenshot of a
-            * receipt keeps the right face and the right name — only a clock that
-            * has stopped gives it away, and that check costs the person handing
-            * out food no thought at all.
-            */}
+           * A ticking clock, not the time this page rendered. A screenshot of a
+           * receipt keeps the right face and the right name — only a clock that
+           * has stopped gives it away, and that check costs the person handing
+           * out food no thought at all.
+           */}
           <LiveClock />
 
           {result.alreadyMarked && (

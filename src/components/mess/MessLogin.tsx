@@ -55,7 +55,10 @@ export function MessLogin({
     const fromUrl =
       typeof window === "undefined"
         ? null
-        : safeCallbackUrl(new URLSearchParams(window.location.search).get("callbackUrl"), window.location.origin);
+        : safeCallbackUrl(
+            new URLSearchParams(window.location.search).get("callbackUrl"),
+            window.location.origin,
+          );
     const target =
       (typeof window === "undefined"
         ? callbackUrl
@@ -73,8 +76,7 @@ export function MessLogin({
       <SheetTrigger
         className={cn(
           "inline-flex cursor-pointer items-center justify-center rounded-xl font-semibold transition-colors",
-          className ??
-            "min-h-14 bg-primary-strong px-7 text-lg text-white hover:bg-primary-hover",
+          className ?? "min-h-14 bg-primary-strong px-7 text-lg text-white hover:bg-primary-hover",
         )}
       >
         {pillClassName ? <span className={pillClassName}>{label}</span> : label}
@@ -82,7 +84,10 @@ export function MessLogin({
       {/* A sheet, not a centre modal: it is what the room site's sign-in already
           is, and on a phone it opens under the thumb rather than under the
           notch. */}
-      <SheetContent side="bottom" className="mx-auto max-w-md rounded-t-2xl bg-white p-6 outline-none">
+      <SheetContent
+        side="bottom"
+        className="mx-auto max-w-md rounded-t-2xl bg-white p-6 outline-none"
+      >
         <SheetTitle className="font-heading text-2xl font-bold text-text-main">
           Who are you?
         </SheetTitle>
