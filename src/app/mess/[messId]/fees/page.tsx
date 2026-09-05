@@ -11,7 +11,7 @@ import {
   dueDate,
   onRollDuringWhere,
 } from "@/lib/mess";
-import { feeBalance, feeStatus, money, type FeeStatus } from "@/lib/mess-finance";
+import { feeBalance, feeStatus, money, FEE_STATUS_LABEL, type FeeStatus } from "@/lib/mess-finance";
 
 export const metadata = { title: "Collections" };
 
@@ -21,15 +21,6 @@ function parseMonth(raw: string | string[] | undefined, now: Date): Date {
   const parsed = new Date(`${value}-01T00:00:00.000Z`);
   return Number.isNaN(parsed.getTime()) ? startOfIstMonth(now) : parsed;
 }
-
-const STATUS_LABEL: Record<FeeStatus, string> = {
-  NOT_SET: "Fee missing",
-  DUE: "Due",
-  OVERDUE: "Overdue",
-  PARTIAL: "Part paid",
-  PAID: "Paid",
-  CREDIT: "Credit",
-};
 
 export default async function FeesPage({
   params,
@@ -45,7 +36,7 @@ export default async function FeesPage({
   const month = parseMonth(query.month, now);
   const search = typeof query.q === "string" ? query.q.trim().slice(0, 80) : "";
   const statusFilter =
-    typeof query.status === "string" && query.status in STATUS_LABEL
+    typeof query.status === "string" && query.status in FEE_STATUS_LABEL
       ? (query.status as FeeStatus)
       : null;
   const today = attendanceDay(now);
@@ -196,7 +187,7 @@ export default async function FeesPage({
               key={status}
               href={`/mess/${messId}/fees?month=${monthQuery}&status=${status}`}
               active={statusFilter === status}
-              label={STATUS_LABEL[status]}
+              label={FEE_STATUS_LABEL[status]}
             />
           ))}
         </div>
@@ -227,7 +218,7 @@ export default async function FeesPage({
                       : `${money(row.balance)} left of ${money(row.charge)}`}
                   </p>
                   <p className="mt-1 text-sm text-text-muted">
-                    {STATUS_LABEL[row.status]}
+                    {FEE_STATUS_LABEL[row.status]}
                     {row.remindersSent
                       ? ` · ${row.remindersSent} reminder${row.remindersSent === 1 ? "" : "s"}`
                       : ""}

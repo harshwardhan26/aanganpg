@@ -30,6 +30,16 @@ export function feeBalance(charge: number | null, entries: FeeEntryLike[]): numb
 
 export type FeeStatus = "NOT_SET" | "DUE" | "OVERDUE" | "PARTIAL" | "PAID" | "CREDIT";
 
+/** How a fee status reads to an owner, in one place both fee screens share. */
+export const FEE_STATUS_LABEL: Record<FeeStatus, string> = {
+  NOT_SET: "Fee missing",
+  DUE: "Due",
+  OVERDUE: "Overdue",
+  PARTIAL: "Part paid",
+  PAID: "Paid",
+  CREDIT: "Credit",
+};
+
 export function feeStatus(input: {
   charge: number | null;
   balance: number;

@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import prisma from "@/lib/prisma";
 import { requireMessOwner } from "@/actions/mess";
 import { attendanceDay, dueDate, monthKey, monthLabel, startOfIstMonth } from "@/lib/mess";
-import { entryLabel, feeBalance, feeStatus, money } from "@/lib/mess-finance";
+import { entryLabel, feeBalance, feeStatus, money, FEE_STATUS_LABEL } from "@/lib/mess-finance";
 import { reverseFeeEntry } from "@/actions/mess-finance";
 import { FeeEntryForm, ReminderForm } from "./FeeEntryForm";
 import { whatsappLink } from "@/lib/whatsapp";
@@ -100,10 +100,7 @@ export default async function StudentFeeLedger({
       <section className="grid grid-cols-3 gap-3">
         <Stat label="Monthly fee" value={charge === null ? "Not set" : money(charge)} />
         <Stat label="Balance" value={money(balance)} />
-        <Stat
-          label="Status"
-          value={status === "NOT_SET" ? "Missing" : status.toLowerCase().replace("_", " ")}
-        />
+        <Stat label="Status" value={FEE_STATUS_LABEL[status]} />
       </section>
 
       <FeeEntryForm
